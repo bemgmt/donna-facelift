@@ -6,6 +6,7 @@ A hybrid Next.js + PHP platform for realtime AI receptionist and voice applicati
 - Next.js 14 (App Router) frontend and API routes
 - Legacy PHP endpoints for business logic and voice processing
 - Optional Node-based WebSocket proxy (secured)
+- **Preview note**: Supabase migrations/data have been removed for this facelift preview. Any feature that previously depended on Supabase will short-circuit with a friendly error if invoked; the UI can still be explored without backend data.
 
 Start here
 - **docs/REPOSITORY_STRUCTURE.md** — Repository organization and development conventions
