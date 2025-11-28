@@ -1,5 +1,5 @@
 
-import { auth } from '@clerk/nextjs/server'
+import { auth } from '@/lib/preview-auth'
 import { NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import OpenAI from 'openai'

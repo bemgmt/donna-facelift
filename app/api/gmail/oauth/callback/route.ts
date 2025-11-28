@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { auth } from '@clerk/nextjs/server'
+import { auth } from '@/lib/preview-auth'
 import { cookies } from 'next/headers'
 import * as Sentry from '@sentry/nextjs'
 

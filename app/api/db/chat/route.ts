@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth } from '@/lib/preview-auth'
 import { NextResponse } from 'next/server'
 const SECURITY_ENABLED = process.env.NODE_ENV === 'production' || process.env.ENABLE_API_SECURITY === 'true'
 import * as Sentry from '@sentry/nextjs'
