@@ -35,6 +35,13 @@ const REQUIRED_PRODUCTION_VARS = [
   'SUPABASE_SERVICE_ROLE_KEY'
 ]
 
+const isFaceliftPreview =
+  process.env.FACELIFT_PREVIEW === 'true' ||
+  (process.env.VERCEL === '1' &&
+    process.env.NODE_ENV === 'production' &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.SUPABASE_SERVICE_ROLE_KEY)
+
 const RECOMMENDED_VARS = [
   'CLERK_PUBLISHABLE_KEY',
   'CLERK_SECRET_KEY',
@@ -97,9 +104,13 @@ function validateEnvironment() {
   const config = {}
 
   const isProduction = process.env.NODE_ENV === 'production'
+  const enforcingProductionRequirements = isProduction && !isFaceliftPreview
   console.log(`Validating environment (NODE_ENV: ${process.env.NODE_ENV || 'development'})`)
+  if (isFaceliftPreview) {
+    console.warn('Facelift preview mode detected — skipping required Supabase/OpenAI env checks. Backend integrations are disabled in this mode.')
+  }
 
-  const requiredVars = isProduction ? REQUIRED_PRODUCTION_VARS : []
+  const requiredVars = enforcingProductionRequirements ? REQUIRED_PRODUCTION_VARS : []
   for (const varName of requiredVars) {
     const result = validateEnvVar(varName, process.env[varName], true)
     if (!result.valid && result.error) errors.push(result.error)
@@ -121,7 +132,7 @@ function validateEnvironment() {
     config[varName] = process.env[varName] || null
   }
 
-  if (isProduction) {
+  if (enforcingProductionRequirements) {
     const hasClerk = process.env.CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY
     const hasJWT = process.env.JWT_SECRET
     const clerkDisabled = process.env.AUTH_DISABLE_CLERK?.toLowerCase() === 'true'
@@ -146,7 +157,7 @@ function validateEnvironment() {
   }
 
   const securityConfig = {
-    securityEnabled: process.env.NODE_ENV === 'production' || process.env.ENABLE_API_SECURITY === 'true',
+    securityEnabled: enforcingProductionRequirements || process.env.ENABLE_API_SECURITY === 'true',
     clerkEnabled: !!(process.env.CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY) && process.env.AUTH_DISABLE_CLERK?.toLowerCase() !== 'true',
     jwtEnabled: !!process.env.JWT_SECRET,
     sentryEnabled: !!(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN),
