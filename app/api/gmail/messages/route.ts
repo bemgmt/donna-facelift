@@ -3,11 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
+import { FACELIFT_PREVIEW_MESSAGE, isFaceliftPreview } from '@/lib/facelift-preview'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabase = !isFaceliftPreview && SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +43,10 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: Request) {
   try {
+    if (!supabase) {
+      return new Response(FACELIFT_PREVIEW_MESSAGE, { status: 503 })
+    }
+
     const { userId } = await auth()
     if (!userId) {
       return new Response('Unauthorized', { status: 401 })

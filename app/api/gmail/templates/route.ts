@@ -2,17 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rate-limit'
+import { FACELIFT_PREVIEW_MESSAGE, isFaceliftPreview } from '@/lib/facelift-preview'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabase = !isFaceliftPreview && SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null
+
+function previewUnavailable() {
+  return NextResponse.json({ error: FACELIFT_PREVIEW_MESSAGE }, { status: 503 })
+}
 
 export const dynamic = 'force-dynamic'
 
 // GET - Fetch user's email templates
 export async function GET(request: NextRequest) {
   try {
+    if (!supabase) return previewUnavailable()
+
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -63,6 +71,8 @@ export async function GET(request: NextRequest) {
 // POST - Create new email template
 export async function POST(request: NextRequest) {
   try {
+    if (!supabase) return previewUnavailable()
+
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -140,6 +150,8 @@ export async function POST(request: NextRequest) {
 // PUT - Update existing template
 export async function PUT(request: NextRequest) {
   try {
+    if (!supabase) return previewUnavailable()
+
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -231,6 +243,8 @@ export async function PUT(request: NextRequest) {
 // DELETE - Remove template
 export async function DELETE(request: NextRequest) {
   try {
+    if (!supabase) return previewUnavailable()
+
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

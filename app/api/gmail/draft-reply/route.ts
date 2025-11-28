@@ -5,12 +5,14 @@ import * as Sentry from '@sentry/nextjs'
 import OpenAI from 'openai'
 import { chooseAgentModel } from '@/lib/model-router'
 import { createClient } from '@supabase/supabase-js'
+import { FACELIFT_PREVIEW_MESSAGE, isFaceliftPreview } from '@/lib/facelift-preview'
 import type { gmail_v1 } from 'googleapis'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabase = !isFaceliftPreview && SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null
 
 export const dynamic = 'force-dynamic'
 
@@ -66,6 +68,10 @@ function getEmailContent(message: gmail_v1.Schema$Message): { subject: string, f
 
 export async function POST(req: Request) {
   try {
+    if (!supabase) {
+      return NextResponse.json({ error: FACELIFT_PREVIEW_MESSAGE }, { status: 503 })
+    }
+
     const { userId } = await auth()
     if (!userId) {
       return new NextResponse('Unauthorized', { status: 401, headers: { 'Cache-Control': 'no-store' } })

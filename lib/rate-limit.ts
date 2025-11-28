@@ -137,3 +137,18 @@ export const RATE_LIMITS = {
 export function createRateLimitCheck(config: RateLimitConfig) {
   return (identifier: string) => checkRateLimit(identifier, config)
 }
+
+/**
+ * Legacy helper used across API routes (async signature for compatibility)
+ */
+export async function rateLimit(
+  identifier: string,
+  bucket: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<RateLimitResult> {
+  return checkRateLimit(`${bucket}:${identifier}`, {
+    windowMs: windowSeconds * 1000,
+    maxRequests
+  })
+}
