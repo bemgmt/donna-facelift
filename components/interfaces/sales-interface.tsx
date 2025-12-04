@@ -47,52 +47,37 @@ const SalesInterface: React.FC = () => {
   // Campaign type matches CampaignBuilder's expected shape
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
 
+  // Shell mode - static demo data
   useEffect(() => {
-    fetchSalesData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Mount-only effect - fetchSalesData is stable and encapsulates state updates
+    setSalesData({
+      contacts: [
+        { id: '1', name: 'John Doe', email: 'john@example.com', phone: '+1-555-0101', status: 'qualified', score: 85, created_at: '2024-01-15' },
+        { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '+1-555-0102', status: 'contacted', score: 72, created_at: '2024-01-14' },
+        { id: '3', name: 'Bob Johnson', email: 'bob@example.com', phone: '+1-555-0103', status: 'new', score: 45, created_at: '2024-01-13' }
+      ],
+      leads: [
+        { id: '1', contact_id: '1', status: 'hot', score: 90, last_contact: '2024-01-15', notes: 'Interested in premium plan' },
+        { id: '2', contact_id: '2', status: 'warm', score: 65, last_contact: '2024-01-14', notes: 'Follow up scheduled' }
+      ],
+      stats: {
+        total_contacts: 3,
+        hot_leads: 1,
+        conversion_rate: 33.3
+      }
+    })
+    setLoading(false)
   }, [])
 
+  // Shell mode - no API calls
   const fetchSalesData = async () => {
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE || '/donna'
-      const response = await fetch(`${apiBase}/api/sales/overview.php`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      const result = await response.json()
-      if (result.success) {
-        setSalesData(result.data)
-      }
-    } catch (error) {
-      console.error('Failed to fetch sales data:', error)
-    } finally {
-      setLoading(false)
-    }
+    // Static data already set in useEffect
+    return
   }
 
+  // Shell mode - visual only
   const addContact = async (contact: Partial<Contact>) => {
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE || '/donna'
-      const response = await fetch(`${apiBase}/api/sales/overview.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'add_contact',
-          contact: contact
-        })
-      })
-      const result = await response.json()
-      if (result.success) {
-        fetchSalesData() // Refresh data
-      }
-    } catch (error) {
-      console.error('Failed to add contact:', error)
-    }
+    alert("Design Preview Mode - Contact creation disabled")
+    // No API call in shell mode
   }
 
   // const updateLead = async (lead: Partial<Lead>) => {

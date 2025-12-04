@@ -49,33 +49,9 @@ const LeadGeneratorInterface: React.FC = () => {
     keywords: ''
   })
 
+  // Shell mode - static demo data
   useEffect(() => {
-    fetchLeadData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Mount-only effect - fetchLeadData is stable and encapsulates state updates
-  }, [])
-
-  const fetchLeadData = async () => {
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE || ''
-      const response = await fetch(`${apiBase}/api/donna_logic.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'show lead generation dashboard',
-          user_profile: 'sales'
-        })
-      })
-      if (process.env.NEXT_PUBLIC_USE_MOCK !== '1') {
-        const result = await response.json()
-        setLeadData(result?.data ?? null)
-        return
-      }
-      
-      // Mock data for now - replace with actual API response
-      const mockData: LeadGeneratorData = {
+    const mockData: LeadGeneratorData = {
         leads: [
           {
             id: '1',
@@ -129,24 +105,19 @@ const LeadGeneratorInterface: React.FC = () => {
       }
       
       setLeadData(mockData)
-    } catch (error) {
-      console.error('Failed to fetch lead data:', error)
-    } finally {
       setLoading(false)
-    }
+    }, [])
+  
+  // Shell mode - no API calls
+  const fetchLeadData = async () => {
+    // Static data already set in useEffect
+    return
   }
 
+  // Shell mode - visual only
   const generateLeads = async () => {
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE || ''
-      const response = await fetch(`${apiBase}/api/donna_logic.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: `Generate leads for: Industry: ${generationCriteria.industry}, Location: ${generationCriteria.location}, Company Size: ${generationCriteria.company_size}, Job Title: ${generationCriteria.job_title}, Keywords: ${generationCriteria.keywords}`,
-          user_profile: 'sales'
+    alert("Design Preview Mode - Lead generation disabled")
+    // No API call in shell mode
         })
       })
       if (process.env.NEXT_PUBLIC_USE_MOCK !== '1') {

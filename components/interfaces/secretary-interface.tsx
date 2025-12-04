@@ -38,47 +38,26 @@ export default function SecretaryInterface() {
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE || ""
 
+  // Shell mode - visual only
   const summarizeNotes = async () => {
     if (notes.length === 0) return
     setLoading(true)
-    try {
-      const body = notes.map(n => `- ${n.text}`).join("\n")
-      const res = await fetch(`${apiBase}/api/donna_logic.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `Summarize these meeting notes into concise bullets and action items with owners and deadlines if present.\n${body}`,
-          user_profile: 'receptionist'
-        })
-      })
-      const json = await res.json()
-      setSummary(json.reply || "")
-    } catch (e) {
-      console.error(e)
-    } finally {
+    // Shell mode - demo summary
+    setTimeout(() => {
+      setSummary("• Meeting discussed project timeline and deliverables\n• Action items: Review proposal by Friday (John), Schedule follow-up (Sarah)\n• Next meeting: Next week")
       setLoading(false)
-    }
+    }, 500)
   }
 
+  // Shell mode - visual only
   const draftFollowUp = async () => {
     const context = notes.map(n => `- ${n.text}`).join("\n")
     setLoading(true)
-    try {
-      const res = await fetch(`${apiBase}/api/donna_logic.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `Draft a professional follow-up email to ${emailTo || 'the attendee'} with subject "${emailSubject || 'Meeting follow-up'}" based on this context:\n${context}\nMake it concise with clear next steps and a friendly tone. Return only the email body.`,
-          user_profile: 'receptionist'
-        })
-      })
-      const json = await res.json()
-      setEmailDraft(json.reply || "")
-    } catch (e) {
-      console.error(e)
-    } finally {
+    // Shell mode - demo draft
+    setTimeout(() => {
+      setEmailDraft("Thank you for the productive meeting today. As discussed, we'll proceed with the following next steps:\n\n1. Review the proposal by Friday\n2. Schedule a follow-up call next week\n\nLooking forward to continuing our collaboration.")
       setLoading(false)
-    }
+    }, 500)
   }
 
   const openDonna = () => {
