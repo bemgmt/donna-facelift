@@ -47,7 +47,6 @@ export default function RootLayout({
         <style>{`
 html {
   font-family: ${inter.style.fontFamily}, system-ui, sans-serif;
-  --font-inter: ${inter.variable};
   --font-mono: ${GeistMono.variable};
 }
         `}</style>
