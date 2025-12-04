@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { MessageCircle, X, Mic, MicOff, Send, Bot } from "lucide-react"
-import { useOpenAIRealtime } from "@/hooks/use-openai-realtime"
 import { ChatBubble } from "@/components/ui/chat-bubble"
 import { NeonButton } from "@/components/ui/neon-button"
 import { FuturisticInput } from "@/components/ui/futuristic-input"
@@ -14,70 +13,29 @@ interface ChatMessage {
   text: string
 }
 
+// Shell version - visual only, no API calls
 export default function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
   const [isMicOn, setIsMicOn] = useState(false)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-
-  const [state, actions] = useOpenAIRealtime({
-    websocketUrl: process.env.NEXT_PUBLIC_WEBSOCKET_URL,
-    voice: 'alloy',
-    temperature: 0.7,
-    onMessage: (msg) => {
-      console.log('[CHAT] ChatWidget received message:', msg)
-      if (msg.type === 'assistant' && msg.content) {
-        console.log('[CHAT] Adding assistant message to ChatWidget UI')
-        setMessages((prev) => [...prev, { id: msg.id, role: 'assistant', text: msg.content }])
-      } else {
-        console.log('[CHAT] Message not added - type:', msg.type, 'content:', msg.content)
-      }
-    },
-    onConnect: () => console.log('ChatWidget connected'),
-    onDisconnect: () => console.log('ChatWidget disconnected'),
-    onError: (err) => console.error('ChatWidget error:', err)
-  })
-
-  useEffect(() => {
-    if (open && !state.isConnected && !state.isConnecting) {
-      actions.connect()
-    }
-    if (!open && state.isConnected) {
-      actions.disconnect()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- actions object is stable from context
-  }, [open, state.isConnected, state.isConnecting])
+  // Static demo messages for visual preview
+  const [messages] = useState<ChatMessage[]>([
+    { id: '1', role: 'assistant', text: 'Hello! I\'m DONNA, your AI assistant. This is a design preview.' },
+    { id: '2', role: 'user', text: 'Hi DONNA!' },
+    { id: '3', role: 'assistant', text: 'Welcome! The full functionality will be available when the backend is connected.' }
+  ])
 
   const sendText = () => {
     const text = input.trim()
     if (!text) return
-    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', text }])
-    actions.sendText(text)
+    // In shell mode, just clear the input - no actual sending
     setInput("")
   }
 
-  const toggleMic = async () => {
-    if (!state.isConnected) await actions.connect()
-    if (!isMicOn) {
-      setIsMicOn(true)
-      actions.startListening()
-    } else {
-      setIsMicOn(false)
-      actions.stopListening()
-    }
+  const toggleMic = () => {
+    setIsMicOn(!isMicOn)
+    // No actual mic functionality in shell mode
   }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only effect; registers window event handlers for widget open/close
-  useEffect(() => {
-    const openHandler = () => setOpen(true)
-    const closeHandler = () => setOpen(false)
-    window.addEventListener('donna:open', openHandler, { passive: true })
-    window.addEventListener('donna:close', closeHandler, { passive: true })
-    return () => {
-      window.removeEventListener('donna:open', openHandler)
-      window.removeEventListener('donna:close', closeHandler)
-    }
-  }, [])
 
   return (
     <>
@@ -157,12 +115,8 @@ export default function ChatWidget() {
               </NeonButton>
             </div>
             <div className="mt-2 text-[10px] text-white/40 flex items-center gap-1">
-              <div className={`w-1.5 h-1.5 rounded-full ${
-                state.isConnected ? 'bg-donna-cyan glow-cyan' : 
-                state.isConnecting ? 'bg-donna-purple animate-pulse' : 
-                'bg-white/30'
-              }`} />
-              <span>{state.isConnected ? 'Connected' : state.isConnecting ? 'Connecting…' : 'Disconnected'}</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+              <span>Design Preview Mode</span>
             </div>
           </div>
         </GlassCard>

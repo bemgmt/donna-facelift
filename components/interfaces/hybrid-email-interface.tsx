@@ -98,54 +98,68 @@ export default function HybridEmailInterface() {
   const bulkSelection = useBulkSelection(emails.map(email => email.id))
   const emailTemplates = useEmailTemplates()
 
+  // Shell mode - static demo data only
   useEffect(() => {
-    fetchEmails()
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch("/api/user/get-settings")
-        const data = await res.json()
-        if (data.success) setIsAutopilotOn(data.autopilot_enabled)
-      } catch (error) {
-        console.error("Failed to fetch user settings", error)
+    // Static demo emails for design preview
+    setEmails([
+      {
+        id: '1',
+        from: 'John Doe',
+        from_email: 'john@example.com',
+        subject: 'Meeting Request',
+        preview: 'Hi, I would like to schedule a meeting...',
+        time: '2 hours ago',
+        dateISO: new Date().toISOString(),
+        starred: false,
+        unread: true,
+        category: 'work',
+        priority: 'high'
+      },
+      {
+        id: '2',
+        from: 'Sarah Smith',
+        from_email: 'sarah@example.com',
+        subject: 'Project Update',
+        preview: 'Here is the latest update on the project...',
+        time: '5 hours ago',
+        dateISO: new Date().toISOString(),
+        starred: true,
+        unread: false,
+        category: 'work',
+        priority: 'medium'
+      },
+      {
+        id: '3',
+        from: 'Newsletter',
+        from_email: 'news@example.com',
+        subject: 'Weekly Newsletter',
+        preview: 'Check out this week\'s highlights...',
+        time: '1 day ago',
+        dateISO: new Date().toISOString(),
+        starred: false,
+        unread: true,
+        category: 'marketing',
+        priority: 'low'
       }
-    }
-    fetchSettings()
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once to load emails and settings on mount
+    ])
+    setLoading(false)
+    setStats({ inbox: 3, starred: 1, sent: 0 })
   }, [])
 
-  const handleAutopilotToggle = async () => {
-    const newState = !isAutopilotOn
-    setIsAutopilotOn(newState)
-    try {
-      const res = await fetch("/api/user/set-autopilot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: newState })
-      })
-      if (!res.ok) throw new Error("Failed to update autopilot setting.")
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to update autopilot setting.'
-      setError(msg)
-      setIsAutopilotOn(!newState)
-    }
+  // Shell mode - visual only, no API calls
+  const handleAutopilotToggle = () => {
+    setIsAutopilotOn(!isAutopilotOn)
+    // No API call in shell mode
   }
 
   const startGmailConnect = () => {
-    window.location.href = "/api/gmail/oauth/start"
+    // No redirect in shell mode - just show message
+    setError("Design Preview Mode - Gmail connection disabled")
   }
 
   const fetchEmails = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await fetch("/api/gmail/messages?limit=15")
-      if (response.status === 401) {
-        setError("Please sign in to connect Gmail")
-        setEmails([])
-        return
-      }
-      const data = await response.json()
-      if (!response.ok) throw new Error(data?.error || "Failed to fetch emails")
+    // Shell mode - already set static data in useEffect
+    return
 
       const emailList = (data.messages || []).map((msg: gmail_v1.Schema$Message): Email => {
         const headers = (msg.payload?.headers || []) as gmail_v1.Schema$MessagePartHeader[]
@@ -204,27 +218,15 @@ export default function HybridEmailInterface() {
     }
   }
 
+  // Shell mode - visual only
   const sendEmail = async () => {
     if (!composer.to || !composer.subject) {
       alert("To and Subject are required")
       return
     }
-    setIsSending(true)
-    try {
-      const res = await fetch("/api/gmail/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(composer)
-      })
-      if (!res.ok) throw new Error(await res.text())
-      alert("Sent!")
-      setComposer({ to: "", subject: "", body: "" })
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      alert(`Failed to send email: ${msg}`)
-    } finally {
-      setIsSending(false)
-    }
+    // Shell mode - no actual sending
+    alert("Design Preview Mode - Email sending disabled")
+    setIsSending(false)
   }
 
   const handleReply = (message: Email) => {
@@ -245,29 +247,18 @@ export default function HybridEmailInterface() {
     window.scrollTo(0, 0)
   }
 
+  // Shell mode - visual only
   const draftWithAi = async () => {
     if (!selectedEmail) return
     if (!aiGoal) {
       alert("Please provide a goal for the AI.")
       return
     }
-    setIsDrafting(true)
-    try {
-      const res = await fetch("/api/gmail/draft-reply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: selectedEmail, goal: aiGoal })
-      })
-      if (!res.ok) throw new Error(await res.text())
-      const data = await res.json()
-      handleReply(selectedEmail)
-      setComposer(prev => ({ ...prev, body: data.draft }))
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      alert(`Failed to draft reply: ${msg}`)
-    } finally {
-      setIsDrafting(false)
-    }
+    // Shell mode - show demo draft
+    alert("Design Preview Mode - AI drafting disabled")
+    handleReply(selectedEmail)
+    setComposer(prev => ({ ...prev, body: "This is a demo AI-generated reply. Full functionality will be available when the backend is connected." }))
+    setIsDrafting(false)
   }
 
   const decodeBase64Url = (data: string): string => {

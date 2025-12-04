@@ -22,61 +22,18 @@ export default function AnalyticsInterface() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch analytics data from backend
+  // Shell mode - static demo data
   useEffect(() => {
-    const ac = new AbortController()
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true)
-        if (process.env.NEXT_PUBLIC_USE_MOCK === '1') {
-          setAnalyticsData({
-            revenue: { total: '$124,592', change: '+12.5%' },
-            users: { active: '8,429', change: '+8.2%' },
-            conversion: { rate: '3.24%', change: '-2.1%' },
-            engagement: { score: '94.2%', change: '+5.7%' },
-            emails: { total: 2139, change: '+15.3%' },
-            contacts: { new: 156, change: '+22.1%' },
-            texts: { sent: 423, change: '+18.7%' }
-          })
-          return
-        }
-        const response = await fetch(`${API_BASE_URL}/api/analytics.php?action=dashboard`, { signal: ac.signal, cache: 'no-store' })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const result = await response.json()
-
-        if (result.success) {
-          setAnalyticsData(result.data)
-        } else {
-          throw new Error(result.error || 'Failed to fetch analytics')
-        }
-      } catch (err: unknown) {
-        if ((err as DOMException)?.name !== 'AbortError') {
-          console.error('Analytics fetch error:', err)
-          setError(err instanceof Error ? err.message : String(err))
-          // Fallback to mock data matching interface
-          setAnalyticsData({
-            revenue: { total: '$124,592', change: '+12.5%' },
-            users: { active: '8,429', change: '+8.2%' },
-            conversion: { rate: '3.24%', change: '-2.1%' },
-            engagement: { score: '94.2%', change: '+5.7%' },
-            emails: { total: 2139, change: '+15.3%' },
-            contacts: { new: 156, change: '+22.1%' },
-            texts: { sent: 423, change: '+18.7%' }
-          })
-        }
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAnalytics()
-    return () => ac.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Mount-only effect - fetchAnalytics is defined inline and stable
+    setAnalyticsData({
+      revenue: { total: '$124,592', change: '+12.5%' },
+      users: { active: '8,429', change: '+8.2%' },
+      conversion: { rate: '3.24%', change: '-2.1%' },
+      engagement: { score: '94.2%', change: '+5.7%' },
+      emails: { total: 2139, change: '+15.3%' },
+      contacts: { new: 156, change: '+22.1%' },
+      texts: { sent: 423, change: '+18.7%' }
+    })
+    setLoading(false)
   }, [])
 
   // Loading state

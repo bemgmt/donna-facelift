@@ -32,40 +32,17 @@ export default function ChatbotControlInterface() {
   const [loadingConvos, setLoadingConvos] = useState(false)
 
   useEffect(() => {
-    // Load saved settings from backend (fallback to localStorage)
-    const ac = new AbortController()
-    const load = async () => {
-      try {
-        const res = await fetch(`${apiBase}/api/chatbot_settings.php`, { signal: ac.signal, cache: 'no-store' })
-        const json = await res.json()
-        if (json?.success && json.data) setSettings(json.data as ChatbotSettings)
-        else {
-          const local = localStorage.getItem('donna_chatbot_settings')
-          if (local) setSettings(JSON.parse(local))
-        }
-      } catch (e) {
-        if ((e as DOMException)?.name !== 'AbortError') {
-          const local = localStorage.getItem('donna_chatbot_settings')
-          if (local) setSettings(JSON.parse(local))
-        }
-      }
-    }
-    load()
-    return () => ac.abort()
+    // Shell mode - load from localStorage only
+    const local = localStorage.getItem('donna_chatbot_settings')
+    if (local) setSettings(JSON.parse(local))
   }, [apiBase])
 
+  // Shell mode - localStorage only
   const saveSettings = async () => {
     setSaving(true)
     try {
       localStorage.setItem('donna_chatbot_settings', JSON.stringify(settings))
-      const ac = new AbortController()
-      const res = await fetch(`${apiBase}/api/chatbot_settings.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-        signal: ac.signal,
-      })
-      await res.json().catch(() => null)
+      // Shell mode - no API call
     } catch (e) {
       console.error('Failed to save settings', e)
     } finally {
@@ -73,13 +50,15 @@ export default function ChatbotControlInterface() {
     }
   }
 
+  // Shell mode - static demo data
   const reloadConvos = async () => {
     setLoadingConvos(true)
     try {
-      const ac = new AbortController()
-      const res = await fetch(`${apiBase}/api/conversations.php`, { signal: ac.signal, cache: 'no-store' })
-      const json = await res.json()
-      if (json?.success) setConvos(json.data || [])
+      // Shell mode - demo conversations
+      setConvos([
+        { id: '1', title: 'Demo Conversation', last_message: 'Hello!', updated_at: new Date().toISOString() },
+        { id: '2', title: 'Another Demo', last_message: 'How can I help?', updated_at: new Date().toISOString() }
+      ])
     } catch (e) {
       console.error('Failed to load conversations', e)
     } finally {
