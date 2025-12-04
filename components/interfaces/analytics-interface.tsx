@@ -4,9 +4,6 @@ import { motion } from "framer-motion"
 import { TrendingUp, Users, DollarSign, Activity, Mail, UserPlus, MessageSquare } from "lucide-react"
 import { useState, useEffect } from "react"
 
-// Backend API base comes from env in Vercel; fallback to empty (relative)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || ''
-
 interface AnalyticsData {
   revenue?: { total: string; change: string }
   users?: { active: string | number; change: string }
@@ -20,7 +17,6 @@ interface AnalyticsData {
 export default function AnalyticsInterface() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   // Shell mode - static demo data
   useEffect(() => {

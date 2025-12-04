@@ -1,8 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-interface FuturisticInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+type FuturisticInputProps = React.InputHTMLAttributes<HTMLInputElement>
 
 const FuturisticInput = React.forwardRef<HTMLInputElement, FuturisticInputProps>(
   ({ className, type, ...props }, ref) => {

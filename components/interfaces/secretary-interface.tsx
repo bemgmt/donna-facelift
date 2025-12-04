@@ -51,7 +51,6 @@ export default function SecretaryInterface() {
 
   // Shell mode - visual only
   const draftFollowUp = async () => {
-    const context = notes.map(n => `- ${n.text}`).join("\n")
     setLoading(true)
     // Shell mode - demo draft
     setTimeout(() => {
