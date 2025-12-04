@@ -107,12 +107,6 @@ const LeadGeneratorInterface: React.FC = () => {
       setLeadData(mockData)
       setLoading(false)
     }, [])
-  
-  // Shell mode - no API calls
-  const fetchLeadData = async () => {
-    // Static data already set in useEffect
-    return
-  }
 
   // Shell mode - visual only
   const generateLeads = async () => {

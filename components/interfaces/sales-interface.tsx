@@ -68,14 +68,8 @@ const SalesInterface: React.FC = () => {
     setLoading(false)
   }, [])
 
-  // Shell mode - no API calls
-  const fetchSalesData = async () => {
-    // Static data already set in useEffect
-    return
-  }
-
   // Shell mode - visual only
-  const addContact = async (contact: Partial<Contact>) => {
+  const addContact = async (_contact: Partial<Contact>) => {
     alert("Design Preview Mode - Contact creation disabled")
     // No API call in shell mode
   }

@@ -132,7 +132,7 @@ module.exports = {
         "neon-blink": "neon-blink 1.6s infinite",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "var(--font-satoshi)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
     },
   },
