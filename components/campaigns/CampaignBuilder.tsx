@@ -333,7 +333,7 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({
                   <h3 className="text-lg font-medium text-white mb-4">Email Sequence</h3>
                   <div className="space-y-6">
                     {campaign.emailTemplates.map((template) => (
-                      <div key={template.step} className="bg-white/5 border border-white/10 rounded-lg p-4">
+                      <div key={template.step} className="glass border border-white/10 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium text-white">
                             Email {template.step}: {template.step === 1 ? 'Initial Follow-up' :
@@ -350,7 +350,7 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({
                               type="text"
                               value={template.subject}
                               onChange={(e) => updateEmailTemplate(template.step, 'subject', e.target.value)}
-                              className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50"
+                              className="w-full px-3 py-2 glass border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50"
                             />
                           </div>
                           <div>
@@ -380,7 +380,7 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({
                 <div>
                   <h3 className="text-lg font-medium text-white mb-4">Preview & Launch</h3>
                   <div className="space-y-4">
-                    <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                    <div className="glass border border-white/10 rounded-lg p-4">
                       <h4 className="font-medium text-white mb-3">Campaign Summary</h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
@@ -402,7 +402,7 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({
                       </div>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                    <div className="glass border border-white/10 rounded-lg p-4">
                       <h4 className="font-medium text-white mb-3">Email Sequence</h4>
                       <div className="space-y-2">
                         {campaign.emailTemplates.map((template) => (

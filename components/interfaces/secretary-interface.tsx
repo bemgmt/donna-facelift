@@ -64,7 +64,7 @@ export default function SecretaryInterface() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-black text-white p-8 glass-dark backdrop-blur">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <ClipboardList className="w-6 h-6 text-blue-400" />
@@ -73,7 +73,7 @@ export default function SecretaryInterface() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Notes and capture */}
-          <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-4">
+          <div className="lg:col-span-2 glass border border-white/10 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-white/60" />
@@ -92,7 +92,7 @@ export default function SecretaryInterface() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Add a quick note…"
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-white/20 text-white placeholder-white/40"
+                className="flex-1 glass border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-white/20 text-white placeholder-white/40"
               />
               <button onClick={addNote} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-sm">Add</button>
               <button onClick={openDonna} className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm">Open Donna</button>
@@ -103,7 +103,7 @@ export default function SecretaryInterface() {
                 <div className="text-white/50 text-sm py-8">No notes yet. Add notes or use the chatbot mic to capture live.</div>
               )}
               {notes.map((n) => (
-                <div key={n.id} className="flex items-start justify-between bg-white/5 border border-white/10 rounded-lg p-3">
+                <div key={n.id} className="flex items-start justify-between glass border border-white/10 rounded-lg p-3">
                   <div className="text-sm text-white/90 whitespace-pre-wrap">{n.text}</div>
                   <button onClick={() => removeNote(n.id)} className="text-xs text-white/40 hover:text-white/70 ml-3">remove</button>
                 </div>
@@ -113,7 +113,7 @@ export default function SecretaryInterface() {
             {summary && (
               <div className="mt-4">
                 <div className="text-xs text-white/50 mb-1">summary</div>
-                <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm whitespace-pre-wrap">{summary}</div>
+                <div className="glass border border-white/10 rounded-lg p-3 text-sm whitespace-pre-wrap">{summary}</div>
               </div>
             )}
           </div>
@@ -128,13 +128,13 @@ export default function SecretaryInterface() {
               value={emailTo}
               onChange={(e) => setEmailTo(e.target.value)}
               placeholder="To (name or email)"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 mb-2"
+              className="w-full glass border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 mb-2"
             />
             <input
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
               placeholder="Subject"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 mb-2"
+              className="w-full glass border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 mb-2"
             />
             <div className="flex gap-2 mb-2">
               <button onClick={draftFollowUp} disabled={loading} className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm disabled:opacity-50">

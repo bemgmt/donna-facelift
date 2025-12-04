@@ -161,7 +161,7 @@ onClick={() => setActiveTab(tab as 'overview' | 'workflows' | 'calls' | 'setting
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <Settings className="w-8 h-8 text-orange-400" />
@@ -176,7 +176,7 @@ onClick={() => setActiveTab(tab as 'overview' | 'workflows' | 'calls' | 'setting
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <Phone className="w-8 h-8 text-blue-400" />
@@ -191,7 +191,7 @@ onClick={() => setActiveTab(tab as 'overview' | 'workflows' | 'calls' | 'setting
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <Clock className="w-8 h-8 text-green-400" />
@@ -206,7 +206,7 @@ onClick={() => setActiveTab(tab as 'overview' | 'workflows' | 'calls' | 'setting
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-8 h-8 text-purple-400" />

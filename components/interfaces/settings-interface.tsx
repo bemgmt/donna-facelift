@@ -19,7 +19,7 @@ export default function SettingsInterface() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20">
       {/* Settings Sidebar */}
-      <div className="w-64 border-r border-white/20 p-6">
+      <div className="w-64 border-r border-white/20 p-6 glass-dark backdrop-blur">
         <h2 className="text-xl font-light mb-6">Settings</h2>
         <nav className="space-y-1">
           {settingsTabs.map((tab) => (
@@ -49,7 +49,7 @@ export default function SettingsInterface() {
                   <input
                     type="text"
                     defaultValue="John Doe"
-                    className="w-full bg-white/10 border border-white/20 rounded px-4 py-2 text-white focus:outline-none focus:border-white/40"
+                    className="w-full glass border border-white/20 rounded px-4 py-2 text-white focus:outline-none focus:border-white/40"
                   />
                 </div>
                 <div>
@@ -57,7 +57,7 @@ export default function SettingsInterface() {
                   <input
                     type="email"
                     defaultValue="john@example.com"
-                    className="w-full bg-white/10 border border-white/20 rounded px-4 py-2 text-white focus:outline-none focus:border-white/40"
+                    className="w-full glass border border-white/20 rounded px-4 py-2 text-white focus:outline-none focus:border-white/40"
                   />
                 </div>
                 <div>
@@ -84,7 +84,7 @@ export default function SettingsInterface() {
                   { label: "SMS alerts", description: "Critical alerts via SMS" },
                   { label: "Weekly reports", description: "Weekly analytics summary" },
                 ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-4 glass rounded-lg">
                     <div>
                       <div className="font-medium">{item.label}</div>
                       <div className="text-sm text-white/60">{item.description}</div>
@@ -104,14 +104,14 @@ export default function SettingsInterface() {
             <div>
               <h3 className="text-lg font-medium mb-4">Security Settings</h3>
               <div className="space-y-4">
-                <div className="p-4 bg-white/5 rounded-lg">
+                <div className="p-4 glass rounded-lg">
                   <div className="font-medium mb-2">Two-Factor Authentication</div>
                   <div className="text-sm text-white/60 mb-3">Add an extra layer of security to your account</div>
                   <button className="bg-white text-black px-4 py-2 rounded text-sm hover:bg-white/90 transition-colors">
                     Enable 2FA
                   </button>
                 </div>
-                <div className="p-4 bg-white/5 rounded-lg">
+                <div className="p-4 glass rounded-lg">
                   <div className="font-medium mb-2">Change Password</div>
                   <div className="text-sm text-white/60 mb-3">Update your account password</div>
                   <button className="border border-white/40 text-white px-4 py-2 rounded text-sm hover:bg-white/10 transition-colors">
