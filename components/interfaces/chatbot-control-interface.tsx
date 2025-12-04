@@ -87,7 +87,7 @@ export default function ChatbotControlInterface() {
   const totalMessages = useMemo(() => convos.reduce((sum,c)=>sum + c.message_count, 0), [convos])
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-black text-white p-8 glass-dark backdrop-blur">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -108,24 +108,24 @@ export default function ChatbotControlInterface() {
 
         {tab==='settings' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="glass border border-white/10 rounded-xl p-4">
               <div className="text-sm text-white/80 mb-3">behavior</div>
               <label className="block text-xs text-white/50 mb-1">greeting</label>
-              <input value={settings.greeting} onChange={e=>setSettings(s=>({...s,greeting:e.target.value}))} className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm mb-3"/>
+              <input value={settings.greeting} onChange={e=>setSettings(s=>({...s,greeting:e.target.value}))} className="w-full glass border border-white/10 rounded px-3 py-2 text-sm mb-3"/>
               <label className="block text-xs text-white/50 mb-1">agent profile</label>
-              <select value={settings.profile} onChange={e=>setSettings(s=>({...s,profile:e.target.value as ChatbotSettings['profile']}))} className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm">
+              <select value={settings.profile} onChange={e=>setSettings(s=>({...s,profile:e.target.value as ChatbotSettings['profile']}))} className="w-full glass border border-white/10 rounded px-3 py-2 text-sm">
                 <option value="general">General</option>
                 <option value="sales">Sales</option>
                 <option value="receptionist">Receptionist</option>
                 <option value="marketing">Marketing</option>
               </select>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="glass border border-white/10 rounded-xl p-4">
               <div className="text-sm text-white/80 mb-3">appearance</div>
               <label className="block text-xs text-white/50 mb-1">theme color</label>
               <input type="color" value={settings.themeColor} onChange={e=>setSettings(s=>({...s,themeColor:e.target.value}))} className="w-16 h-8 bg-transparent border border-white/10 rounded mb-3"/>
               <label className="block text-xs text-white/50 mb-1">position</label>
-              <select value={settings.position} onChange={e=>setSettings(s=>({...s,position:e.target.value as ChatbotSettings['position']}))} className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm">
+              <select value={settings.position} onChange={e=>setSettings(s=>({...s,position:e.target.value as ChatbotSettings['position']}))} className="w-full glass border border-white/10 rounded px-3 py-2 text-sm">
                 <option value="bottom-right">Bottom Right</option>
                 <option value="bottom-left">Bottom Left</option>
               </select>
@@ -164,19 +164,19 @@ export default function ChatbotControlInterface() {
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <div className="flex items-center gap-2 text-sm text-white/80 mb-3"><BarChart3 className="w-4 h-4"/> analytics</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white/5 border border-white/10 rounded p-3">
+              <div className="glass border border-white/10 rounded p-3">
                 <div className="text-white/60 text-xs">conversations</div>
                 <div className="text-xl font-light">{convos.length}</div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded p-3">
+              <div className="glass border border-white/10 rounded p-3">
                 <div className="text-white/60 text-xs">messages</div>
                 <div className="text-xl font-light">{totalMessages}</div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded p-3">
+              <div className="glass border border-white/10 rounded p-3">
                 <div className="text-white/60 text-xs">profile</div>
                 <div className="text-xl font-light">{settings.profile}</div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded p-3">
+              <div className="glass border border-white/10 rounded p-3">
                 <div className="text-white/60 text-xs">position</div>
                 <div className="text-xl font-light">{settings.position}</div>
               </div>

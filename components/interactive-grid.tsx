@@ -394,10 +394,10 @@ export default function InteractiveGrid() {
             return (
               <motion.div
                 key={item.id}
-                className={`
+                  className={`
                   relative border border-white/20 cursor-pointer overflow-hidden
                   transition-all duration-150 ease-out
-                  ${isHovered ? "bg-white/5 border-white/40 z-10" : "bg-transparent"}
+                  ${isHovered ? "glass border-white/40 z-10" : "glass-dark"}
                 `}
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
@@ -423,7 +423,7 @@ export default function InteractiveGrid() {
                     transformOrigin: getCellTransformOrigin(),
                   }}
                 >
-                  <div className="w-full h-full overflow-hidden rounded-sm bg-black/20 p-4">
+                  <div className="w-full h-full overflow-hidden rounded-sm glass p-4">
                     <div className="w-full h-full overflow-hidden">{item.preview}</div>
                   </div>
                 </div>
@@ -459,12 +459,12 @@ export default function InteractiveGrid() {
       </div>
 
       <div className="absolute bottom-8 left-8">
-        <div className="text-xs text-white/40 border border-white/20 px-2 py-1 rounded">
+        <div className="text-xs text-white/40 glass border border-white/20 px-2 py-1 rounded">
           hover + scroll to zoom {zoomLevel > 0 && `(${Math.round(zoomLevel)}%)`}
         </div>
       </div>
       <div className="absolute bottom-8 right-8">
-        <div className="text-xs text-white/40 border border-white/20 px-2 py-1 rounded">click to enter</div>
+        <div className="text-xs text-white/40 glass border border-white/20 px-2 py-1 rounded">click to enter</div>
       </div>
     </div>
   )

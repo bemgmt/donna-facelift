@@ -192,7 +192,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-white/5 border border-white/10 rounded-lg p-4"
+            className="glass border border-white/10 rounded-lg p-4"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -226,7 +226,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 transition-colors"
+              className="glass border border-white/10 rounded-lg p-6 hover:bg-white/10 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

@@ -140,7 +140,7 @@ export default function ReceptionistInterface() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20 glass-dark backdrop-blur">
       <div className="p-6 border-b border-white/20">
         <div className="flex items-center justify-between">
           <div>
@@ -191,7 +191,7 @@ export default function ReceptionistInterface() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="border-b border-white/20 p-4 bg-white/5"
+          className="border-b border-white/20 p-4 glass"
         >
           <h3 className="text-sm font-medium mb-3">Receptionist Voice Settings</h3>
           <div className="grid grid-cols-3 gap-4">
@@ -273,7 +273,7 @@ export default function ReceptionistInterface() {
 
       <div className="p-6 grid grid-cols-2 gap-6">
         {/* Voice Controls */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-6">
+        <div className="glass border border-white/20 rounded-lg p-6">
           <h3 className="font-medium mb-6">
             {isCallActive ? `Call with ${currentCaller}` : 'Voice Assistant'}
           </h3>
@@ -395,7 +395,7 @@ onClick={realtimeState.isConnecting ? undefined : (() => { /* latch mode default
         </div>
 
         {/* Call History & Conversation */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-6 flex flex-col">
+        <div className="glass border border-white/20 rounded-lg p-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium">
               {isCallActive ? 'Current Conversation' : 'Recent Calls'}
@@ -454,7 +454,7 @@ onClick={realtimeState.isConnecting ? undefined : (() => { /* latch mode default
 
               {realtimeState.isSpeaking && !realtimeState.currentTranscript && (
                 <div className="flex justify-start">
-                  <div className="bg-white/10 text-white/80 p-2 rounded text-xs flex items-center gap-2">
+                  <div className="glass text-white/80 p-2 rounded text-xs flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
                     <span>DONNA is speaking...</span>
                   </div>
@@ -472,7 +472,7 @@ onClick={realtimeState.isConnecting ? undefined : (() => { /* latch mode default
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded hover:bg-white/10 transition-colors border border-white/10"
+                  className="flex items-center justify-between p-3 glass rounded hover:bg-white/10 transition-colors border border-white/10"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${
@@ -502,7 +502,7 @@ onClick={realtimeState.isConnecting ? undefined : (() => { /* latch mode default
 
       {/* Status Bar */}
       <div className="absolute bottom-6 left-6 right-6">
-        <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+        <div className="glass border border-white/20 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${

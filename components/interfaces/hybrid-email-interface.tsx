@@ -271,7 +271,7 @@ export default function HybridEmailInterface() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20 bg-black text-white">
       {/* Sidebar */}
-      <div className="w-64 border-r border-white/20 p-4 flex flex-col">
+      <div className="w-64 border-r border-white/20 p-4 flex flex-col glass-dark backdrop-blur">
         <div className="mb-4">
           <button onClick={startGmailConnect} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm mb-2">
             Connect Gmail
@@ -308,7 +308,7 @@ export default function HybridEmailInterface() {
             { icon: Archive, label: "Archive" },
             { icon: Trash2, label: "Trash" }
           ].map((item, index) => (
-            <div key={index} className="flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer">
+            <div key={index} className="flex items-center gap-3 p-2 rounded glass hover:bg-white/10 cursor-pointer transition-colors">
               <item.icon className="w-4 h-4 text-white/60" />
               <span className="text-sm">{item.label}</span>
               {(item.count ?? 0) > 0 && <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">{item.count}</span>}
@@ -318,7 +318,7 @@ export default function HybridEmailInterface() {
       </div>
 
       {/* Email List */}
-      <div className="w-80 border-r border-white/20 flex flex-col">
+      <div className="w-80 border-r border-white/20 flex flex-col glass-dark">
         <div className="p-4 border-b border-white/20">
           <h3 className="font-medium text-lg">Inbox</h3>
         </div>
@@ -330,7 +330,7 @@ export default function HybridEmailInterface() {
             </div>
           ) : (
             emails.map(email => (
-              <div key={email.id} className={`p-4 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors ${selectedEmail?.id === email.id ? "bg-blue-500/10" : ""} ${email.unread ? "border-l-2 border-blue-400" : ""}`} onClick={() => openEmail(email)}>
+              <div key={email.id} className={`p-4 border-b border-white/10 cursor-pointer glass hover:bg-white/10 transition-colors ${selectedEmail?.id === email.id ? "bg-blue-500/10" : ""} ${email.unread ? "border-l-2 border-blue-400" : ""}`} onClick={() => openEmail(email)}>
                 <div className="flex items-start justify-between mb-1">
                   <span className={`font-medium text-sm ${email.unread ? "text-white" : "text-white/80"}`}>{email.from}</span>
                   <span className="text-xs text-white/60 flex-shrink-0 ml-2">{email.time}</span>
@@ -344,14 +344,14 @@ export default function HybridEmailInterface() {
       </div>
 
       {/* Composer / Main View */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col glass-dark">
         <div className="p-4 border-b border-white/20">
           <h2 className="text-lg font-light">Composer</h2>
         </div>
         <div className="p-4 space-y-3">
-          <input value={composer.to} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposer(s => ({ ...s, to: e.target.value }))} placeholder="To" className="w-full bg-white/5 p-2 rounded border border-white/10" />
-          <input value={composer.subject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposer(s => ({ ...s, subject: e.target.value }))} placeholder="Subject" className="w-full bg-white/5 p-2 rounded border border-white/10" />
-          <textarea value={composer.body} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposer(s => ({ ...s, body: e.target.value }))} placeholder="Message body..." className="w-full bg-white/5 p-2 rounded h-48 border border-white/10" />
+          <input value={composer.to} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposer(s => ({ ...s, to: e.target.value }))} placeholder="To" className="w-full glass p-2 rounded border border-white/10" />
+          <input value={composer.subject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposer(s => ({ ...s, subject: e.target.value }))} placeholder="Subject" className="w-full glass p-2 rounded border border-white/10" />
+          <textarea value={composer.body} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposer(s => ({ ...s, body: e.target.value }))} placeholder="Message body..." className="w-full glass p-2 rounded h-48 border border-white/10" />
           <div className="flex justify-end">
             <button onClick={sendEmail} disabled={isSending} className="px-5 py-2 bg-white text-black rounded text-sm font-medium disabled:opacity-50 flex items-center gap-2">
               <Send className="w-4 h-4" />
@@ -375,7 +375,7 @@ export default function HybridEmailInterface() {
             <div className="p-4 border-t border-white/10 bg-[#222] rounded-b-lg space-y-3">
               <div className="flex items-center gap-2">
                 <Bot className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                <input value={aiGoal} onChange={e => setAiGoal(e.target.value)} placeholder="Enter AI goal (e.g., 'schedule a meeting for next week')" className="w-full bg-white/5 p-2 rounded text-sm border border-white/10" />
+                <input value={aiGoal} onChange={e => setAiGoal(e.target.value)} placeholder="Enter AI goal (e.g., 'schedule a meeting for next week')" className="w-full glass p-2 rounded text-sm border border-white/10" />
                 <button onClick={draftWithAi} disabled={isDrafting} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm disabled:opacity-50 flex-shrink-0">
                   {isDrafting ? "Drafting..." : "Draft Reply with AI"}
                 </button>

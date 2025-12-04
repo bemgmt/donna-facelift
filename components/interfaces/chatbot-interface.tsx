@@ -185,7 +185,7 @@ export default function ChatbotInterface() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex flex-col pt-20">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex flex-col pt-20 glass-dark backdrop-blur">
       <div className="p-6 border-b border-white/20">
         <div className="flex items-center justify-between">
           <div>
@@ -224,7 +224,7 @@ export default function ChatbotInterface() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="border-b border-white/20 p-4 bg-white/5"
+          className="border-b border-white/20 p-4 glass"
         >
           <h3 className="text-sm font-medium mb-3">Voice Settings</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -242,7 +242,7 @@ export default function ChatbotInterface() {
             </div>
             <div>
               <label className="text-xs text-white/60 mb-1 block">Voice</label>
-              <div className="text-xs bg-white/10 border border-white/20 rounded px-2 py-1 text-white w-full">
+              <div className="text-xs glass border border-white/20 rounded px-2 py-1 text-white w-full">
                 Custom Voice (XcXEQzuLXRU9RcfWzEJt)
               </div>
               <div className="text-xs text-white/60 mt-1">
@@ -340,7 +340,7 @@ export default function ChatbotInterface() {
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder={isVoiceMode ? "Type or speak your message..." : "Type your message..."}
             disabled={voiceState.isProcessing}
-            className="flex-1 bg-white/10 border border-white/20 rounded px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-white/40 disabled:opacity-50"
+            className="flex-1 glass border border-white/20 rounded px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-white/40 disabled:opacity-50"
           />
 
           {/* Voice recording button */}

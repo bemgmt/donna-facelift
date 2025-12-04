@@ -124,7 +124,7 @@ const LeadGeneratorInterface: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-green-900/20 to-green-800/10 p-6 rounded-lg overflow-hidden">
+    <div className="w-full h-full glass-dark p-6 rounded-lg overflow-hidden backdrop-blur">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -166,7 +166,7 @@ const LeadGeneratorInterface: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <Users className="w-8 h-8 text-green-400" />
@@ -181,7 +181,7 @@ const LeadGeneratorInterface: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <Target className="w-8 h-8 text-blue-400" />
@@ -196,7 +196,7 @@ const LeadGeneratorInterface: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <TrendingUp className="w-8 h-8 text-purple-400" />
@@ -211,7 +211,7 @@ const LeadGeneratorInterface: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <Target className="w-8 h-8 text-orange-400" />
@@ -226,7 +226,7 @@ const LeadGeneratorInterface: React.FC = () => {
 
           {activeTab === 'generate' && (
             <div className="space-y-6">
-              <div className="bg-white/10 rounded-lg p-6">
+              <div className="glass rounded-lg p-6">
                 <h3 className="text-lg font-medium text-white mb-4">AI Lead Generation</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -236,7 +236,7 @@ const LeadGeneratorInterface: React.FC = () => {
                       value={generationCriteria.industry}
                       onChange={(e) => setGenerationCriteria(prev => ({ ...prev, industry: e.target.value }))}
                       placeholder="e.g., Technology, Healthcare, Finance"
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
+                      className="w-full glass border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
                     />
                   </div>
                   <div>
@@ -246,7 +246,7 @@ const LeadGeneratorInterface: React.FC = () => {
                       value={generationCriteria.location}
                       onChange={(e) => setGenerationCriteria(prev => ({ ...prev, location: e.target.value }))}
                       placeholder="e.g., Los Angeles, CA"
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
+                      className="w-full glass border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
                     />
                   </div>
                   <div>
@@ -271,7 +271,7 @@ const LeadGeneratorInterface: React.FC = () => {
                       value={generationCriteria.job_title}
                       onChange={(e) => setGenerationCriteria(prev => ({ ...prev, job_title: e.target.value }))}
                       placeholder="e.g., CEO, Marketing Director, CTO"
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
+                      className="w-full glass border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
                     />
                   </div>
                 </div>

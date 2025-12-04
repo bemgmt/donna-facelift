@@ -35,7 +35,7 @@ export default function AnalyticsInterface() {
   // Loading state
   if (loading) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20 glass-dark backdrop-blur">
         <div className="p-6 border-b border-white/20">
           <h2 className="text-xl font-light">Analytics Dashboard</h2>
           <p className="text-sm text-white/60 mt-1">Loading real-time business insights...</p>
@@ -108,7 +108,7 @@ export default function AnalyticsInterface() {
   ]
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20 glass-dark backdrop-blur">
       <div className="p-6 border-b border-white/20">
         <h2 className="text-xl font-light">Analytics Dashboard</h2>
         <p className="text-sm text-white/60 mt-1">Real-time business insights</p>
@@ -140,7 +140,7 @@ export default function AnalyticsInterface() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white/5 border border-white/20 rounded-lg p-4 hover:bg-white/10 transition-colors"
+              className="glass border border-white/20 rounded-lg p-4 hover:bg-white/10 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
                 <metric.icon className="w-5 h-5 text-white/60" />
@@ -159,7 +159,7 @@ export default function AnalyticsInterface() {
         </div>
 
         {/* Chart Area */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-6 mb-6">
+        <div className="glass border border-white/20 rounded-lg p-6 mb-6">
           <h3 className="font-medium mb-4">Revenue Trend</h3>
           <div className="h-64 flex items-end justify-between gap-2">
             {Array.from({ length: 12 }, (_, i) => (
@@ -180,7 +180,7 @@ export default function AnalyticsInterface() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-6">
+        <div className="glass border border-white/20 rounded-lg p-6">
           <h3 className="font-medium mb-4">Recent Activity</h3>
           <div className="space-y-3">
             {[
@@ -194,7 +194,7 @@ export default function AnalyticsInterface() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="flex items-center gap-3 p-2 rounded hover:bg-white/5"
+                className="flex items-center gap-3 p-2 rounded glass hover:bg-white/10 transition-colors"
               >
                 <div className="w-2 h-2 bg-blue-500 rounded-full" />
                 <span className="text-sm">{activity}</span>

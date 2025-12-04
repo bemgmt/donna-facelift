@@ -171,7 +171,7 @@ const SalesInterface: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-blue-900/20 to-blue-800/10 p-6 rounded-lg overflow-hidden">
+    <div className="w-full h-full glass-dark p-6 rounded-lg overflow-hidden backdrop-blur">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -220,7 +220,7 @@ const SalesInterface: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <Users className="w-8 h-8 text-blue-400" />
@@ -235,7 +235,7 @@ const SalesInterface: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <TrendingUp className="w-8 h-8 text-red-400" />
@@ -250,7 +250,7 @@ const SalesInterface: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white/10 rounded-lg p-4"
+                className="glass rounded-lg p-4"
               >
                 <div className="flex items-center gap-3">
                   <TrendingUp className="w-8 h-8 text-green-400" />
@@ -274,7 +274,7 @@ const SalesInterface: React.FC = () => {
                     placeholder="Search contacts..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg pl-10 pr-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
+                    className="w-full glass border border-white/20 rounded-lg pl-10 pr-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
                   />
                 </div>
                 <select
@@ -297,7 +297,7 @@ const SalesInterface: React.FC = () => {
                     key={contact.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-white/10 rounded-lg p-4 hover:bg-white/15 transition-colors"
+                    className="glass rounded-lg p-4 hover:bg-white/10 transition-colors"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
