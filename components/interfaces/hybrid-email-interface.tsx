@@ -157,65 +157,10 @@ export default function HybridEmailInterface() {
     setError("Design Preview Mode - Gmail connection disabled")
   }
 
+  // Shell mode - already set static data in useEffect
   const fetchEmails = async () => {
-    // Shell mode - already set static data in useEffect
+    // Static data already set in useEffect, no API call needed
     return
-
-      const emailList = (data.messages || []).map((msg: gmail_v1.Schema$Message): Email => {
-        const headers = (msg.payload?.headers || []) as gmail_v1.Schema$MessagePartHeader[]
-        const h = Object.fromEntries(
-          headers
-            .filter((x): x is { name: string; value: string } => !!x?.name && !!x?.value)
-            .map(x => [x.name!.toLowerCase(), x.value!])
-        ) as Record<string, string>
-        const fromField = h["from"] || "Unknown"
-        const fromNameMatch = fromField.match(/(.*)<.*>/)
-
-        // Ensure non-null string id with safe fallback
-        const safeId = msg.id || msg.threadId || msg.internalDate || `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-
-        // Extract and convert date to stable ISO timestamp
-        const rawDate = h["date"]
-        let dateISO: string | null = null
-        try {
-          if (rawDate) {
-            const parsedDate = new Date(rawDate)
-            if (!isNaN(parsedDate.getTime())) {
-              dateISO = parsedDate.toISOString()
-            }
-          }
-        } catch {
-          // Invalid date, keep dateISO as null
-        }
-
-        return {
-          id: String(safeId),
-          from: fromNameMatch ? fromNameMatch[1].trim().replace(/\"/g, "") : fromField,
-          from_email: (fromField.match(/<(.+)>/) || [])[1] || fromField,
-          subject: h["subject"] || "No Subject",
-          preview: msg.snippet || "No preview available",
-          time: formatDate(dateISO),
-          dateISO,
-          starred: msg.labelIds?.includes("STARRED") || false,
-          unread: msg.labelIds?.includes("UNREAD") || false,
-          payload: msg.payload
-        }
-      })
-
-      setEmails(emailList)
-      setStats({
-        inbox: emailList.filter((e: Email) => e.unread).length,
-        starred: emailList.filter((e: Email) => e.starred).length,
-        sent: 0
-      })
-    } catch (err: unknown) {
-      console.error("Email fetch error:", err)
-      const msg = err instanceof Error ? err.message : 'Failed to fetch emails'
-      setError(msg)
-      setEmails([])
-    } finally {
-      setLoading(false)
-    }
   }
 
   // Shell mode - visual only
