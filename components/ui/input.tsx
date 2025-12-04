@@ -2,7 +2,22 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+interface InputProps extends React.ComponentProps<"input"> {
+  variant?: "default" | "futuristic"
+}
+
+function Input({ className, type, variant = "default", ...props }: InputProps) {
+  if (variant === "futuristic") {
+    return (
+      <input
+        type={type}
+        data-slot="input"
+        className={cn("donna-input", className)}
+        {...props}
+      />
+    )
+  }
+
   return (
     <input
       type={type}

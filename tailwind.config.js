@@ -50,6 +50,21 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // DONNA Futuristic Theme Colors
+        "donna-dark": {
+          DEFAULT: "#0C0F16",
+          alt: "#10121A",
+        },
+        "donna-purple": {
+          DEFAULT: "#A56BFF",
+          light: "rgba(165, 107, 255, 0.3)",
+          glow: "rgba(165, 107, 255, 0.55)",
+        },
+        "donna-cyan": {
+          DEFAULT: "#31D2F2",
+          light: "rgba(49, 210, 242, 0.3)",
+          glow: "rgba(49, 210, 242, 0.55)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -89,6 +104,19 @@ module.exports = {
           "0%": { transform: "translateX(100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        "auroraShift": {
+          "0%": { transform: "translate(-10%, -10%) scale(1)" },
+          "50%": { transform: "translate(5%, 5%) scale(1.05)" },
+          "100%": { transform: "translate(-10%, -10%) scale(1)" },
+        },
+        "pulse-donna": {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(165, 107, 255, 0.5)" },
+          "50%": { boxShadow: "0 0 30px rgba(49, 210, 242, 0.8)" },
+        },
+        "neon-blink": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -99,6 +127,12 @@ module.exports = {
         "slide-in-from-bottom": "slide-in-from-bottom 0.2s ease-out",
         "slide-in-from-left": "slide-in-from-left 0.2s ease-out",
         "slide-in-from-right": "slide-in-from-right 0.2s ease-out",
+        "aurora-shift": "auroraShift 18s ease-in-out infinite",
+        "pulse-donna": "pulse-donna 2.4s ease-in-out infinite",
+        "neon-blink": "neon-blink 1.6s infinite",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "var(--font-satoshi)", "system-ui", "sans-serif"],
       },
     },
   },
