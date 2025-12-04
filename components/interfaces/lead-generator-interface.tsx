@@ -118,20 +118,6 @@ const LeadGeneratorInterface: React.FC = () => {
   const generateLeads = async () => {
     alert("Design Preview Mode - Lead generation disabled")
     // No API call in shell mode
-        })
-      })
-      if (process.env.NEXT_PUBLIC_USE_MOCK !== '1') {
-        const result = await response.json()
-        // Optionally handle result here
-        return
-      }
-      
-      // Show success message
-      alert('Lead generation request submitted! DONNA will process this and add qualified leads to your database.')
-      
-    } catch (error) {
-      console.error('Failed to generate leads:', error)
-    }
   }
   
 
