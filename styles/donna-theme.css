@@ -185,8 +185,14 @@
     transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
   
-  .donna-card::before,
-  .donna-card::after {
+  /* Hover effects that can be added to glass variants without conflicts */
+  .donna-card-hover {
+    position: relative;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .donna-card-hover::before,
+  .donna-card-hover::after {
     content: "";
     position: absolute;
     inset: 1px;
@@ -196,17 +202,18 @@
     opacity: 0;
   }
   
-  .donna-card::before {
+  .donna-card-hover::before {
     border-top: 1px solid rgba(165, 107, 255, 0.45);
     border-left: 1px solid rgba(165, 107, 255, 0.2);
   }
   
-  .donna-card::after {
+  .donna-card-hover::after {
     border-bottom: 1px solid rgba(49, 210, 242, 0.45);
     border-right: 1px solid rgba(49, 210, 242, 0.2);
   }
   
-  .donna-card:hover {
+  .donna-card:hover,
+  .donna-card-hover:hover {
     transform: translateY(-6px);
     border-color: rgba(165, 107, 255, 0.45);
     box-shadow:
@@ -216,7 +223,9 @@
   }
   
   .donna-card:hover::before,
-  .donna-card:hover::after {
+  .donna-card:hover::after,
+  .donna-card-hover:hover::before,
+  .donna-card-hover:hover::after {
     opacity: 1;
   }
   

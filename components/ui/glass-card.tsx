@@ -22,7 +22,7 @@ function GlassCard({
     <div
       className={cn(
         variantClasses[variant],
-        hover && "donna-card",
+        hover && "donna-card-hover",
         "rounded-xl",
         className
       )}
