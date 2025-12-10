@@ -23,10 +23,10 @@ class PostgreSQLDataAccess implements DataAccessInterface {
     // ========================================
     
     public function createUser(array $userData): string {
-        $sql = "INSERT INTO users (clerk_id, email, name, profile, preferences, status) 
-                VALUES (:clerk_id, :email, :name, :profile, :preferences, :status) 
+        $sql = "INSERT INTO users (clerk_id, email, name, profile, preferences, vertical, status)
+                VALUES (:clerk_id, :email, :name, :profile, :preferences, :vertical, :status)
                 RETURNING id";
-        
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'clerk_id' => $userData['clerk_id'] ?? null,
@@ -34,13 +34,14 @@ class PostgreSQLDataAccess implements DataAccessInterface {
             'name' => $userData['name'] ?? null,
             'profile' => json_encode($userData['profile'] ?? []),
             'preferences' => json_encode($userData['preferences'] ?? []),
+            'vertical' => $userData['vertical'] ?? null,
             'status' => $userData['status'] ?? 'active'
         ]);
-        
+
         $result = $stmt->fetch();
         $userId = $result['id'];
-        
-        log_info('User created in database', ['user_id' => $userId, 'clerk_id' => $userData['clerk_id'] ?? null]);
+
+        log_info('User created in database', ['user_id' => $userId, 'clerk_id' => $userData['clerk_id'] ?? null, 'vertical' => $userData['vertical'] ?? null]);
         return $userId;
     }
     
@@ -73,10 +74,10 @@ class PostgreSQLDataAccess implements DataAccessInterface {
     }
     
     public function updateUser(string $userId, array $updates): bool {
-        $allowedFields = ['email', 'name', 'profile', 'preferences', 'last_active_at', 'status'];
+        $allowedFields = ['email', 'name', 'profile', 'preferences', 'vertical', 'last_active_at', 'status'];
         $setClause = [];
         $params = ['id' => $userId];
-        
+
         foreach ($updates as $field => $value) {
             if (in_array($field, $allowedFields)) {
                 $setClause[] = "{$field} = :{$field}";
@@ -87,14 +88,14 @@ class PostgreSQLDataAccess implements DataAccessInterface {
                 }
             }
         }
-        
+
         if (empty($setClause)) {
             return false;
         }
-        
+
         $sql = "UPDATE users SET " . implode(', ', $setClause) . " WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
-        
+
         return $stmt->execute($params);
     }
     

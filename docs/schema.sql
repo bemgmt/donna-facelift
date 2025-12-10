@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255),
     profile JSONB DEFAULT '{}',
     preferences JSONB DEFAULT '{}',
+    vertical VARCHAR(50) DEFAULT NULL CHECK (vertical IS NULL OR vertical IN ('hospitality', 'real_estate', 'professional_services')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_active_at TIMESTAMP WITH TIME ZONE,
@@ -27,6 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 CREATE INDEX IF NOT EXISTS idx_users_last_active ON users(last_active_at);
+CREATE INDEX IF NOT EXISTS idx_users_vertical ON users(vertical);
 
 -- ========================================
 -- Chat Sessions Table
