@@ -191,7 +191,7 @@ export default function ReceptionistInterface() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="border-b border-white/20 p-4 glass"
+          className="border-b border-white/20 p-4 donna-glass donna-gradient-border"
         >
           <h3 className="text-sm font-medium mb-3">Receptionist Voice Settings</h3>
           <div className="grid grid-cols-3 gap-4">

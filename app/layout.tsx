@@ -54,7 +54,8 @@ html {
       </head>
       <body className={`${inter.variable} min-h-screen text-white`} style={{ background: 'transparent' }}>
         <VoiceProvider>
-          <div className="donna-bg min-h-screen text-white">
+          <div className="donna-bg min-h-screen text-white relative">
+            <div className="donna-light-bar" />
             <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
               <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
                 <div className="text-sm opacity-70">🧠 DONNA</div>

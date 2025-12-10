@@ -8,9 +8,9 @@ const neonButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: "donna-btn",
-        glass: "donna-btn-glass",
-        outline: "donna-btn-glass border-2 border-donna-purple/50 hover:border-donna-purple",
+        default: "donna-btn donna-hover",
+        glass: "donna-btn-glass donna-hover",
+        outline: "donna-btn-glass border-2 border-donna-purple/50 hover:border-donna-purple donna-hover donna-gradient-border",
       },
       size: {
         default: "px-4 py-2",

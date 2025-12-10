@@ -224,7 +224,7 @@ export default function ChatbotInterface() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="border-b border-white/20 p-4 glass"
+          className="border-b border-white/20 p-4 donna-glass donna-gradient-border"
         >
           <h3 className="text-sm font-medium mb-3">Voice Settings</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -253,7 +253,7 @@ export default function ChatbotInterface() {
         </motion.div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 relative donna-glow">
         {/* Render messages based on mode */}
         {(isVoiceMode ? voiceState.messages : rtMessages).map((message, index) => (
           <motion.div
@@ -269,8 +269,8 @@ export default function ChatbotInterface() {
               </div>
             )}
             <div
-              className={`max-w-md p-3 rounded-lg ${
-                message.type === "user" ? "bg-white text-black" : "bg-white/10 text-white"
+              className={`max-w-md p-3 rounded-lg donna-message ${
+                message.type === "user" ? "bg-white text-black" : "bg-white/10 text-white donna-glow"
               }`}
             >
               <p className="text-sm leading-relaxed">{message.text}</p>

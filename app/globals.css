@@ -57,3 +57,113 @@
     background: transparent;
   }
 }
+
+/* ------------------------------------------------------ */
+/* DONNA PREMIUM FUTURISTIC ACCENTS                      */
+/* ------------------------------------------------------ */
+/* Soft ambient glow backgrounds */
+.donna-glow {
+  position: relative;
+}
+
+.donna-glow::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  background: radial-gradient(circle at center,
+      rgba(56, 189, 248, 0.18),
+      rgba(147, 51, 234, 0.12),
+      transparent 70%);
+  filter: blur(18px);
+  z-index: -1;
+}
+
+/* Gradient accent borders */
+.donna-gradient-border {
+  position: relative;
+  border-radius: 12px;
+}
+
+.donna-gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #3b82f6, #a855f7, #06b6d4);
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Glass card effect (Apple-style) */
+.donna-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px) saturate(180%);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Microanimations — subtle & premium */
+.donna-hover {
+  transition: all 150ms ease;
+}
+
+.donna-hover:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+}
+
+/* Chat message fade-in */
+@keyframes donna-fade-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.donna-message {
+  animation: donna-fade-rise 0.25s ease-out;
+}
+
+/* Icon illumination */
+.donna-icon {
+  transition: all 140ms ease;
+}
+
+.donna-icon:hover,
+.donna-icon-active {
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+  transform: scale(1.06);
+}
+
+/* ------------------------------------------------------ */
+/* DONNA VERTICAL LIGHT BAR (Option A #8)                */
+/* ------------------------------------------------------ */
+.donna-light-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom,
+      rgba(56, 189, 248, 0.9),
+      rgba(147, 51, 234, 0.85),
+      rgba(6, 182, 212, 0.8));
+  filter: blur(3px);
+  opacity: 0.75;
+}
+
+/* ------------------------------------------------------ */
+/* DONNA ORB PULSE (Optional Upgrade)                    */
+/* ------------------------------------------------------ */
+@keyframes donna-orb-pulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.15); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.donna-orb-pulse {
+  animation: donna-orb-pulse 4s ease-in-out infinite;
+}

@@ -26,6 +26,8 @@ function ChatBubble({
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={cn(
         variantClasses[variant],
+        "donna-message",
+        variant === "donna" && "donna-glow",
         className
       )}
       {...props}

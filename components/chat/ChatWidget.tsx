@@ -69,7 +69,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 relative donna-glow">
             {messages.length === 0 && (
               <div className="text-center text-white/50 text-sm py-8">
                 Talk to DONNA. Type or hold the mic to speak.

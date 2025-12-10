@@ -30,7 +30,7 @@ export default function SettingsInterface() {
                 activeTab === tab.id ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5"
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className={`w-4 h-4 donna-icon ${activeTab === tab.id ? "donna-icon-active" : ""}`} />
               <span className="text-sm">{tab.label}</span>
             </button>
           ))}
@@ -84,7 +84,7 @@ export default function SettingsInterface() {
                   { label: "SMS alerts", description: "Critical alerts via SMS" },
                   { label: "Weekly reports", description: "Weekly analytics summary" },
                 ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 glass rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-4 donna-glass donna-gradient-border rounded-lg">
                     <div>
                       <div className="font-medium">{item.label}</div>
                       <div className="text-sm text-white/60">{item.description}</div>
@@ -104,14 +104,14 @@ export default function SettingsInterface() {
             <div>
               <h3 className="text-lg font-medium mb-4">Security Settings</h3>
               <div className="space-y-4">
-                <div className="p-4 glass rounded-lg">
+                <div className="p-4 donna-glass donna-gradient-border rounded-lg">
                   <div className="font-medium mb-2">Two-Factor Authentication</div>
                   <div className="text-sm text-white/60 mb-3">Add an extra layer of security to your account</div>
                   <button className="bg-white text-black px-4 py-2 rounded text-sm hover:bg-white/90 transition-colors">
                     Enable 2FA
                   </button>
                 </div>
-                <div className="p-4 glass rounded-lg">
+                <div className="p-4 donna-glass donna-gradient-border rounded-lg">
                   <div className="font-medium mb-2">Change Password</div>
                   <div className="text-sm text-white/60 mb-3">Update your account password</div>
                   <button className="border border-white/40 text-white px-4 py-2 rounded text-sm hover:bg-white/10 transition-colors">

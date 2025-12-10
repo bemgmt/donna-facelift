@@ -8,7 +8,7 @@ export default function VoicePanel() {
   const [state, actions] = useVoice()
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+    <div className="donna-glass donna-gradient-border rounded-xl p-4">
       <div className="text-sm text-white/80 mb-2">Voice (Realtime WebRTC)</div>
       {state.error && (
         <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded p-2 mb-2">

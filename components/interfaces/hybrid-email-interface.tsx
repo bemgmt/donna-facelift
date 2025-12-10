@@ -309,7 +309,7 @@ export default function HybridEmailInterface() {
             { icon: Trash2, label: "Trash" }
           ].map((item, index) => (
             <div key={index} className="flex items-center gap-3 p-2 rounded glass hover:bg-white/10 cursor-pointer transition-colors">
-              <item.icon className="w-4 h-4 text-white/60" />
+              <item.icon className="w-4 h-4 text-white/60 donna-icon" />
               <span className="text-sm">{item.label}</span>
               {(item.count ?? 0) > 0 && <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">{item.count}</span>}
             </div>
