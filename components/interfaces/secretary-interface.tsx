@@ -64,7 +64,7 @@ export default function SecretaryInterface() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8 glass-dark backdrop-blur">
+    <div className="min-h-screen text-white p-8 glass-dark backdrop-blur">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <ClipboardList className="w-6 h-6 text-blue-400" />

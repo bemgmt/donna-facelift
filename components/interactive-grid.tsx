@@ -309,7 +309,7 @@ export default function InteractiveGrid() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="min-h-screen bg-black text-white relative"
+          className="min-h-screen text-white relative"
         >
           <button
             onClick={handleBackToGrid}
@@ -352,7 +352,7 @@ export default function InteractiveGrid() {
   return (
     <div
       ref={containerRef}
-      className="min-h-screen bg-black text-white flex flex-col overflow-hidden"
+      className="min-h-screen text-white flex flex-col overflow-hidden"
       style={{
         perspective: "1200px",
         transformStyle: "preserve-3d",

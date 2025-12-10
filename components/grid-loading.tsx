@@ -8,7 +8,7 @@ import React from "react"
  */
 export default function GridLoading() {
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+    <div className="min-h-screen text-white flex flex-col items-center justify-center">
       {/* Main loading content */}
       <div className="flex flex-col items-center justify-center">
         {/* Brain logo with pulse animation */}

@@ -87,7 +87,7 @@ export default function ChatbotControlInterface() {
   const totalMessages = useMemo(() => convos.reduce((sum,c)=>sum + c.message_count, 0), [convos])
 
   return (
-    <div className="min-h-screen bg-black text-white p-8 glass-dark backdrop-blur">
+    <div className="min-h-screen text-white p-8 glass-dark backdrop-blur">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -139,7 +139,7 @@ export default function ChatbotControlInterface() {
               <div className="flex items-center gap-2 text-sm text-white/80"><Code2 className="w-4 h-4"/> embed code (PHP batch mode)</div>
               <button onClick={copyEmbed} className="text-xs bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-1.5 rounded">{embedCopied? 'copied':'copy'}</button>
             </div>
-            <pre className="text-xs whitespace-pre-wrap bg-black/40 border border-white/10 rounded p-3 text-white/80">{embedCode}</pre>
+            <pre className="text-xs whitespace-pre-wrap glass-dark border border-white/10 rounded p-3 text-white/80">{embedCode}</pre>
             <div className="text-[11px] text-white/40 mt-2">This widget uses your {settings.profile} profile and talks to {apiBase}/api/donna_logic.php. Update CORS if embedding on external domains.</div>
           </div>
         )}

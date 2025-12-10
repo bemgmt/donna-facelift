@@ -85,7 +85,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <div className="p-3 border-t border-white/10 bg-black/20">
+          <div className="p-3 border-t border-white/10 glass-dark">
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleMic}

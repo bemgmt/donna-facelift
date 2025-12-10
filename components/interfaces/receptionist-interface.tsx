@@ -329,7 +329,7 @@ onClick={realtimeState.isConnecting ? undefined : (() => { /* latch mode default
               {/* Audio level indicator */}
               {realtimeState.isListening && (
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-black/50 px-2 py-1 rounded text-xs text-white">
+                  <div className="glass-dark px-2 py-1 rounded text-xs text-white">
                     {Math.round(realtimeState.audioLevel * 100)}%
                   </div>
                 </div>

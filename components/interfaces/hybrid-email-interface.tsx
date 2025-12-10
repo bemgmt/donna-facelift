@@ -269,7 +269,7 @@ export default function HybridEmailInterface() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20 bg-black text-white">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20 text-white">
       {/* Sidebar */}
       <div className="w-64 border-r border-white/20 p-4 flex flex-col glass-dark backdrop-blur">
         <div className="mb-4">
@@ -363,7 +363,7 @@ export default function HybridEmailInterface() {
 
       {/* Email View Modal */}
       {isModalOpen && selectedEmail && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setIsModalOpen(false)}>
+        <div className="fixed inset-0 glass-dark backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setIsModalOpen(false)}>
           <div className="bg-[#1c1c1c] border border-white/10 rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="p-4 border-b border-white/10">
               <h2 className="text-lg font-semibold">{selectedEmail.subject}</h2>
