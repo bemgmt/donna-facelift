@@ -48,10 +48,11 @@ export default function RootLayout({
 html {
   font-family: ${inter.style.fontFamily}, system-ui, sans-serif;
   --font-mono: ${GeistMono.variable};
+  background: transparent;
 }
         `}</style>
       </head>
-      <body className={`${inter.variable} min-h-screen text-white`}>
+      <body className={`${inter.variable} min-h-screen text-white`} style={{ background: 'transparent' }}>
         <VoiceProvider>
           <div className="donna-bg min-h-screen text-white">
             <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
