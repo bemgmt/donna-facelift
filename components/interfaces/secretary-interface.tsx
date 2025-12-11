@@ -152,7 +152,7 @@ export default function SecretaryInterface() {
           </div>
         </div>
 
-        {activeTab === 'notes' && (
+        {activeTab === 'notes' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Notes and capture */}
           <div className="lg:col-span-2 glass border border-white/10 rounded-xl p-4">
@@ -245,9 +245,9 @@ export default function SecretaryInterface() {
             <div className="text-xs text-white/40">Next: Chrome Extension integration to run directly on meet.google.com with hotword and auto-notes.</div>
           </div>
         </div>
-        )}
+        ) : null}
 
-        {activeTab === 'tasks' && (
+        {activeTab === 'tasks' ? (
           <div className="space-y-6">
             <div className="glass border border-white/10 rounded-xl p-6">
               <div className="flex justify-between items-center mb-4">
@@ -346,9 +346,9 @@ export default function SecretaryInterface() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {activeTab === 'meetings' && (
+        {activeTab === 'meetings' ? (
           <div className="space-y-6">
             <div className="glass border border-white/10 rounded-xl p-6">
               <div className="flex justify-between items-center mb-4">
@@ -461,9 +461,9 @@ export default function SecretaryInterface() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {activeTab === 'email' && (
+        {activeTab === 'email' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 glass border border-white/10 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
@@ -520,7 +520,7 @@ export default function SecretaryInterface() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
