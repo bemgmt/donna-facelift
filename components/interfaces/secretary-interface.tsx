@@ -44,8 +44,8 @@ export default function SecretaryInterface() {
   const [activeTab, setActiveTab] = useState<'notes' | 'tasks' | 'meetings' | 'email'>('notes')
   const [tasks, setTasks] = useState<Task[]>([])
   const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [newTask, setNewTask] = useState({ title: '', description: '', dueDate: '', priority: 'medium' as const })
-  const [newMeeting, setNewMeeting] = useState({ title: '', date: '', time: '', duration: 60, location: '', type: 'video' as const, attendees: '' })
+  const [newTask, setNewTask] = useState<{ title: string; description: string; dueDate: string; priority: 'low' | 'medium' | 'high' }>({ title: '', description: '', dueDate: '', priority: 'medium' })
+  const [newMeeting, setNewMeeting] = useState<{ title: string; date: string; time: string; duration: number; location: string; type: 'in-person' | 'video' | 'phone'; attendees: string }>({ title: '', date: '', time: '', duration: 60, location: '', type: 'video', attendees: '' })
 
   useEffect(() => {
     const saved = localStorage.getItem("donna_secretary_notes")
