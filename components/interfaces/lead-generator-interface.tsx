@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Users, Target, TrendingUp, Plus } from "lucide-react"
+import { Users, Target, TrendingUp, Plus, Search, Filter, Download, Upload, Eye, Mail, Phone, CheckCircle, XCircle, FileText } from "lucide-react"
 
 interface Lead {
   id: string
@@ -295,7 +295,138 @@ const LeadGeneratorInterface: React.FC = () => {
             </div>
           )}
 
-          {/* Other tabs would go here */}
+          {activeTab === 'leads' && (
+            <div className="h-full flex flex-col">
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <input
+                    type="text"
+                    placeholder="Search leads..."
+                    className="w-full glass border border-white/20 rounded-lg pl-10 pr-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40"
+                  />
+                </div>
+                <select className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-white/40">
+                  <option value="all">All Status</option>
+                  <option value="new">New</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="qualified">Qualified</option>
+                  <option value="converted">Converted</option>
+                  <option value="lost">Lost</option>
+                </select>
+                <button className="bg-white/10 hover:bg-white/15 border border-white/20 rounded-lg px-4 py-2 text-white flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  Filter
+                </button>
+                <button className="bg-white/10 hover:bg-white/15 border border-white/20 rounded-lg px-4 py-2 text-white flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Export
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-3">
+                {leadData?.leads.map((lead) => (
+                  <motion.div
+                    key={lead.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="glass rounded-lg p-4 hover:bg-white/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="text-white font-medium">{lead.name}</h4>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            lead.status === 'converted' ? 'bg-green-500/20 text-green-400' :
+                            lead.status === 'qualified' ? 'bg-blue-500/20 text-blue-400' :
+                            lead.status === 'contacted' ? 'bg-yellow-500/20 text-yellow-400' :
+                            lead.status === 'new' ? 'bg-purple-500/20 text-purple-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {lead.status}
+                          </span>
+                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
+                            Score: {lead.score}
+                          </span>
+                        </div>
+                        <p className="text-white/60 text-sm">{lead.email}</p>
+                        {lead.phone && <p className="text-white/60 text-sm">{lead.phone}</p>}
+                        {lead.company && <p className="text-white/50 text-xs mt-1">{lead.company}</p>}
+                        <div className="flex items-center gap-4 mt-2 text-xs text-white/60">
+                          <span>Source: {lead.source}</span>
+                          {lead.last_contact && <span>Last: {new Date(lead.last_contact).toLocaleDateString()}</span>}
+                          {lead.notes && <span className="text-white/50">{lead.notes}</span>}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="p-2 hover:bg-white/20 rounded transition-colors" title="View">
+                          <Eye className="w-4 h-4 text-white/60" />
+                        </button>
+                        <button className="p-2 hover:bg-white/20 rounded transition-colors" title="Email">
+                          <Mail className="w-4 h-4 text-white/60" />
+                        </button>
+                        {lead.phone && (
+                          <button className="p-2 hover:bg-white/20 rounded transition-colors" title="Call">
+                            <Phone className="w-4 h-4 text-white/60" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'import' && (
+            <div className="space-y-6">
+              <div className="glass rounded-lg p-6">
+                <h3 className="text-lg font-medium text-white mb-4">Import Leads</h3>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center hover:border-white/40 transition-colors">
+                    <Upload className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                    <p className="text-white/60 mb-2">Drag and drop CSV file here, or click to browse</p>
+                    <button className="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-4 py-2 rounded-lg text-sm transition-colors">
+                      Choose File
+                    </button>
+                    <p className="text-white/40 text-xs mt-2">Supports CSV, Excel, and Google Sheets</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Import Format
+                    </h4>
+                    <p className="text-white/60 text-sm mb-2">Your CSV should include the following columns:</p>
+                    <ul className="text-white/60 text-sm space-y-1 list-disc list-inside">
+                      <li>Name (required)</li>
+                      <li>Email (required)</li>
+                      <li>Phone (optional)</li>
+                      <li>Company (optional)</li>
+                      <li>Source (optional)</li>
+                    </ul>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-2">Recent Imports</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                        <div>
+                          <p className="text-white text-sm">leads_2024_01.csv</p>
+                          <p className="text-white/60 text-xs">127 leads imported • 2 days ago</p>
+                        </div>
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                        <div>
+                          <p className="text-white text-sm">prospects_q4.csv</p>
+                          <p className="text-white/60 text-xs">89 leads imported • 1 week ago</p>
+                        </div>
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
