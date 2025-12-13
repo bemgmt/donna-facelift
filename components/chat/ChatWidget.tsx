@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { MessageCircle, X, Mic, MicOff, Send, Bot } from "lucide-react"
 import { ChatBubble } from "@/components/ui/chat-bubble"
 import { NeonButton } from "@/components/ui/neon-button"
@@ -19,12 +19,20 @@ export default function ChatWidget() {
   const [input, setInput] = useState("")
   const [isMicOn, setIsMicOn] = useState(false)
   const [isDonnaSpeaking, setIsDonnaSpeaking] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   // Static demo messages for visual preview
   const [messages] = useState<ChatMessage[]>([
     { id: '1', role: 'assistant', text: 'Hello! I\'m DONNA, your AI assistant. This is a design preview.' },
     { id: '2', role: 'user', text: 'Hi DONNA!' },
     { id: '3', role: 'assistant', text: 'Welcome! The full functionality will be available when the backend is connected.' }
   ])
+
+  // Scroll to bottom when panel opens or messages change
+  useEffect(() => {
+    if (open && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [open, messages])
 
   // Simulate Donna speaking when messages appear
   useEffect(() => {
@@ -84,19 +92,28 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button - bottom right */}
       <NeonButton
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 rounded-full p-4 glow-soft"
+        className="fixed z-50 rounded-full p-4 glow-soft"
+        style={{ bottom: '24px', right: '24px' }}
         aria-label="Open DONNA Chat"
         size="icon"
       >
         <MessageCircle className="w-6 h-6" />
       </NeonButton>
 
-      {/* Popup panel - opens upward */}
+      {/* Popup panel - opens upward from bottom right */}
       {open && (
-        <GlassCard className="fixed bottom-20 right-6 z-50 w-[380px] max-h-[70vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+        <GlassCard 
+          className="fixed z-50 w-[380px] rounded-xl shadow-2xl flex flex-col overflow-hidden" 
+          style={{ 
+            bottom: '100px', 
+            right: '24px', 
+            maxHeight: 'calc(100vh - 120px)',
+            left: 'auto'
+          }}
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <div className="flex items-center gap-2">
               <Bot className="w-4 h-4 text-donna-cyan glow-cyan" />
@@ -113,8 +130,8 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 relative donna-glow">
+          {/* Messages - scrolls from bottom */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 relative donna-glow flex flex-col">
             {messages.length === 0 && (
               <div className="text-center text-white/50 text-sm py-8">
                 Talk to DONNA. Type or hold the mic to speak.
@@ -127,6 +144,7 @@ export default function ChatWidget() {
                 </ChatBubble>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
