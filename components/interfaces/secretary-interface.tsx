@@ -124,23 +124,26 @@ export default function SecretaryInterface(): JSX.Element {
 
   const addTask = () => {
     if (!newTask.title) return
-    setTasks([...tasks, {
+    const newTaskObj: Task = {
       id: `t-${Date.now()}`,
       ...newTask,
-      status: 'pending',
+      status: 'pending' as const,
       dueDate: newTask.dueDate || new Date().toISOString().split('T')[0]
-    }])
+    }
+    setTasks([...tasks, newTaskObj])
     setNewTask({ title: '', description: '', dueDate: '', priority: 'medium' })
   }
 
   const addMeeting = () => {
     if (!newMeeting.title || !newMeeting.date) return
-    setMeetings([...meetings, {
+    const attendeesList = newMeeting.attendees.split(',').map(a => a.trim())
+    const newMeetingObj: Meeting = {
       id: `m-${Date.now()}`,
       ...newMeeting,
-      attendees: newMeeting.attendees.split(',').map(a => a.trim()),
-      status: 'scheduled'
-    }])
+      attendees: attendeesList,
+      status: 'scheduled' as const
+    }
+    setMeetings([...meetings, newMeetingObj])
     setNewMeeting({ title: '', date: '', time: '', duration: 60, location: '', type: 'video', attendees: '' })
   }
 
