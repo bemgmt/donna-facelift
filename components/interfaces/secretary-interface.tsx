@@ -50,7 +50,7 @@ type NewMeetingType = {
   attendees: string
 }
 
-export default function SecretaryInterface() {
+export default function SecretaryInterface(): JSX.Element {
   const [notes, setNotes] = useState<Note[]>([])
   const [draft, setDraft] = useState("")
   const [summary, setSummary] = useState("")
