@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Mail, MessageCircle, BarChart3, Settings, Users, ClipboardList } from "lucide-react"
+import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList } from "lucide-react"
 import dynamic from "next/dynamic"
 
 const HybridEmailInterface = dynamic(
@@ -31,7 +31,6 @@ const LeadGeneratorInterface = dynamic(
   { ssr: false, loading: () => <div className="p-6 text-white/60">Loading Lead Generator…</div> }
 )
 
-import SettingsInterface from "./interfaces/settings-interface"
 import ChatbotControlInterface from "./interfaces/chatbot-control-interface"
 
 type GridItem = {
@@ -164,30 +163,6 @@ const gridItems: GridItem[] = [
           <div className="space-y-1">
             <div className="h-1 bg-white/20 rounded w-full"></div>
             <div className="h-1 bg-white/15 rounded w-3/4"></div>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "settings",
-    title: "settings",
-    icon: <Settings className="w-8 h-8" />,
-    component: <SettingsInterface />,
-    preview: (
-      <div className="w-full h-full bg-gradient-to-br from-gray-900/20 to-gray-800/10 p-4 rounded">
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <div className="h-2 bg-white/30 rounded w-1/2"></div>
-            <div className="w-6 h-3 bg-white/20 rounded-full"></div>
-          </div>
-          <div className="flex justify-between items-center">
-            <div className="h-2 bg-white/25 rounded w-2/3"></div>
-            <div className="w-6 h-3 bg-blue-400/40 rounded-full"></div>
-          </div>
-          <div className="flex justify-between items-center">
-            <div className="h-2 bg-white/20 rounded w-1/3"></div>
-            <div className="w-6 h-3 bg-white/20 rounded-full"></div>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MessageCircle, X, Mic, MicOff, Send, Bot } from "lucide-react"
 import { ChatBubble } from "@/components/ui/chat-bubble"
 import { NeonButton } from "@/components/ui/neon-button"
@@ -18,6 +18,7 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
   const [isMicOn, setIsMicOn] = useState(false)
+  const [isDonnaSpeaking, setIsDonnaSpeaking] = useState(false)
   // Static demo messages for visual preview
   const [messages] = useState<ChatMessage[]>([
     { id: '1', role: 'assistant', text: 'Hello! I\'m DONNA, your AI assistant. This is a design preview.' },
@@ -25,16 +26,60 @@ export default function ChatWidget() {
     { id: '3', role: 'assistant', text: 'Welcome! The full functionality will be available when the backend is connected.' }
   ])
 
+  // Simulate Donna speaking when messages appear
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage.role === 'assistant') {
+        setIsDonnaSpeaking(true)
+        window.dispatchEvent(new CustomEvent('donna:start-speaking', {
+          detail: { intensity: 0.9 }
+        }))
+
+        // Simulate speaking duration based on message length
+        const duration = Math.min(lastMessage.text.length * 50, 3000)
+        const timer = setTimeout(() => {
+          setIsDonnaSpeaking(false)
+          window.dispatchEvent(new Event('donna:stop-speaking'))
+        }, duration)
+
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [messages])
+
   const sendText = () => {
     const text = input.trim()
     if (!text) return
     // In shell mode, just clear the input - no actual sending
     setInput("")
+
+    // Simulate Donna responding
+    setTimeout(() => {
+      setIsDonnaSpeaking(true)
+      window.dispatchEvent(new CustomEvent('donna:start-speaking', {
+        detail: { intensity: 0.9 }
+      }))
+
+      setTimeout(() => {
+        setIsDonnaSpeaking(false)
+        window.dispatchEvent(new Event('donna:stop-speaking'))
+      }, 2000)
+    }, 500)
   }
 
   const toggleMic = () => {
-    setIsMicOn(!isMicOn)
-    // No actual mic functionality in shell mode
+    const newMicState = !isMicOn
+    setIsMicOn(newMicState)
+
+    // Simulate Donna listening/responding when mic is on
+    if (newMicState) {
+      window.dispatchEvent(new CustomEvent('donna:start-speaking', {
+        detail: { intensity: 0.6 }
+      }))
+    } else {
+      window.dispatchEvent(new Event('donna:stop-speaking'))
+    }
   }
 
   return (
@@ -49,9 +94,9 @@ export default function ChatWidget() {
         <MessageCircle className="w-6 h-6" />
       </NeonButton>
 
-      {/* Popup panel */}
+      {/* Popup panel - opens upward */}
       {open && (
-        <GlassCard className="fixed bottom-24 right-6 z-50 w-[380px] max-h-[70vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+        <GlassCard className="fixed bottom-20 right-6 z-50 w-[380px] max-h-[70vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <div className="flex items-center gap-2">
               <Bot className="w-4 h-4 text-donna-cyan glow-cyan" />

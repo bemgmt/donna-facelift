@@ -153,6 +153,34 @@
       rgba(6, 182, 212, 0.8));
   filter: blur(3px);
   opacity: 0.75;
+  transition: all 0.3s ease;
+}
+
+@keyframes donna-light-pulse {
+  0%, 100% {
+    opacity: 0.75;
+    filter: blur(3px);
+    width: 4px;
+  }
+  50% {
+    opacity: 1;
+    filter: blur(5px);
+    width: 6px;
+  }
+}
+
+@keyframes donna-light-wave {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+.donna-light-bar-active {
+  animation: donna-light-pulse 1.5s ease-in-out infinite, donna-light-wave 2s linear infinite;
+  background-size: 100% 200%;
 }
 
 /* ------------------------------------------------------ */
