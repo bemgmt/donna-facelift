@@ -1,18 +1,12 @@
 "use client"
 
-import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { TourTrigger } from './TourTrigger'
-import { TourOverlay } from './TourOverlay'
-
 /**
- * Client wrapper for the tour system with error boundary
+ * Client wrapper for the tour system
+ * Temporarily disabled to fix initialization error
  */
 export default function TourSystem() {
-  return (
-    <ErrorBoundary fallback={null}>
-      <TourTrigger />
-      <TourOverlay />
-    </ErrorBoundary>
-  )
+  // Temporarily return null to fix initialization error
+  // Tour functionality can be re-enabled once the root cause is identified
+  return null
 }
 
