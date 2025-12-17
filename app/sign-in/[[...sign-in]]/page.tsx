@@ -15,16 +15,14 @@ export default function Page() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Redirect if already authenticated
+  // If already authenticated and initialized, redirect to home
   useEffect(() => {
     const demoSession = localStorage.getItem('donna_demo_session')
-    if (demoSession === 'true') {
-      // Check if initialization is complete before redirecting
-      const isInitialized = sessionStorage.getItem('donna_context_initialized')
-      if (isInitialized === 'true') {
-        router.push('/')
-      }
-      // If not initialized, stay on login page - initialization will happen on home page
+    const isInitialized = sessionStorage.getItem('donna_context_initialized')
+    
+    if (demoSession === 'true' && isInitialized === 'true') {
+      // User is authenticated and initialized, redirect to home
+      router.push('/')
     }
   }, [router])
 

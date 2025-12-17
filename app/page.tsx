@@ -25,34 +25,31 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const checkAuthentication = useCallback(() => {
-    // Check for demo session
-    const demoSession = localStorage.getItem('donna_demo_session')
-    
-    if (demoSession === 'true') {
-      // User is authenticated, show the interface
-      setIsAuthenticated(true)
-      setFlowState('authenticated')
-      
-      // Dispatch event to notify ChatWidget that it's ready
-      window.dispatchEvent(new CustomEvent('donna:auth-ready'))
-    } else {
-      // User is not authenticated, redirect to login
-      setIsAuthenticated(false)
-      setFlowState('unauthenticated')
-      router.push('/sign-in')
-    }
+    // After initialization, always redirect to login
+    // This ensures the flow is: Loading → Initialize → Login → Grid
+    // The login page will handle redirecting to home if already authenticated
+    setIsAuthenticated(false)
+    setFlowState('unauthenticated')
+    router.push('/sign-in')
   }, [router])
 
   useEffect(() => {
-    // Check if initialization has already been completed
+    // Check if initialization has already been completed in this session
     const isInitialized = sessionStorage.getItem('donna_context_initialized')
+    const demoSession = localStorage.getItem('donna_demo_session')
     
-    if (isInitialized === 'true') {
-      // Skip initialization, go straight to auth check
+    if (isInitialized === 'true' && demoSession === 'true') {
+      // Both initialization and auth are complete, show the grid
+      // This handles the case when user returns from login page
+      setIsAuthenticated(true)
+      setFlowState('authenticated')
+      window.dispatchEvent(new CustomEvent('donna:auth-ready'))
+    } else if (isInitialized === 'true') {
+      // Initialization done but not authenticated, go to login
       setFlowState('checking-auth')
       checkAuthentication()
     } else {
-      // Start with loading screen, then move to initialization
+      // Start with loading screen, then initialization
       const timer = setTimeout(() => {
         setFlowState('initializing')
       }, 500) // Brief loading screen before initialization

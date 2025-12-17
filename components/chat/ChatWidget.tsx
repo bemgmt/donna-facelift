@@ -21,8 +21,8 @@ export default function ChatWidget() {
   const [isDonnaSpeaking, setIsDonnaSpeaking] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  // Static demo messages for visual preview
-  const [messages] = useState<ChatMessage[]>([
+  // Messages state - now updatable
+  const [messages, setMessages] = useState<ChatMessage[]>([
     { id: '1', role: 'assistant', text: 'Hello! I\'m DONNA, your AI assistant. This is a design preview.' },
     { id: '2', role: 'user', text: 'Hi DONNA!' },
     { id: '3', role: 'assistant', text: 'Welcome! The full functionality will be available when the backend is connected.' }
@@ -106,18 +106,17 @@ export default function ChatWidget() {
     const lowerText = text.toLowerCase()
     const isTourRequest = tourKeywords.some(keyword => lowerText.includes(keyword))
     
-    // In shell mode, just clear the input - no actual sending
+    // Add user message to chat
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      text: text
+    }
+    setMessages(prev => [...prev, userMessage])
     setInput("")
 
     // If it's a tour request, trigger the tour
     if (isTourRequest) {
-      // Add user message to chat
-      const userMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        text: text
-      }
-      
       // Trigger tour start
       window.dispatchEvent(new CustomEvent('donna:tour-control', {
         detail: {
@@ -133,7 +132,7 @@ export default function ChatWidget() {
           role: 'assistant',
           text: 'Great! Let me show you around. Starting the tour now! 🎉'
         }
-        // Note: In shell mode, we can't update messages state, but this shows the intent
+        setMessages(prev => [...prev, donnaMessage])
       }, 300)
       
       return
@@ -149,6 +148,13 @@ export default function ChatWidget() {
       setTimeout(() => {
         setIsDonnaSpeaking(false)
         window.dispatchEvent(new Event('donna:stop-speaking'))
+        // Add a generic response
+        const donnaMessage: ChatMessage = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          text: 'I understand. How can I help you further?'
+        }
+        setMessages(prev => [...prev, donnaMessage])
       }, 2000)
     }, 500)
   }
@@ -192,8 +198,11 @@ export default function ChatWidget() {
           style={{ 
             bottom: '100px', 
             right: '24px', 
-            maxHeight: 'calc(100vh - 120px)',
-            left: 'auto'
+            left: 'auto',
+            top: 'auto',
+            maxHeight: 'calc(100vh - 140px)',
+            display: 'flex',
+            flexDirection: 'column'
           }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">

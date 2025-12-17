@@ -1,12 +1,21 @@
 "use client"
 
+import { TourTrigger } from './TourTrigger'
+import { TourOverlay } from './TourOverlay'
+import { useTour } from '@/contexts/TourContext'
+
 /**
  * Client wrapper for the tour system
- * Temporarily disabled to fix initialization error
+ * Renders tour trigger and overlay components
  */
 export default function TourSystem() {
-  // Temporarily return null to fix initialization error
-  // Tour functionality can be re-enabled once the root cause is identified
-  return null
+  const { isActive } = useTour()
+
+  return (
+    <>
+      <TourTrigger />
+      {isActive && <TourOverlay />}
+    </>
+  )
 }
 
