@@ -109,14 +109,7 @@ export default function DonnaContextInitializer({
       sessionStorage.setItem('donna_context_initialized', 'true')
       sessionStorage.setItem('donna_context_init_time', Date.now().toString())
       
-      // In preview mode, also set demo session
-      const isPreviewMode = typeof window !== 'undefined' && (
-        window.location.hostname.includes('vercel.app') ||
-        window.location.hostname.includes('preview')
-      )
-      if (isPreviewMode && typeof window !== 'undefined') {
-        localStorage.setItem('donna_demo_session', 'true')
-      }
+      // Don't automatically set demo session - require login even in preview mode
 
       // Wait a moment to show completion state, then call onComplete
       setTimeout(() => {

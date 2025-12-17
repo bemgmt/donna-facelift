@@ -70,7 +70,7 @@ export default function SettingsModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
         >
         <motion.div
@@ -88,7 +88,7 @@ export default function SettingsModal() {
             minWidth: position.minWidth,
             maxWidth: position.maxWidth,
             maxHeight: 'calc(100vh - 120px)',
-            zIndex: 100
+            zIndex: 9999
           }}
           onClick={(e) => e.stopPropagation()}
         >
