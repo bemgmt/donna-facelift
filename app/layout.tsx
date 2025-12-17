@@ -26,16 +26,17 @@ const VoiceNavButton = dynamic(() => import('@/components/voice/VoiceNavButton')
 const TourSystem = dynamic(() => import('@/components/tour/TourSystem'), { ssr: false })
 
 // Load web vitals tracking client-side only with error handling
-const WebVitalsTracker = dynamic(() => import('./web-vitals').then(mod => ({
-  default: () => {
+const WebVitalsTracker = dynamic(() => import('./web-vitals').then(mod => {
+  // Only call initWebVitals if it exists and we're in browser
+  if (typeof window !== 'undefined' && typeof mod.initWebVitals === 'function') {
     try {
       mod.initWebVitals()
     } catch (error) {
       console.warn('Web vitals initialization failed:', error)
     }
-    return null
   }
-})).catch(() => ({
+  return { default: () => null }
+}).catch(() => ({
   default: () => null
 })), { ssr: false })
 

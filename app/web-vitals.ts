@@ -241,7 +241,8 @@ export function getWebVitalsForHealthCheck() {
   }
 }
 
-if (typeof window !== 'undefined') {
+// Only run in browser environment, not during SSR
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const startTracking = () => {
     try {
       initWebVitals()

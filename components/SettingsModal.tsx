@@ -10,8 +10,12 @@ export default function SettingsModal() {
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
+    // Only set up event listener on client side
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return
+    }
+    
     const handleOpen = (e?: Event) => {
-      console.log('Settings modal open event received', e)
       // Find the settings button to anchor the modal
       const settingsButton = document.querySelector('[aria-label="Settings"]') as HTMLButtonElement
       if (settingsButton) {
@@ -21,39 +25,42 @@ export default function SettingsModal() {
     }
     
     // Listen for the custom event
-    if (typeof window !== 'undefined') {
-      window.addEventListener('donna:open-settings', handleOpen as EventListener)
-      console.log('Settings modal event listener attached')
-    }
+    window.addEventListener('donna:open-settings', handleOpen as EventListener)
     
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('donna:open-settings', handleOpen as EventListener)
-      }
+      window.removeEventListener('donna:open-settings', handleOpen as EventListener)
     }
   }, [])
 
-  // Calculate position relative to settings button (should be at top of page)
-  const getModalPosition = () => {
-    const button = settingsButtonRef.current || document.querySelector('[aria-label="Settings"]') as HTMLElement
-    if (!button || typeof window === 'undefined') {
-      // Fallback to top-right if button not found
-      return { top: '80px', right: '24px', minWidth: '400px', maxWidth: '600px' }
-    }
-    const rect = button.getBoundingClientRect()
-    // Position modal below the header, aligned with the settings button at the top
-    // Ensure it's always at the top of the page, not bottom
-    return {
-      top: `${Math.max(rect.bottom + 8, 80)}px`, // At least 80px from top
-      right: `${window.innerWidth - rect.right}px`,
-      left: 'unset',
-      bottom: 'unset',
-      minWidth: '400px',
-      maxWidth: '600px'
-    }
-  }
+  const [position, setPosition] = useState({ top: '80px', right: '24px', minWidth: '400px', maxWidth: '600px' })
 
-  const position = getModalPosition()
+  // Calculate position relative to settings button (should be at top of page)
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined' || typeof document === 'undefined') {
+      return
+    }
+
+    const getModalPosition = () => {
+      const button = settingsButtonRef.current || document.querySelector('[aria-label="Settings"]') as HTMLElement
+      if (!button) {
+        // Fallback to top-right if button not found
+        return { top: '80px', right: '24px', minWidth: '400px', maxWidth: '600px' }
+      }
+      const rect = button.getBoundingClientRect()
+      // Position modal below the header, aligned with the settings button at the top
+      // Ensure it's always at the top of the page, not bottom
+      return {
+        top: `${Math.max(rect.bottom + 8, 80)}px`, // At least 80px from top
+        right: `${window.innerWidth - rect.right}px`,
+        left: 'unset',
+        bottom: 'unset',
+        minWidth: '400px',
+        maxWidth: '600px'
+      }
+    }
+
+    setPosition(getModalPosition())
+  }, [isOpen])
 
   return (
     <AnimatePresence mode="wait">
