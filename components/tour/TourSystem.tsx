@@ -7,7 +7,7 @@ import { TourOverlay } from './TourOverlay'
 /**
  * Client wrapper for the tour system with error boundary
  */
-export function TourSystem() {
+export default function TourSystem() {
   return (
     <ErrorBoundary fallback={null}>
       <TourTrigger />

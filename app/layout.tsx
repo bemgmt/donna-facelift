@@ -23,7 +23,7 @@ const inter = Inter({
 const VoiceNavButton = dynamic(() => import('@/components/voice/VoiceNavButton'), { ssr: false })
 
 // Load tour system client-side only (they use hooks that require client context)
-const TourSystem = dynamic(() => import('@/components/tour/TourSystem').then(mod => ({ default: mod.TourSystem })), { ssr: false })
+const TourSystem = dynamic(() => import('@/components/tour/TourSystem'), { ssr: false })
 
 // Load web vitals tracking client-side only with error handling
 const WebVitalsTracker = dynamic(() => import('./web-vitals').then(mod => ({
