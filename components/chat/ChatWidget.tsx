@@ -59,10 +59,46 @@ export default function ChatWidget() {
   const sendText = () => {
     const text = input.trim()
     if (!text) return
+    
+    // Check if user is requesting a tour
+    const tourKeywords = ['tour', 'show me around', 'guide me', 'walkthrough', 'tutorial', 'help me navigate']
+    const lowerText = text.toLowerCase()
+    const isTourRequest = tourKeywords.some(keyword => lowerText.includes(keyword))
+    
     // In shell mode, just clear the input - no actual sending
     setInput("")
 
-    // Simulate Donna responding
+    // If it's a tour request, trigger the tour
+    if (isTourRequest) {
+      // Add user message to chat
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        text: text
+      }
+      
+      // Trigger tour start
+      window.dispatchEvent(new CustomEvent('donna:tour-control', {
+        detail: {
+          action: 'start',
+          tourId: 'dashboard-full-tour'
+        }
+      }))
+      
+      // Add DONNA's response
+      setTimeout(() => {
+        const donnaMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          text: 'Great! Let me show you around. Starting the tour now! 🎉'
+        }
+        // Note: In shell mode, we can't update messages state, but this shows the intent
+      }, 300)
+      
+      return
+    }
+
+    // Simulate Donna responding for other messages
     setTimeout(() => {
       setIsDonnaSpeaking(true)
       window.dispatchEvent(new CustomEvent('donna:start-speaking', {

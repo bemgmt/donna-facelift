@@ -11,6 +11,8 @@ import { OnboardingProvider } from '@/contexts/OnboardingContext'
 import { TourProvider } from '@/contexts/TourContext'
 import SettingsButton from '@/components/SettingsButton'
 import { AuthStatus } from '@/components/AuthStatus'
+import { TourOverlay } from '@/components/tour/TourOverlay'
+import { TourTrigger } from '@/components/tour/TourTrigger'
 import dynamic from 'next/dynamic'
 
 const inter = Inter({
@@ -79,6 +81,9 @@ html {
                 <ChatWidget />
                 {/* Settings modal */}
                 <SettingsModal />
+                {/* Tour system */}
+                <TourTrigger />
+                <TourOverlay />
                 {/* Web vitals tracking */}
                 <WebVitalsTracker />
               </div>
