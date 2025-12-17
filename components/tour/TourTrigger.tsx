@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useContext, useState } from 'react'
+import { useEffect, useContext } from 'react'
 import { TourContext } from '@/contexts/TourContext'
 
 /**
@@ -21,24 +21,61 @@ export function TourTrigger() {
       return
     }
 
-    // Lazy load tour configs to avoid circular dependency issues
-    let tourConfigs: any = null
+    // Cache for loaded tour configs
+    let tourConfigsCache: any = null
+    let isLoading = false
     
-    const loadTourConfigs = async () => {
-      if (!tourConfigs) {
-        try {
-          const tourModule = await import('@/lib/tours/dashboard-tour')
-          tourConfigs = {
-            dashboardTour: tourModule.dashboardTour,
-            quickTips: tourModule.quickTips,
-            allTours: tourModule.allTours
-          }
-        } catch (error) {
-          console.error('Failed to load tour configs:', error)
-          return null
-        }
+    const loadTourConfigs = async (retryCount = 0): Promise<any> => {
+      if (tourConfigsCache) {
+        return tourConfigsCache
       }
-      return tourConfigs
+      
+      if (isLoading) {
+        // Wait a bit and try again
+        await new Promise(resolve => setTimeout(resolve, 100))
+        return loadTourConfigs(retryCount)
+      }
+      
+      if (retryCount > 3) {
+        console.error('Failed to load tour configs after multiple retries')
+        return null
+      }
+      
+      isLoading = true
+      
+      try {
+        // Use requestIdleCallback or setTimeout to ensure we're not blocking
+        await new Promise(resolve => {
+          if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(() => resolve(undefined))
+          } else {
+            setTimeout(resolve, 200 + retryCount * 100)
+          }
+        })
+        
+        const tourModule = await import('@/lib/tours/dashboard-tour')
+        
+        // Wait a bit more to ensure module is fully initialized
+        await new Promise(resolve => setTimeout(resolve, 50))
+        
+        tourConfigsCache = {
+          dashboardTour: tourModule.dashboardTour,
+          quickTips: tourModule.quickTips,
+          allTours: tourModule.allTours
+        }
+        
+        isLoading = false
+        return tourConfigsCache
+      } catch (error) {
+        isLoading = false
+        console.error('Failed to load tour configs:', error)
+        // Retry with exponential backoff
+        if (retryCount < 3) {
+          await new Promise(resolve => setTimeout(resolve, 200 * (retryCount + 1)))
+          return loadTourConfigs(retryCount + 1)
+        }
+        return null
+      }
     }
 
     // Listen for tour requests from chat or other sources
@@ -50,8 +87,13 @@ export function TourTrigger() {
           return
         }
 
-        const configs = await loadTourConfigs()
-        if (!configs) return
+        // Load tour configs with retry mechanism
+        const tourConfigs = await loadTourConfigs()
+        
+        if (!tourConfigs || !tourConfigs.dashboardTour) {
+          console.warn('Tour configs not available')
+          return
+        }
 
         const { tourId } = event.detail
         
@@ -59,27 +101,33 @@ export function TourTrigger() {
         let tourConfig = null
         
         // Check allTours object first
-        for (const [key, tour] of Object.entries(configs.allTours)) {
-          if (tour.id === tourId) {
-            tourConfig = tour
-            break
+        if (tourConfigs.allTours && typeof tourConfigs.allTours === 'object') {
+          try {
+            for (const [key, tour] of Object.entries(tourConfigs.allTours)) {
+              if (tour && typeof tour === 'object' && 'id' in tour && tour.id === tourId) {
+                tourConfig = tour
+                break
+              }
+            }
+          } catch (e) {
+            console.warn('Error iterating allTours:', e)
           }
         }
         
         // Fallback to specific tours
         if (!tourConfig) {
-          if (tourId === 'dashboard-full-tour') {
-            tourConfig = configs.dashboardTour
-          } else if (tourId === 'quick-tips') {
-            tourConfig = configs.quickTips
+          if (tourId === 'dashboard-full-tour' && tourConfigs.dashboardTour) {
+            tourConfig = tourConfigs.dashboardTour
+          } else if (tourId === 'quick-tips' && tourConfigs.quickTips) {
+            tourConfig = tourConfigs.quickTips
           }
         }
         
         if (tourConfig && startTour) {
           startTour(tourConfig)
-        } else if (startTour) {
+        } else if (startTour && tourConfigs.dashboardTour) {
           console.warn(`Tour not found: ${tourId}. Starting default dashboard tour.`)
-          startTour(configs.dashboardTour)
+          startTour(tourConfigs.dashboardTour)
         }
       } catch (error) {
         console.error('Error handling tour request:', error)
