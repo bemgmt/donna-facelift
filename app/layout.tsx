@@ -11,8 +11,6 @@ import { OnboardingProvider } from '@/contexts/OnboardingContext'
 import { TourProvider } from '@/contexts/TourContext'
 import SettingsButton from '@/components/SettingsButton'
 import { AuthStatus } from '@/components/AuthStatus'
-import { TourOverlay } from '@/components/tour/TourOverlay'
-import { TourTrigger } from '@/components/tour/TourTrigger'
 import dynamic from 'next/dynamic'
 
 const inter = Inter({
@@ -23,6 +21,9 @@ const inter = Inter({
 
 // load nav mic button client-side only
 const VoiceNavButton = dynamic(() => import('@/components/voice/VoiceNavButton'), { ssr: false })
+
+// Load tour system client-side only (they use hooks that require client context)
+const TourSystem = dynamic(() => import('@/components/tour/TourSystem').then(mod => ({ default: mod.TourSystem })), { ssr: false })
 
 // Load web vitals tracking client-side only with error handling
 const WebVitalsTracker = dynamic(() => import('./web-vitals').then(mod => ({
@@ -82,8 +83,7 @@ html {
                 {/* Settings modal */}
                 <SettingsModal />
                 {/* Tour system */}
-                <TourTrigger />
-                <TourOverlay />
+                <TourSystem />
                 {/* Web vitals tracking */}
                 <WebVitalsTracker />
               </div>
