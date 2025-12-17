@@ -1,21 +1,15 @@
 "use client"
 
 import { TourTrigger } from './TourTrigger'
-import { TourOverlay } from './TourOverlay'
-import { useTour } from '@/contexts/TourContext'
 
 /**
  * Client wrapper for the tour system
- * Renders tour trigger and overlay components
+ * Renders tour trigger component
+ * TourOverlay is rendered in OnboardingFlow to avoid circular dependency issues
  */
 export default function TourSystem() {
-  const { isActive } = useTour()
-
-  return (
-    <>
-      <TourTrigger />
-      {isActive && <TourOverlay />}
-    </>
-  )
+  // Just render TourTrigger - TourOverlay is handled in OnboardingFlow
+  // This avoids circular dependency issues with useTour hook
+  return <TourTrigger />
 }
 
