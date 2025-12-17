@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import NoSSR from "@/components/no-ssr"
 import GridLoading from "@/components/grid-loading"
@@ -15,6 +17,36 @@ const InteractiveGrid = dynamic(
 )
 
 export default function Home() {
+  const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    // Check for demo session
+    const demoSession = localStorage.getItem('donna_demo_session')
+    
+    if (demoSession === 'true') {
+      // User is authenticated, show the interface
+      setIsAuthenticated(true)
+      setIsChecking(false)
+    } else {
+      // User is not authenticated, redirect to login
+      setIsChecking(false)
+      router.push('/sign-in')
+    }
+  }, [router])
+
+  // Show loading while checking authentication
+  if (isChecking) {
+    return <GridLoading />
+  }
+
+  // If not authenticated, the redirect will happen, but show loading as fallback
+  if (!isAuthenticated) {
+    return <GridLoading />
+  }
+
+  // User is authenticated, show the interface
   return (
     <main className="min-h-screen">
       <div className="p-4 flex justify-end">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Sparkles, Lock, User } from 'lucide-react'
@@ -14,6 +14,14 @@ export default function Page() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    const demoSession = localStorage.getItem('donna_demo_session')
+    if (demoSession === 'true') {
+      router.push('/')
+    }
+  }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +42,7 @@ export default function Page() {
       // Simulate login delay
       setTimeout(() => {
         setIsLoading(false)
-        router.push('/protected')
+        router.push('/')
       }, 500)
     } else {
       setError('Invalid username or password. Use DONNA / DONNA123 for demo.')
