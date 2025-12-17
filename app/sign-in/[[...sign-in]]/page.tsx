@@ -97,6 +97,7 @@ export default function Page() {
                 placeholder="Enter username"
                 className="w-full"
                 autoFocus
+                autoComplete="username"
                 required
               />
             </div>
@@ -113,6 +114,7 @@ export default function Page() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
                 className="w-full"
+                autoComplete="current-password"
                 required
               />
             </div>

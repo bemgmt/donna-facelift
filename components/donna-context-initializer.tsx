@@ -74,7 +74,7 @@ export default function DonnaContextInitializer({
       
       // Load governance policy (if available)
       try {
-        const governanceResponse = await fetch('/governance/governance_policy.json')
+        const governanceResponse = await fetch('/api/governance/policy')
         if (governanceResponse.ok) {
           await governanceResponse.json()
         }
@@ -91,7 +91,7 @@ export default function DonnaContextInitializer({
       
       // Load UI awareness (if available)
       try {
-        const uiResponse = await fetch('/contexts/ui_awareness.json')
+        const uiResponse = await fetch('/api/contexts/ui-awareness')
         if (uiResponse.ok) {
           await uiResponse.json()
         }
@@ -108,6 +108,15 @@ export default function DonnaContextInitializer({
       // Store initialization completion in sessionStorage
       sessionStorage.setItem('donna_context_initialized', 'true')
       sessionStorage.setItem('donna_context_init_time', Date.now().toString())
+      
+      // In preview mode, also set demo session
+      const isPreviewMode = typeof window !== 'undefined' && (
+        window.location.hostname.includes('vercel.app') ||
+        window.location.hostname.includes('preview')
+      )
+      if (isPreviewMode && typeof window !== 'undefined') {
+        localStorage.setItem('donna_demo_session', 'true')
+      }
 
       // Wait a moment to show completion state, then call onComplete
       setTimeout(() => {

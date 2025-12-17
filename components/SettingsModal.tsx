@@ -24,17 +24,21 @@ export default function SettingsModal() {
 
   if (!isOpen) return null
 
-  // Calculate position relative to settings button
+  // Calculate position relative to settings button (should be at top of page)
   const getModalPosition = () => {
     const button = settingsButtonRef.current || document.querySelector('[aria-label="Settings"]') as HTMLElement
-    if (!button) {
+    if (!button || typeof window === 'undefined') {
       // Fallback to top-right if button not found
-      return { top: '80px', right: '24px' }
+      return { top: '80px', right: '24px', minWidth: '400px', maxWidth: '600px' }
     }
     const rect = button.getBoundingClientRect()
+    // Position modal below the header, aligned with the settings button at the top
+    // Ensure it's always at the top of the page, not bottom
     return {
-      top: `${rect.bottom + 8}px`,
+      top: `${Math.max(rect.bottom + 8, 80)}px`, // At least 80px from top
       right: `${window.innerWidth - rect.right}px`,
+      left: 'unset',
+      bottom: 'unset',
       minWidth: '400px',
       maxWidth: '600px'
     }
@@ -58,11 +62,15 @@ export default function SettingsModal() {
           transition={{ duration: 0.2 }}
           className="fixed rounded-xl glass-dark border border-white/20 shadow-2xl"
           style={{
+            position: 'fixed',
             top: position.top,
             right: position.right,
+            left: position.left || 'unset',
+            bottom: position.bottom || 'unset',
             minWidth: position.minWidth,
             maxWidth: position.maxWidth,
-            maxHeight: 'calc(100vh - 120px)'
+            maxHeight: 'calc(100vh - 120px)',
+            zIndex: 100
           }}
           onClick={(e) => e.stopPropagation()}
         >

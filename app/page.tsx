@@ -34,16 +34,46 @@ export default function Home() {
   }, [router])
 
   useEffect(() => {
-    // Check if initialization has already been completed in this session
-    const isInitialized = sessionStorage.getItem('donna_context_initialized')
-    const demoSession = localStorage.getItem('donna_demo_session')
+    // Check if we're in preview/demo mode (auth disabled)
+    // Check for preview mode indicators
+    const isPreviewMode = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') ||
+      window.location.hostname.includes('preview') ||
+      document.querySelector('[data-preview]') !== null
+    )
     
-    if (isInitialized === 'true' && demoSession === 'true') {
+    // Check if initialization has already been completed in this session
+    const isInitialized = typeof window !== 'undefined' 
+      ? sessionStorage.getItem('donna_context_initialized')
+      : null
+    const demoSession = typeof window !== 'undefined'
+      ? localStorage.getItem('donna_demo_session')
+      : null
+    
+    // In preview mode, show grid after initialization without requiring auth
+    if (isPreviewMode) {
+      if (isInitialized === 'true') {
+        // Already initialized, show grid directly
+        setIsAuthenticated(true)
+        setFlowState('authenticated')
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('donna:auth-ready'))
+        }
+      } else {
+        // Start initialization
+        const timer = setTimeout(() => {
+          setFlowState('initializing')
+        }, 500)
+        return () => clearTimeout(timer)
+      }
+    } else if (isInitialized === 'true' && demoSession === 'true') {
       // Both initialization and auth are complete, show the grid
       // This handles the case when user returns from login page
       setIsAuthenticated(true)
       setFlowState('authenticated')
-      window.dispatchEvent(new CustomEvent('donna:auth-ready'))
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('donna:auth-ready'))
+      }
     } else if (isInitialized === 'true') {
       // Initialization done but not authenticated, go to login
       setFlowState('checking-auth')

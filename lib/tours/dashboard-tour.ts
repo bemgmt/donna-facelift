@@ -167,17 +167,6 @@ export const analyticsSectionTour: TourConfig = {
   }
 }
 
-// Export all tours for easy importing
-export const allTours = {
-  dashboardTour,
-  emailSectionTour,
-  analyticsSectionTour,
-  marketingSectionTour,
-  salesSectionTour,
-  settingsSectionTour,
-  quickTips
-}
-
 export const quickTips: TourConfig = {
   id: 'quick-tips',
   type: 'mini',
@@ -201,6 +190,18 @@ export const quickTips: TourConfig = {
       placement: 'left'
     }
   ]
+}
+
+// Export all tours for easy importing
+// Note: Defined after all individual tours to avoid circular dependency issues
+export const allTours = {
+  dashboardTour,
+  emailSectionTour,
+  analyticsSectionTour,
+  marketingSectionTour,
+  salesSectionTour,
+  settingsSectionTour,
+  quickTips
 }
 
 export const marketingSectionTour: TourConfig = {

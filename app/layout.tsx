@@ -40,9 +40,9 @@ const WebVitalsTracker = dynamic(() => import('./web-vitals').then(mod => ({
 })), { ssr: false })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'DONNA - AI Assistant Platform',
+  description: 'AI-powered business tools for sales, marketing, and productivity',
+  generator: 'DONNA',
 }
 
 export default function RootLayout({
@@ -53,6 +53,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.svg" />
         <style>{`
 html {
   font-family: ${inter.style.fontFamily}, system-ui, sans-serif;

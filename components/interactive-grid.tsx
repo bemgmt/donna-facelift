@@ -304,6 +304,7 @@ export default function InteractiveGrid() {
 
   const getGridTransformOrigin = () => {
     // Use cursor position as percentage of viewport
+    if (typeof window === 'undefined') return '50% 50%'
     const x = (cursorPosition.x / window.innerWidth) * 100
     const y = (cursorPosition.y / window.innerHeight) * 100
     return `${x}% ${y}%`

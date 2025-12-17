@@ -197,19 +197,21 @@ export default function ChatWidget() {
         <MessageCircle className="w-6 h-6" />
       </NeonButton>
 
-      {/* Popup panel - opens upward from bottom right */}
+      {/* Popup panel - opens upward from bottom right, attached to button */}
       {open && (
         <GlassCard 
           className="fixed z-50 w-[380px] rounded-xl shadow-2xl flex flex-col overflow-hidden" 
           style={{ 
-            bottom: '100px', 
+            position: 'fixed',
+            bottom: '88px', 
             right: '24px', 
-            left: 'auto',
-            top: 'auto',
+            left: 'unset',
+            top: 'unset',
             maxHeight: 'calc(100vh - 140px)',
             display: 'flex',
             flexDirection: 'column',
-            transform: 'translateY(0)'
+            transform: 'translateY(0)',
+            zIndex: 50
           }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
