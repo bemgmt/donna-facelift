@@ -184,7 +184,13 @@ export default function ChatWidget() {
       <NeonButton
         onClick={() => setOpen((v) => !v)}
         className="fixed z-50 rounded-full p-4 glow-soft"
-        style={{ bottom: '24px', right: '24px' }}
+        style={{ 
+          bottom: '24px', 
+          right: '24px',
+          left: 'auto',
+          top: 'auto',
+          position: 'fixed'
+        }}
         aria-label="Open DONNA Chat"
         size="icon"
       >
@@ -202,7 +208,8 @@ export default function ChatWidget() {
             top: 'auto',
             maxHeight: 'calc(100vh - 140px)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            transform: 'translateY(0)'
           }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
