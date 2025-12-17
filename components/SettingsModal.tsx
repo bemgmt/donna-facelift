@@ -10,7 +10,8 @@ export default function SettingsModal() {
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
-    const handleOpen = () => {
+    const handleOpen = (e?: Event) => {
+      console.log('Settings modal open event received', e)
       // Find the settings button to anchor the modal
       const settingsButton = document.querySelector('[aria-label="Settings"]') as HTMLButtonElement
       if (settingsButton) {
@@ -18,11 +19,19 @@ export default function SettingsModal() {
       }
       setIsOpen(true)
     }
-    window.addEventListener('donna:open-settings', handleOpen)
-    return () => window.removeEventListener('donna:open-settings', handleOpen)
+    
+    // Listen for the custom event
+    if (typeof window !== 'undefined') {
+      window.addEventListener('donna:open-settings', handleOpen as EventListener)
+      console.log('Settings modal event listener attached')
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('donna:open-settings', handleOpen as EventListener)
+      }
+    }
   }, [])
-
-  if (!isOpen) return null
 
   // Calculate position relative to settings button (should be at top of page)
   const getModalPosition = () => {
@@ -47,14 +56,16 @@ export default function SettingsModal() {
   const position = getModalPosition()
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-        onClick={() => setIsOpen(false)}
-      >
+    <AnimatePresence mode="wait">
+      {isOpen && (
+        <motion.div
+          key="settings-modal"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+          onClick={() => setIsOpen(false)}
+        >
         <motion.div
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -88,7 +99,8 @@ export default function SettingsModal() {
             <SettingsInterface />
           </div>
         </motion.div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   )
 }

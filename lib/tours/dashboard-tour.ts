@@ -192,18 +192,6 @@ export const quickTips: TourConfig = {
   ]
 }
 
-// Export all tours for easy importing
-// Note: Defined after all individual tours to avoid circular dependency issues
-export const allTours = {
-  dashboardTour,
-  emailSectionTour,
-  analyticsSectionTour,
-  marketingSectionTour,
-  salesSectionTour,
-  settingsSectionTour,
-  quickTips
-}
-
 export const marketingSectionTour: TourConfig = {
   id: 'marketing-section-tour',
   type: 'section',
@@ -335,5 +323,17 @@ export const settingsSectionTour: TourConfig = {
   onComplete: () => {
     localStorage.setItem('donna_settings_tour_completed', 'true')
   }
+}
+
+// Export all tours for easy importing
+// IMPORTANT: Must be defined AFTER all individual tours to avoid circular dependency issues
+export const allTours = {
+  dashboardTour,
+  emailSectionTour,
+  analyticsSectionTour,
+  marketingSectionTour,
+  salesSectionTour,
+  settingsSectionTour,
+  quickTips
 }
 
