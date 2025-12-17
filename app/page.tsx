@@ -22,6 +22,9 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
     // Check for demo session
     const demoSession = localStorage.getItem('donna_demo_session')
     
@@ -32,7 +35,7 @@ export default function Home() {
     } else {
       // User is not authenticated, redirect to login
       setIsChecking(false)
-      router.push('/sign-in')
+      router.replace('/sign-in')
     }
   }, [router])
 
@@ -41,7 +44,7 @@ export default function Home() {
     return <GridLoading />
   }
 
-  // If not authenticated, the redirect will happen, but show loading as fallback
+  // If not authenticated, redirect is happening - show loading briefly
   if (!isAuthenticated) {
     return <GridLoading />
   }
