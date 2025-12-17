@@ -22,9 +22,6 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
-    
     // Check for demo session
     const demoSession = localStorage.getItem('donna_demo_session')
     
@@ -35,7 +32,11 @@ export default function Home() {
     } else {
       // User is not authenticated, redirect to login
       setIsChecking(false)
-      router.replace('/sign-in')
+      // Use setTimeout to ensure redirect happens after render
+      const timer = setTimeout(() => {
+        router.replace('/sign-in')
+      }, 100)
+      return () => clearTimeout(timer)
     }
   }, [router])
 
