@@ -1,32 +1,65 @@
 "use client"
 
-import { useEffect } from 'react'
-import { useTour } from '@/contexts/TourContext'
-import { dashboardTour, quickTips, allTours } from '@/lib/tours/dashboard-tour'
+import { useEffect, useContext, useState } from 'react'
+import { TourContext } from '@/contexts/TourContext'
 
 /**
  * Component that listens for tour requests and starts the appropriate tour
  * This handles both chat-triggered tours and programmatic tour requests
  */
 export function TourTrigger() {
-  const { startTour } = useTour()
+  // Use useContext directly to avoid throwing errors if context is not available
+  const context = useContext(TourContext)
+  
+  // If context is not available, set up listeners but they won't work until context is ready
+  const startTour = context?.startTour
 
   useEffect(() => {
-    // Don't set up listeners if startTour is not available
-    if (!startTour) {
+    // Set up listeners even if startTour is not available yet
+    // They will work once the context is ready
+    if (typeof window === 'undefined') {
       return
     }
 
+    // Lazy load tour configs to avoid circular dependency issues
+    let tourConfigs: any = null
+    
+    const loadTourConfigs = async () => {
+      if (!tourConfigs) {
+        try {
+          const tourModule = await import('@/lib/tours/dashboard-tour')
+          tourConfigs = {
+            dashboardTour: tourModule.dashboardTour,
+            quickTips: tourModule.quickTips,
+            allTours: tourModule.allTours
+          }
+        } catch (error) {
+          console.error('Failed to load tour configs:', error)
+          return null
+        }
+      }
+      return tourConfigs
+    }
+
     // Listen for tour requests from chat or other sources
-    const handleTourRequest = (event: CustomEvent) => {
+    const handleTourRequest = async (event: CustomEvent) => {
       try {
+        if (!startTour) {
+          // Context not ready yet, wait a bit and try again
+          setTimeout(() => handleTourRequest(event), 100)
+          return
+        }
+
+        const configs = await loadTourConfigs()
+        if (!configs) return
+
         const { tourId } = event.detail
         
         // Find the tour config by ID from allTours object
         let tourConfig = null
         
         // Check allTours object first
-        for (const [key, tour] of Object.entries(allTours)) {
+        for (const [key, tour] of Object.entries(configs.allTours)) {
           if (tour.id === tourId) {
             tourConfig = tour
             break
@@ -36,9 +69,9 @@ export function TourTrigger() {
         // Fallback to specific tours
         if (!tourConfig) {
           if (tourId === 'dashboard-full-tour') {
-            tourConfig = dashboardTour
+            tourConfig = configs.dashboardTour
           } else if (tourId === 'quick-tips') {
-            tourConfig = quickTips
+            tourConfig = configs.quickTips
           }
         }
         
@@ -46,7 +79,7 @@ export function TourTrigger() {
           startTour(tourConfig)
         } else if (startTour) {
           console.warn(`Tour not found: ${tourId}. Starting default dashboard tour.`)
-          startTour(dashboardTour)
+          startTour(configs.dashboardTour)
         }
       } catch (error) {
         console.error('Error handling tour request:', error)

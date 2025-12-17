@@ -18,7 +18,7 @@ interface TourContextType {
   skipTour: () => void
 }
 
-const TourContext = createContext<TourContextType | null>(null)
+export const TourContext = createContext<TourContextType | null>(null)
 
 export function TourProvider({ children }: { children: React.ReactNode }) {
   const [activeTour, setActiveTour] = useState<TourConfig | null>(null)
