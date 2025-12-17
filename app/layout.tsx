@@ -7,6 +7,8 @@ import ChatWidget from '@/components/chat/ChatWidget'
 import SettingsModal from '@/components/SettingsModal'
 import DonnaLightBar from '@/components/DonnaLightBar'
 import { VoiceProvider } from '@/components/voice/VoiceProvider'
+import { OnboardingProvider } from '@/contexts/OnboardingContext'
+import { TourProvider } from '@/contexts/TourContext'
 import SettingsButton from '@/components/SettingsButton'
 import dynamic from 'next/dynamic'
 
@@ -56,28 +58,32 @@ html {
         `}</style>
       </head>
       <body className={`${inter.variable} min-h-screen text-white`} style={{ background: 'transparent' }}>
-        <VoiceProvider>
-          <div className="donna-bg min-h-screen text-white relative">
-            <DonnaLightBar />
-            <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
-              <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-                <div className="text-sm opacity-70">🧠 DONNA</div>
-                <div className="flex items-center gap-3 text-xs opacity-70">
-                  <span>Auth disabled in preview</span>
-                  <VoiceNavButton />
-                  <SettingsButton />
-                </div>
+        <OnboardingProvider>
+          <TourProvider>
+            <VoiceProvider>
+              <div className="donna-bg min-h-screen text-white relative">
+                <DonnaLightBar />
+                <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
+                  <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+                    <div className="text-sm opacity-70">🧠 DONNA</div>
+                    <div className="flex items-center gap-3 text-xs opacity-70">
+                      <span>Auth disabled in preview</span>
+                      <VoiceNavButton />
+                      <SettingsButton />
+                    </div>
+                  </div>
+                </header>
+                <main className="relative z-10">{children}</main>
+                {/* Floating DONNA chat widget (client component) */}
+                <ChatWidget />
+                {/* Settings modal */}
+                <SettingsModal />
+                {/* Web vitals tracking */}
+                <WebVitalsTracker />
               </div>
-            </header>
-            <main className="relative z-10">{children}</main>
-            {/* Floating DONNA chat widget (client component) */}
-            <ChatWidget />
-            {/* Settings modal */}
-            <SettingsModal />
-            {/* Web vitals tracking */}
-            <WebVitalsTracker />
-          </div>
-        </VoiceProvider>
+            </VoiceProvider>
+          </TourProvider>
+        </OnboardingProvider>
       </body>
     </html>
   )

@@ -369,6 +369,7 @@ export default function InteractiveGrid() {
             return (
               <motion.div
                 key={item.id}
+                data-tour={`${item.id}-interface`}
                   className={`
                   relative border border-white/20 cursor-pointer overflow-hidden
                   transition-all duration-150 ease-out

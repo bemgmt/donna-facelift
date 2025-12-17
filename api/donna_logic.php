@@ -151,8 +151,99 @@ if ($abuse_detected) {
     logAbuse($chat_id, $message, $user_id, $user_email);
 }
 
+// Intent detection for tours and onboarding
+$tour_intent = null;
+$onboarding_intent = null;
+
+if ($user_id) {
+    // Load intent detection and tour controller
+    require_once __DIR__ . '/../lib/IntentDetector.php';
+    require_once __DIR__ . '/../lib/TourController.php';
+    require_once __DIR__ . '/../lib/OnboardingStateManager.php';
+    require_once __DIR__ . '/../lib/ConversationalIntakeHandler.php';
+    
+    // Check for tour intents
+    $tour_intent = IntentDetector::detectIntent($message);
+    
+    // Check if user needs onboarding
+    $onboardingManager = new OnboardingStateManager();
+    $clerkId = $auth['claims']['sub'] ?? $user_id;
+    
+    if (!$onboardingManager->isOnboardingCompleted($user_id, $clerkId)) {
+        // Check if message is part of onboarding conversation
+        $intakeHandler = new ConversationalIntakeHandler();
+        $state = $onboardingManager->getOnboardingState($user_id, $clerkId);
+        $currentStep = $state['current_step'] ?? null;
+        
+        // Process onboarding response
+        $onboarding_result = $intakeHandler->processResponse($user_id, $message, $currentStep, $clerkId);
+        
+        // If this is an onboarding response, return it directly
+        if (isset($onboarding_result['action']) && in_array($onboarding_result['action'], ['ask_field', 'field_completed', 'clarify', 'skip'])) {
+            echo json_encode([
+                "success" => true,
+                "reply" => $onboarding_result['message'] ?? "Let's continue with your onboarding.",
+                "action" => "onboarding",
+                "onboarding" => $onboarding_result,
+                "metadata" => [
+                    "profile" => $user_profile,
+                    "chat_id" => $chat_id,
+                    "authenticated" => true
+                ]
+            ]);
+            exit;
+        }
+    }
+    
+    // Handle tour intents
+    if ($tour_intent) {
+        $tourController = new TourController();
+        $commandType = IntentDetector::getCommandType($tour_intent);
+        $moduleId = IntentDetector::getTourModuleId($tour_intent);
+        
+        if ($commandType && $moduleId) {
+            $tour_result = $tourController->processCommand($user_id, $commandType, ['module_id' => $moduleId], $clerkId);
+            
+            // Log command
+            $activeTour = $tourController->getActiveTour($user_id, $clerkId);
+            $tourController->logCommand(
+                $user_id,
+                $commandType,
+                $message,
+                $tour_intent,
+                $tour_result,
+                $activeTour['id'] ?? null,
+                $clerkId
+            );
+            
+            // Return tour response
+            if ($tour_result['success']) {
+                $tour_message = "Great! Let me show you around. ";
+                if (isset($tour_result['current_step']['text'])) {
+                    $tour_message .= $tour_result['current_step']['text'];
+                } else {
+                    $tour_message .= "Starting the tour now!";
+                }
+                
+                echo json_encode([
+                    "success" => true,
+                    "reply" => $tour_message,
+                    "action" => "tour",
+                    "tour" => $tour_result,
+                    "metadata" => [
+                        "profile" => $user_profile,
+                        "chat_id" => $chat_id,
+                        "authenticated" => true
+                    ]
+                ]);
+                exit;
+            }
+        }
+    }
+}
+
 // Build system prompt based on profile
-$system_prompt = buildSystemPrompt($user_profile, $user_memory, $abuse_detected);
+$system_prompt = buildSystemPrompt($user_profile, $user_memory, $abuse_detected, $user_id, $clerkId ?? null);
 
 // Prepare messages for OpenAI
 $messages = [["role" => "system", "content" => $system_prompt]];
@@ -332,7 +423,7 @@ function callOpenAI($api_key, $messages, $profile) {
 /**
  * Build dynamic system prompt based on profile
  */
-function buildSystemPrompt($profile, $user_memory, $abuse_detected) {
+function buildSystemPrompt($profile, $user_memory, $abuse_detected, $user_id = null, $clerk_id = null) {
     $profiles = [
         'general' => 'You are DONNA, a helpful AI assistant. Be friendly, professional, and concise. Help with general questions and tasks.',
 
@@ -344,6 +435,32 @@ function buildSystemPrompt($profile, $user_memory, $abuse_detected) {
     ];
 
     $base_prompt = $profiles[$profile] ?? $profiles['general'];
+
+    // Load personality configuration if available
+    $personality_config = null;
+    if ($user_id) {
+        try {
+            require_once __DIR__ . '/../lib/PersonalityConfigManager.php';
+            $personalityManager = new PersonalityConfigManager();
+            $personality_config = $personalityManager->getPersonalityForDONNA($user_id, $clerk_id);
+            
+            if ($personality_config && isset($personality_config['name'])) {
+                // Override base prompt with personality configuration
+                $traits = $personality_config['traits'] ?? [];
+                $tone = $personality_config['tone'] ?? 'professional';
+                $formality = $personality_config['formality'] ?? 'semi-formal';
+                
+                $personality_desc = "You are DONNA with a " . $personality_config['name'] . " personality. ";
+                $personality_desc .= "Your traits: " . implode(', ', $traits) . ". ";
+                $personality_desc .= "Tone: $tone. Formality: $formality. ";
+                $personality_desc .= $personality_config['description'] ?? '';
+                
+                $base_prompt = $personality_desc;
+            }
+        } catch (Exception $e) {
+            error_log("Error loading personality config: " . $e->getMessage());
+        }
+    }
 
     // Add user context if available
     $context = '';
@@ -363,6 +480,7 @@ function buildSystemPrompt($profile, $user_memory, $abuse_detected) {
     $guidelines .= "- Ask follow-up questions when you need more information\n";
     $guidelines .= "- Stay professional and helpful\n";
     $guidelines .= "- If handling emails or leads, classify them appropriately\n";
+    $guidelines .= "- If the user asks for a tour or help with navigation, you can suggest using the tour system\n";
 
     if ($abuse_detected) {
         $guidelines .= "- The user's message contains inappropriate language - respond professionally but briefly\n";

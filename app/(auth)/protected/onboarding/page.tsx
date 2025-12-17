@@ -1,17 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { VerticalOptionCard } from "@/components/VerticalOptionCard"
 import { Button } from "@/components/ui/button"
 import { VERTICALS, type VerticalKey } from "@/lib/constants/verticals"
 import { Loader2 } from "lucide-react"
+import { useOnboarding } from "@/contexts/OnboardingContext"
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow"
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { state } = useOnboarding()
   const [selectedVertical, setSelectedVertical] = useState<VerticalKey | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Show new onboarding flow if not complete
+  const showNewOnboarding = !state.isComplete
 
   const handleSelect = (key: VerticalKey) => {
     setSelectedVertical(key)
@@ -51,6 +57,12 @@ export default function OnboardingPage() {
     }
   }
 
+  // If new onboarding is not complete, show the new flow
+  if (showNewOnboarding) {
+    return <OnboardingFlow />
+  }
+
+  // Otherwise show vertical selection (legacy onboarding)
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-4xl space-y-8">

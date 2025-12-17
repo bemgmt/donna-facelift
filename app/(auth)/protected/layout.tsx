@@ -19,6 +19,14 @@ export default function ProtectedLayout({
       return
     }
 
+    // Check for demo session
+    const demoSession = localStorage.getItem('donna_demo_session')
+    if (demoSession === 'true') {
+      // Demo user - allow access
+      setIsChecking(false)
+      return
+    }
+
     // Check if user has selected a vertical
     const checkVertical = async () => {
       try {
