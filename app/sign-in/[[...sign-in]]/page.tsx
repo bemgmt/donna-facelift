@@ -23,9 +23,13 @@ export default function Page() {
     if (username === 'DONNA' && password === 'DONNA123') {
       setIsLoading(true)
       
-      // Store demo session
+      // Store demo session in localStorage (for client-side checks)
       localStorage.setItem('donna_demo_session', 'true')
       localStorage.setItem('donna_demo_user', username)
+      
+      // Set cookie for server-side API routes (accessible in preview mode)
+      document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+      document.cookie = `donna_demo_user=${username}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
       
       // Simulate login delay
       setTimeout(() => {

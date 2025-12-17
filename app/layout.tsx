@@ -10,6 +10,7 @@ import { VoiceProvider } from '@/components/voice/VoiceProvider'
 import { OnboardingProvider } from '@/contexts/OnboardingContext'
 import { TourProvider } from '@/contexts/TourContext'
 import SettingsButton from '@/components/SettingsButton'
+import { AuthStatus } from '@/components/AuthStatus'
 import dynamic from 'next/dynamic'
 
 const inter = Inter({
@@ -67,7 +68,7 @@ html {
                   <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
                     <div className="text-sm opacity-70">🧠 DONNA</div>
                     <div className="flex items-center gap-3 text-xs opacity-70">
-                      <span>Auth disabled in preview</span>
+                      <AuthStatus />
                       <VoiceNavButton />
                       <SettingsButton />
                     </div>
