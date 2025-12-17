@@ -192,7 +192,7 @@ export function WelcomeStep() {
               <Sparkles className="w-8 h-8 text-white" />
             </motion.div>
             <h1 className="text-2xl font-semibold text-white">Welcome to DONNA</h1>
-            <p className="text-sm text-white/70">Let's get to know each other</p>
+            <p className="text-sm text-white/70">Let&apos;s get to know each other</p>
           </div>
 
           {/* Chat Messages */}

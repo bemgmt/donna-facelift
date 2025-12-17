@@ -126,9 +126,6 @@ export function TourOverlay() {
                 duration: 0.4,
                 ease: 'easeOut'
               }}
-              style={{
-                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.5)',
-              }}
               className="absolute"
               style={{
                 top: elementPosition.top,
@@ -137,6 +134,7 @@ export function TourOverlay() {
                 height: elementPosition.height,
                 borderRadius: '8px',
                 border: '2px solid rgba(168, 85, 247, 0.6)',
+                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.5)',
                 pointerEvents: 'none'
               }}
             >
@@ -194,7 +192,6 @@ export function TourOverlay() {
             onPrevious={previousStep}
             onPause={handlePauseToggle}
             onSkip={skipTour}
-            tourType={activeTour.type}
           />
         )}
 
@@ -253,7 +250,7 @@ export function TourOverlay() {
                   className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center"
                 >
                   <h3 className="text-2xl font-bold text-white mb-2">Tour Complete! 🎉</h3>
-                  <p className="text-white/70">You're all set to explore!</p>
+                  <p className="text-white/70">You&apos;re all set to explore!</p>
                 </motion.div>
               </motion.div>
             </motion.div>

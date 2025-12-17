@@ -58,7 +58,7 @@ export function PersonalityStep() {
             <Check className="w-10 h-10 text-white" />
           </motion.div>
           <h2 className="text-2xl font-semibold text-white">Perfect!</h2>
-          <p className="text-white/70">Your personality is all set. Let's continue!</p>
+          <p className="text-white/70">Your personality is all set. Let&apos;s continue!</p>
         </motion.div>
       </div>
     )
@@ -82,7 +82,7 @@ export function PersonalityStep() {
             >
               <Sparkles className="w-8 h-8 text-white" />
             </motion.div>
-            <h1 className="text-3xl font-semibold text-white">Choose DONNA's Personality</h1>
+            <h1 className="text-3xl font-semibold text-white">Choose DONNA&apos;s Personality</h1>
             <p className="text-white/70">How would you like DONNA to communicate with you?</p>
           </div>
 
@@ -277,7 +277,7 @@ export function PersonalityStep() {
                       className="p-3 rounded-lg bg-black/20 border border-white/10 transition-colors"
                     >
                       <p className="text-xs text-white/50 mb-1">Sample response:</p>
-                      <p className="text-sm text-white/80 italic">"{preset.sampleResponse}"</p>
+                      <p className="text-sm text-white/80 italic">&quot;{preset.sampleResponse}&quot;</p>
                     </motion.div>
                   </div>
                 </GlassCard>

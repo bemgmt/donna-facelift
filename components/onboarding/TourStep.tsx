@@ -143,7 +143,7 @@ export function TourStep() {
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-2">Skip Tour</h3>
                   <p className="text-sm text-white/70">
-                    I'll explore on my own. I can always ask DONNA for help!
+                    I&apos;ll explore on my own. I can always ask DONNA for help!
                   </p>
                 </div>
                 <div className="pt-2">
