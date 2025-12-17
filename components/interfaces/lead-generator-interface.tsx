@@ -124,7 +124,7 @@ const LeadGeneratorInterface: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full glass-dark p-6 rounded-lg overflow-hidden backdrop-blur">
+    <div className="w-full h-full glass-dark p-6 rounded-lg overflow-hidden backdrop-blur" data-tour="lead-generator-content">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">

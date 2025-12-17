@@ -17,7 +17,7 @@ export default function SettingsInterface() {
   ]
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20" data-tour="settings-content">
       {/* Settings Sidebar */}
       <div className="w-64 border-r border-white/20 p-6 glass-dark backdrop-blur">
         <h2 className="text-xl font-light mb-6">Settings</h2>

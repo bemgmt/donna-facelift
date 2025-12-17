@@ -238,7 +238,7 @@ const SalesInterface: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full glass-dark p-6 rounded-lg overflow-hidden backdrop-blur">
+    <div className="w-full h-full glass-dark p-6 rounded-lg overflow-hidden backdrop-blur" data-tour="sales-content">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -256,6 +256,7 @@ const SalesInterface: React.FC = () => {
               }
             }}
             className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            data-tour="sales-add-contact"
           >
             <Plus className="w-4 h-4" />
             Add Contact
@@ -273,6 +274,7 @@ const SalesInterface: React.FC = () => {
                   ? 'bg-white/20 text-white'
                   : 'text-white/60 hover:text-white hover:bg-white/10'
               }`}
+              data-tour={`sales-${tab}-tab`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>

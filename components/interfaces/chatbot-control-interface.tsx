@@ -87,7 +87,7 @@ export default function ChatbotControlInterface() {
   const totalMessages = useMemo(() => convos.reduce((sum,c)=>sum + c.message_count, 0), [convos])
 
   return (
-    <div className="min-h-screen text-white p-8 glass-dark backdrop-blur">
+    <div className="min-h-screen text-white p-8 glass-dark backdrop-blur" data-tour="chatbot-content">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

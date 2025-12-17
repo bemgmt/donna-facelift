@@ -71,6 +71,17 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     if (config.steps[0]?.beforeShow) {
       config.steps[0].beforeShow()
     }
+    
+    // Emit step change event for first step
+    if (config.steps[0]?.chatMessage) {
+      window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
+        detail: {
+          stepId: config.steps[0].id,
+          chatMessage: config.steps[0].chatMessage,
+          stepIndex: 0
+        }
+      }))
+    }
   }, [])
 
   const nextStep = useCallback(() => {
@@ -95,6 +106,17 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       if (activeTour.steps[nextIndex]?.beforeShow) {
         activeTour.steps[nextIndex].beforeShow()
       }
+      
+      // Emit step change event
+      if (activeTour.steps[nextIndex]?.chatMessage) {
+        window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
+          detail: {
+            stepId: activeTour.steps[nextIndex].id,
+            chatMessage: activeTour.steps[nextIndex].chatMessage,
+            stepIndex: nextIndex
+          }
+        }))
+      }
     }
   }, [activeTour, currentStepIndex, currentStep])
 
@@ -108,6 +130,17 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     if (activeTour.steps[prevIndex]?.beforeShow) {
       activeTour.steps[prevIndex].beforeShow()
     }
+    
+    // Emit step change event
+    if (activeTour.steps[prevIndex]?.chatMessage) {
+      window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
+        detail: {
+          stepId: activeTour.steps[prevIndex].id,
+          chatMessage: activeTour.steps[prevIndex].chatMessage,
+          stepIndex: prevIndex
+        }
+      }))
+    }
   }, [activeTour, currentStepIndex])
 
   const goToStep = useCallback((index: number) => {
@@ -118,6 +151,17 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     // Execute beforeShow for target step
     if (activeTour.steps[index]?.beforeShow) {
       activeTour.steps[index].beforeShow()
+    }
+    
+    // Emit step change event
+    if (activeTour.steps[index]?.chatMessage) {
+      window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
+        detail: {
+          stepId: activeTour.steps[index].id,
+          chatMessage: activeTour.steps[index].chatMessage,
+          stepIndex: index
+        }
+      }))
     }
   }, [activeTour])
 

@@ -276,7 +276,7 @@ export default function SecretaryInterface(): JSX.Element {
   )
 
   return (
-    <div className="min-h-screen text-white p-6 glass-dark backdrop-blur">
+    <div className="min-h-screen text-white p-6 glass-dark backdrop-blur" data-tour="secretary-content">
       <div className="max-w-[1800px] mx-auto h-[calc(100vh-3rem)] flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">

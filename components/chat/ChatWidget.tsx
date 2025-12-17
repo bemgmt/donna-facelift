@@ -6,6 +6,7 @@ import { ChatBubble } from "@/components/ui/chat-bubble"
 import { NeonButton } from "@/components/ui/neon-button"
 import { FuturisticInput } from "@/components/ui/futuristic-input"
 import { GlassCard } from "@/components/ui/glass-card"
+import { useTour } from "@/contexts/TourContext"
 
 interface ChatMessage {
   id: string
@@ -21,6 +22,8 @@ export default function ChatWidget() {
   const [isDonnaSpeaking, setIsDonnaSpeaking] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { isActive: isTourActive } = useTour()
+  
   // Messages state - now updatable
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: '1', role: 'assistant', text: 'Hello! I\'m DONNA, your AI assistant. This is a design preview.' },
@@ -68,6 +71,36 @@ export default function ChatWidget() {
     }
   }, [])
 
+  // Keep chat open during tour
+  useEffect(() => {
+    if (isTourActive && !open) {
+      setOpen(true)
+    }
+  }, [isTourActive, open])
+
+  // Listen for tour step changes to display chat messages
+  useEffect(() => {
+    const handleStepChange = (event: CustomEvent) => {
+      const { chatMessage } = event.detail
+      if (chatMessage) {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          text: chatMessage
+        }])
+        // Ensure chat is open
+        if (!open) {
+          setOpen(true)
+        }
+      }
+    }
+
+    window.addEventListener('donna:tour-step-changed', handleStepChange as EventListener)
+    return () => {
+      window.removeEventListener('donna:tour-step-changed', handleStepChange as EventListener)
+    }
+  }, [open])
+
   // Scroll to bottom when panel opens or messages change
   useEffect(() => {
     if (open && messagesEndRef.current) {
@@ -101,10 +134,61 @@ export default function ChatWidget() {
     const text = input.trim()
     if (!text) return
     
+    const lowerText = text.toLowerCase()
+    
+    // Check for "stop the tour" command
+    if (lowerText.includes('stop the tour') || lowerText.includes('stop tour')) {
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        text: text
+      }
+      setMessages(prev => [...prev, userMessage])
+      setInput("")
+      
+      // Stop the tour
+      window.dispatchEvent(new CustomEvent('donna:tour-control', {
+        detail: { action: 'skip' }
+      }))
+      
+      // Add confirmation message
+      setTimeout(() => {
+        const donnaMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          text: 'Tour stopped. You can continue exploring on your own! Feel free to ask me anything or request another tour anytime.'
+        }
+        setMessages(prev => [...prev, donnaMessage])
+      }, 300)
+      
+      return
+    }
+    
     // Check if user is requesting a tour
     const tourKeywords = ['tour', 'show me around', 'guide me', 'walkthrough', 'tutorial', 'help me navigate']
-    const lowerText = text.toLowerCase()
     const isTourRequest = tourKeywords.some(keyword => lowerText.includes(keyword))
+    
+    // Check for section-specific tour requests
+    const sectionTourMap: { [key: string]: string } = {
+      'sales': 'sales-detailed-tour',
+      'sales dashboard': 'sales-detailed-tour',
+      'marketing': 'marketing-detailed-tour',
+      'email': 'marketing-detailed-tour',
+      'secretary': 'secretary-detailed-tour',
+      'analytics': 'analytics-detailed-tour',
+      'chatbot': 'chatbot-detailed-tour',
+      'lead generator': 'lead-generator-detailed-tour',
+      'lead': 'lead-generator-detailed-tour',
+      'settings': 'settings-detailed-tour'
+    }
+    
+    let requestedTourId = 'comprehensive-dashboard-tour'
+    for (const [keyword, tourId] of Object.entries(sectionTourMap)) {
+      if (lowerText.includes(keyword)) {
+        requestedTourId = tourId
+        break
+      }
+    }
     
     // Add user message to chat
     const userMessage: ChatMessage = {
@@ -121,7 +205,7 @@ export default function ChatWidget() {
       window.dispatchEvent(new CustomEvent('donna:tour-control', {
         detail: {
           action: 'start',
-          tourId: 'dashboard-full-tour'
+          tourId: requestedTourId
         }
       }))
       
@@ -130,7 +214,9 @@ export default function ChatWidget() {
         const donnaMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          text: 'Great! Let me show you around. Starting the tour now! 🎉'
+          text: requestedTourId === 'comprehensive-dashboard-tour' 
+            ? 'Great! Let me show you around. Starting the comprehensive tour now! 🎉'
+            : `Perfect! Let me give you a detailed tour of that section. Starting now! 🎉`
         }
         setMessages(prev => [...prev, donnaMessage])
       }, 300)

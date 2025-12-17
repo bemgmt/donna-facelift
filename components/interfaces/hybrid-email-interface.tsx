@@ -269,7 +269,7 @@ export default function HybridEmailInterface() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20 text-white">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen flex pt-20 text-white" data-tour="marketing-content">
       {/* Sidebar */}
       <div className="w-64 border-r border-white/20 p-4 flex flex-col glass-dark backdrop-blur">
         <div className="mb-4">

@@ -58,6 +58,7 @@ export interface TourStep {
   action?: () => void
   beforeShow?: () => void | Promise<void>
   afterShow?: () => void | Promise<void>
+  chatMessage?: string // Message to display in DONNA chat during this step
 }
 
 export interface TourConfig {

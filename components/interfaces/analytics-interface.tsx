@@ -108,7 +108,7 @@ export default function AnalyticsInterface() {
   ]
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20 glass-dark backdrop-blur">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20 glass-dark backdrop-blur" data-tour="analytics-content">
       <div className="p-6 border-b border-white/20">
         <h2 className="text-xl font-light">Analytics Dashboard</h2>
         <p className="text-sm text-white/60 mt-1">Real-time business insights</p>

@@ -121,6 +121,7 @@ export function TourTrigger() {
         
         tourConfigsCache = {
           dashboardTour: tourModule.dashboardTour,
+          comprehensiveDashboardTour: tourModule.comprehensiveDashboardTour,
           quickTips: tourModule.quickTips,
           allTours: tourModule.allTours
         }
@@ -184,6 +185,8 @@ export function TourTrigger() {
         if (!tourConfig) {
           if (tourId === 'dashboard-full-tour' && tourConfigs.dashboardTour) {
             tourConfig = tourConfigs.dashboardTour
+          } else if (tourId === 'comprehensive-dashboard-tour' && tourConfigs.comprehensiveDashboardTour) {
+            tourConfig = tourConfigs.comprehensiveDashboardTour
           } else if (tourId === 'quick-tips' && tourConfigs.quickTips) {
             tourConfig = tourConfigs.quickTips
           }
