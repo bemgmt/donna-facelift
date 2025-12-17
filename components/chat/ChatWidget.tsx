@@ -19,6 +19,7 @@ export default function ChatWidget() {
   const [input, setInput] = useState("")
   const [isMicOn, setIsMicOn] = useState(false)
   const [isDonnaSpeaking, setIsDonnaSpeaking] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   // Static demo messages for visual preview
   const [messages] = useState<ChatMessage[]>([
@@ -26,6 +27,46 @@ export default function ChatWidget() {
     { id: '2', role: 'user', text: 'Hi DONNA!' },
     { id: '3', role: 'assistant', text: 'Welcome! The full functionality will be available when the backend is connected.' }
   ])
+
+  // Check if user is authenticated and main UI is ready
+  useEffect(() => {
+    const checkReady = () => {
+      const demoSession = localStorage.getItem('donna_demo_session')
+      const isInitialized = sessionStorage.getItem('donna_context_initialized')
+      
+      // Only activate chatbot after authentication and initialization
+      if (demoSession === 'true' && isInitialized === 'true') {
+        setIsReady(true)
+      } else {
+        setIsReady(false)
+      }
+    }
+
+    // Check immediately
+    checkReady()
+
+    // Listen for auth ready event
+    const handleAuthReady = () => {
+      checkReady()
+    }
+
+    // Listen for storage changes (when user logs in from another tab)
+    const handleStorageChange = () => {
+      checkReady()
+    }
+
+    window.addEventListener('donna:auth-ready', handleAuthReady)
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Also check periodically in case events don't fire
+    const interval = setInterval(checkReady, 500)
+
+    return () => {
+      window.removeEventListener('donna:auth-ready', handleAuthReady)
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
 
   // Scroll to bottom when panel opens or messages change
   useEffect(() => {
@@ -124,6 +165,11 @@ export default function ChatWidget() {
     } else {
       window.dispatchEvent(new Event('donna:stop-speaking'))
     }
+  }
+
+  // Don't render if not ready (user not authenticated or initialization not complete)
+  if (!isReady) {
+    return null
   }
 
   return (

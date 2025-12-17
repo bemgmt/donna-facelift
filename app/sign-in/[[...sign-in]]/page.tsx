@@ -19,7 +19,12 @@ export default function Page() {
   useEffect(() => {
     const demoSession = localStorage.getItem('donna_demo_session')
     if (demoSession === 'true') {
-      router.push('/')
+      // Check if initialization is complete before redirecting
+      const isInitialized = sessionStorage.getItem('donna_context_initialized')
+      if (isInitialized === 'true') {
+        router.push('/')
+      }
+      // If not initialized, stay on login page - initialization will happen on home page
     }
   }, [router])
 
@@ -42,6 +47,7 @@ export default function Page() {
       // Simulate login delay
       setTimeout(() => {
         setIsLoading(false)
+        // Redirect to home - initialization will happen there if needed
         router.push('/')
       }, 500)
     } else {
