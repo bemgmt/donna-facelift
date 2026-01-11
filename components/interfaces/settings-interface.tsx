@@ -91,7 +91,7 @@ export default function SettingsInterface() {
     }
 
     loadSettings()
-  }, [form, toast])
+  }, [form])
 
   // Track unsaved changes
   useEffect(() => {
