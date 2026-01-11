@@ -75,6 +75,10 @@ export default function SettingsInterface() {
               ...defaultSettings,
               ...data.data,
             }
+            // Convert empty string or null vertical to "none" to match our Select fix
+            if (mergedSettings.profile?.vertical === "" || mergedSettings.profile?.vertical === null || mergedSettings.profile?.vertical === undefined) {
+              mergedSettings.profile.vertical = "none"
+            }
             form.reset(mergedSettings)
           }
         }

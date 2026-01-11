@@ -58,7 +58,7 @@ export default function ProfileIdentitySection() {
   const planTier = watch("billing.planTier") // Assuming this is available in form context
 
   const verticalOptions = [
-    { value: "", label: "None" },
+    { value: "none", label: "None" },
     ...VERTICALS.map((v) => ({ value: v.key, label: v.label })),
   ]
 

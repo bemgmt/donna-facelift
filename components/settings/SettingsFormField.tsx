@@ -113,12 +113,16 @@ export function SettingsFormField({
           <Controller
             name={name}
             control={control}
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={disabled}
-              >
+            render={({ field }) => {
+              // Ensure value is not empty string - convert to undefined if needed
+              // Also handle null/undefined values properly
+              const selectValue = (field.value === "" || field.value === null || field.value === undefined) ? undefined : field.value
+              return (
+                <Select
+                  value={selectValue}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                >
                 <SelectTrigger className={cn(
                   "w-full glass border border-white/20 text-white",
                   error && "border-red-500/50"
@@ -126,14 +130,17 @@ export function SettingsFormField({
                   <SelectValue placeholder={placeholder || "Select an option"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  {options
+                    .filter((option) => option.value !== "") // Filter out empty string values
+                    .map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
-            )}
+              )
+            }}
           />
         )
 

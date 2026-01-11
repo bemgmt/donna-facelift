@@ -11,6 +11,7 @@ import { OnboardingProvider } from '@/contexts/OnboardingContext'
 import { TourProvider } from '@/contexts/TourContext'
 import SettingsButton from '@/components/SettingsButton'
 import { AuthStatus } from '@/components/AuthStatus'
+import { Toaster } from '@/components/ui/toaster'
 import dynamic from 'next/dynamic'
 
 const inter = Inter({
@@ -89,6 +90,8 @@ html {
                 <TourSystem />
                 {/* Web vitals tracking */}
                 <WebVitalsTracker />
+                {/* Toast notifications */}
+                <Toaster />
               </div>
             </VoiceProvider>
           </TourProvider>
