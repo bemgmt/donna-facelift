@@ -34,9 +34,6 @@ export async function auth(): Promise<AuthResult> {
     // Check for demo session cookie
     const cookieStore = await cookies()
     const demoSession = cookieStore.get('donna_demo_session')
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'post-fix',hypothesisId:'H5',location:'lib/preview-auth.ts:37',message:'auth running in facelift preview mode',data:{isFaceliftPreview:true,hasDemoCookie:demoSession?.value==='true'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (demoSession?.value === 'true') {
       return demoAuthResult
     }
@@ -45,9 +42,6 @@ export async function auth(): Promise<AuthResult> {
   if (clerkDisabled) {
     const cookieStore = await cookies()
     const demoSession = cookieStore.get('donna_demo_session')
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'post-fix',hypothesisId:'H5',location:'lib/preview-auth.ts:48',message:'auth running with clerk disabled',data:{clerkDisabled:true,hasDemoCookie:demoSession?.value==='true'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (demoSession?.value === 'true') {
       return demoAuthResult
     }

@@ -169,9 +169,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const saveProgress = useCallback(async () => {
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H1',location:'contexts/OnboardingContext.tsx:173',message:'saveProgress request start',data:{hasState:!!state,currentStep:state.currentStep,isComplete:state.isComplete},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       // Save to backend API
       const response = await fetch('/api/user/onboarding', {
         method: 'POST',
@@ -179,9 +176,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         body: JSON.stringify(state)
       })
 
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H1',location:'contexts/OnboardingContext.tsx:179',message:'saveProgress response received',data:{ok:response.ok,status:response.status},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       if (!response.ok) {
         throw new Error('Failed to save onboarding progress')
       }
@@ -193,13 +187,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const loadProgress = useCallback(async () => {
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H1',location:'contexts/OnboardingContext.tsx:190',message:'loadProgress request start',data:{storageKey:'donna_onboarding_state'},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       const response = await fetch('/api/user/onboarding')
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H1',location:'contexts/OnboardingContext.tsx:192',message:'loadProgress response received',data:{ok:response.ok,status:response.status},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       if (response.ok) {
         const data = await response.json()
         if (data.progress) {
