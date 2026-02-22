@@ -48,7 +48,7 @@ export function HospitalityDashboard() {
         <div className="p-5 rounded-xl bg-white/5 border border-white/10">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-4 h-4 text-[var(--donna-purple)]" />
-            <h3 className="text-sm font-semibold text-white">Today's Check-ins</h3>
+            <h3 className="text-sm font-semibold text-white">Today&apos;s Check-ins</h3>
           </div>
           <div className="space-y-3">
             {todayCheckins.map((checkin) => (
