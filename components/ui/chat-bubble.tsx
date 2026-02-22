@@ -7,12 +7,12 @@ interface ChatBubbleProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
 }
 
-function ChatBubble({ 
+const ChatBubble = React.forwardRef<HTMLDivElement, ChatBubbleProps>(function ChatBubble({
   className, 
   variant = "donna",
   children,
   ...props 
-}: ChatBubbleProps) {
+}, ref) {
   const variantClasses = {
     donna: "bubble-donna",
     user: "bubble-user"
@@ -30,11 +30,14 @@ function ChatBubble({
         variant === "donna" && "donna-glow",
         className
       )}
+      ref={ref}
       {...props}
     >
       {children}
     </motion.div>
   )
-}
+})
+
+ChatBubble.displayName = "ChatBubble"
 
 export { ChatBubble }

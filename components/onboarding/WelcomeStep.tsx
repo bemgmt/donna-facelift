@@ -66,6 +66,19 @@ export function WelcomeStep() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H3',location:'components/onboarding/WelcomeStep.tsx:71',message:'WelcomeStep message list rendered in AnimatePresence popLayout',data:{messageCount:messages.length,animatePresenceMode:'popLayout',childComponent:'ChatBubble'},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+  }, [messages.length])
+
+  useEffect(() => {
+    if (!showConfirmation) return
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H4',location:'components/onboarding/WelcomeStep.tsx:79',message:'confirmation animation triggered',data:{showConfirmation,keyframes:[0,1.2,1],transitionType:'spring'},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+  }, [showConfirmation])
+
   const addMessage = (role: 'assistant' | 'user', text: string) => {
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -113,6 +126,9 @@ export function WelcomeStep() {
     // Move to next question
     setTimeout(() => {
       const nextQuestion = currentQuestion + 1
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'post-fix',hypothesisId:'H6',location:'components/onboarding/WelcomeStep.tsx:130',message:'attempting to advance onboarding question',data:{currentQuestion,nextQuestion,totalQuestions:questions.length},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       if (nextQuestion < questions.length) {
         setCurrentQuestion(nextQuestion)
         const nextQ = questions[nextQuestion]
@@ -124,6 +140,9 @@ export function WelcomeStep() {
         // If this is the last question, auto-complete after showing message
         if (nextQuestion === questions.length - 1) {
           setTimeout(() => {
+            // #region agent log
+            fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'post-fix',hypothesisId:'H6',location:'components/onboarding/WelcomeStep.tsx:144',message:'completing welcome step from last question',data:{nextQuestion,totalQuestions:questions.length},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             completeStep('welcome')
           }, 3000)
         }
@@ -233,7 +252,7 @@ export function WelcomeStep() {
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: [0, 1.2, 1] }}
-                      transition={{ duration: 0.4, type: 'spring' }}
+                      transition={{ duration: 0.4, ease: 'easeOut' }}
                       className="w-6 h-6 rounded-full bg-gradient-to-br from-donna-purple to-donna-cyan flex items-center justify-center relative"
                     >
                       {/* Expanding glow */}
