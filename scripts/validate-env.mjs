@@ -43,8 +43,6 @@ const isFaceliftPreview =
     !process.env.SUPABASE_SERVICE_ROLE_KEY)
 
 const RECOMMENDED_VARS = [
-  'CLERK_PUBLISHABLE_KEY',
-  'CLERK_SECRET_KEY',
   'SENTRY_DSN',
   'NEXT_PUBLIC_SENTRY_DSN',
   'ALLOWED_ORIGINS',
@@ -53,8 +51,7 @@ const RECOMMENDED_VARS = [
 
 const SECURITY_VARS = [
   'JWT_SECRET',
-  'ENABLE_API_SECURITY',
-  'AUTH_DISABLE_CLERK'
+  'ENABLE_API_SECURITY'
 ]
 
 function validateEnvVar(name, value, required = false) {
@@ -76,12 +73,6 @@ function validateEnvVar(name, value, required = false) {
     case 'NEXT_PUBLIC_SUPABASE_ANON_KEY':
       if (value.length < 100) return { valid: false, error: `${name} appears to be too short for a Supabase key` }
       break
-    case 'CLERK_PUBLISHABLE_KEY':
-      if (!value.startsWith('pk_')) return { valid: false, error: `${name} should start with 'pk_'` }
-      break
-    case 'CLERK_SECRET_KEY':
-      if (!value.startsWith('sk_')) return { valid: false, error: `${name} should start with 'sk_'` }
-      break
     case 'ALLOWED_ORIGINS':
       const origins = value.split(',').map(o => o.trim())
       for (const origin of origins) {
@@ -91,7 +82,6 @@ function validateEnvVar(name, value, required = false) {
       }
       break
     case 'ENABLE_API_SECURITY':
-    case 'AUTH_DISABLE_CLERK':
       if (!['true', 'false'].includes(value.toLowerCase())) return { valid: false, error: `${name} must be 'true' or 'false'` }
       break
   }
@@ -133,10 +123,8 @@ function validateEnvironment() {
   }
 
   if (enforcingProductionRequirements) {
-    const hasClerk = process.env.CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY
     const hasJWT = process.env.JWT_SECRET
-    const clerkDisabled = process.env.AUTH_DISABLE_CLERK?.toLowerCase() === 'true'
-    if (!hasClerk && !hasJWT && !clerkDisabled) warnings.push('No authentication method configured (Clerk or JWT)')
+    if (!hasJWT) warnings.push('No JWT_SECRET configured; using demo auth')
 
     const securityEnabled = process.env.ENABLE_API_SECURITY?.toLowerCase() === 'true'
     if (!securityEnabled) warnings.push('API security is not explicitly enabled in production')
@@ -158,7 +146,7 @@ function validateEnvironment() {
 
   const securityConfig = {
     securityEnabled: enforcingProductionRequirements || process.env.ENABLE_API_SECURITY === 'true',
-    clerkEnabled: !!(process.env.CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY) && process.env.AUTH_DISABLE_CLERK?.toLowerCase() !== 'true',
+    demoAuthEnabled: true,
     jwtEnabled: !!process.env.JWT_SECRET,
     sentryEnabled: !!(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN),
     allowedOrigins: (process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [

@@ -72,8 +72,8 @@ export default function DemoPage() {
         <div className="mt-12 glass p-6 rounded-lg">
           <h3 className="text-lg font-medium text-white mb-2">MVP Status</h3>
           <p className="text-white/80 text-sm">
-            These components are ready for MVP deployment. They integrate with the existing 
-            Supabase database, Clerk authentication, and provide the core functionality 
+            These components are ready for MVP deployment.             They integrate with the existing 
+            Supabase database, demo authentication, and provide the core functionality
             specified in the PRD-MVP.md document.
           </p>
         </div>

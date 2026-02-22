@@ -32,7 +32,7 @@ export function TourOverlay() {
   const [showCelebration, setShowCelebration] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Calculate position of highlighted element
+  // Calculate position of highlighted element; fallback to centered when element not found
   useEffect(() => {
     if (!currentStep || !isActive) {
       setElementPosition(null)
@@ -41,19 +41,26 @@ export function TourOverlay() {
 
     const updatePosition = () => {
       const element = document.querySelector(currentStep.target)
+      const padding = currentStep.highlightPadding || 8
+
       if (element) {
         const rect = element.getBoundingClientRect()
-        const padding = currentStep.highlightPadding || 8
-        
         setElementPosition({
           top: rect.top - padding,
           left: rect.left - padding,
           width: rect.width + padding * 2,
           height: rect.height + padding * 2
         })
-
-        // Scroll element into view if needed
         element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else {
+        // Fallback: centered tooltip when target element doesn't exist (e.g. wrong page)
+        const size = 1
+        setElementPosition({
+          top: window.innerHeight / 2 - size / 2,
+          left: window.innerWidth / 2 - size / 2,
+          width: size,
+          height: size
+        })
       }
     }
 
@@ -113,9 +120,9 @@ export function TourOverlay() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[9999] pointer-events-none"
       >
-        {/* Dark overlay with spotlight cutout */}
+        {/* Dark overlay with spotlight cutout (or full dim when element not found) */}
         <div className="absolute inset-0 bg-black/70 pointer-events-auto">
-          {elementPosition && (
+          {elementPosition && elementPosition.width > 10 && elementPosition.height > 10 && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ 

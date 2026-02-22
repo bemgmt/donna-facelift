@@ -583,7 +583,178 @@ class RateLimiter {
 - Service-level permissions
 - Audit logging
 
+## Telnyx Integration
+
+### 1. Voice API (Call Control)
+
+**Purpose**: Real PSTN phone calling for inbound and outbound calls
+
+**Implementation**: `voice_system/telnyx_voice_client.php`
+
+**Key Features**:
+- Outbound call initiation
+- Inbound call handling via webhooks
+- Call control (answer, hangup, transfer)
+- Call recording
+- Call history and analytics
+
+**API Configuration**:
+```php
+class TelnyxVoiceClient implements VoiceProviderInterface {
+    private $apiKey;
+    private $baseUrl = 'https://api.telnyx.com/v2';
+}
+```
+
+**Call Operations**:
+- `initiateCall($to, $from, $options)` - Start outbound call
+- `answerCall($callId)` - Answer incoming call
+- `hangupCall($callId)` - End call
+- `transferCall($callId, $to)` - Transfer to another number
+- `getCallStatus($callId)` - Get current call state
+- `recordCall($callId, $enabled)` - Toggle recording
+
+**Webhook Events**:
+- `call.initiated` - New call started
+- `call.answered` - Call answered
+- `call.ended` - Call completed
+- `call.hangup` - Call hung up
+
+### 2. Messaging API (SMS/MMS)
+
+**Purpose**: SMS and MMS messaging for customer communication
+
+**Implementation**: `voice_system/telnyx_messaging_client.php`
+
+**Key Features**:
+- SMS sending and receiving
+- MMS support with media
+- Delivery status tracking
+- Webhook-based message handling
+
+**API Configuration**:
+```php
+class TelnyxMessagingClient implements MessagingProviderInterface {
+    private $apiKey;
+    private $messagingProfileId;
+    private $baseUrl = 'https://api.telnyx.com/v2';
+}
+```
+
+**Messaging Operations**:
+- `sendSMS($to, $message, $options)` - Send SMS
+- `sendMMS($to, $message, $media, $options)` - Send MMS
+- `getMessageStatus($messageId)` - Check delivery status
+- `receiveMessage($webhookData)` - Process inbound message
+
+**Webhook Events**:
+- `message.received` - Incoming message
+- `message.finalized` - Message delivery confirmed
+- `message.sending.failed` - Delivery failure
+
+### 3. Provider Abstraction Layer
+
+**Purpose**: Allow switching between providers without code changes
+
+**Implementation**: `lib/ProviderFactory.php`
+
+**Factory Pattern**:
+```php
+// Create voice provider
+$voiceProvider = ProviderFactory::createVoiceProvider('telnyx');
+
+// Create messaging provider
+$messagingProvider = ProviderFactory::createMessagingProvider('telnyx');
+```
+
+**Configuration**:
+- Environment variables: `VOICE_PROVIDER`, `MESSAGING_PROVIDER`
+- Defaults to 'telnyx' if not specified
+- Supports future providers (Twilio, etc.)
+
+### 4. Webhook Handling
+
+**Purpose**: Real-time event processing from Telnyx
+
+**Implementation**: `api/telnyx/webhook.php`
+
+**Features**:
+- Signature verification using Ed25519
+- Call event processing
+- Message event processing
+- Call history storage
+- Event fanout to other services
+
+**Webhook Configuration**:
+```env
+TELNYX_WEBHOOK_URL=https://yourdomain.com/api/telnyx/webhook.php
+TELNYX_WEBHOOK_SECRET=your_webhook_secret
+```
+
+### 5. Call History API
+
+**Purpose**: Store and retrieve call records
+
+**Implementation**: `api/call-history.php`
+
+**Endpoints**:
+- `GET /api/call-history.php` - List calls with filters
+- `GET /api/call-history.php?id={callId}` - Get specific call
+
+**Features**:
+- Date range filtering
+- Phone number filtering
+- Pagination support
+- File-based storage (with Supabase option)
+
+## Integration Management
+
+### Provider Selection
+
+The system uses a factory pattern to select providers:
+
+```php
+// Voice provider selection
+$voiceProvider = ProviderFactory::createVoiceProvider();
+// Reads VOICE_PROVIDER env var, defaults to 'telnyx'
+
+// Messaging provider selection
+$messagingProvider = ProviderFactory::createMessagingProvider();
+// Reads MESSAGING_PROVIDER env var, defaults to 'telnyx'
+```
+
+### Environment Variables
+
+```bash
+# Telnyx Configuration
+TELNYX_API_KEY=your_telnyx_api_key
+TELNYX_MESSAGING_PROFILE_ID=your_messaging_profile_id
+TELNYX_PHONE_NUMBER=+1234567890
+TELNYX_WEBHOOK_SECRET=your_webhook_secret
+TELNYX_WEBHOOK_URL=https://yourdomain.com/api/telnyx/webhook.php
+TELNYX_CONNECTION_ID=your_connection_id
+
+# Provider Selection
+VOICE_PROVIDER=telnyx
+MESSAGING_PROVIDER=telnyx
+```
+
+### Error Handling
+
+All Telnyx operations include comprehensive error handling:
+- API error detection and logging
+- Retry logic for transient failures
+- Graceful fallbacks
+- User-friendly error messages
+
+### Security
+
+- Webhook signature verification
+- API key stored in environment variables
+- HTTPS required for webhooks
+- Rate limiting on API endpoints
+
 ---
 
-*This comprehensive third-party integration architecture ensures reliable, secure, and scalable operation of the DONNA platform across multiple external services.*
+*This comprehensive third-party integration architecture ensures reliable, secure, and scalable operation of the DONNA platform across multiple external services, including Telnyx for voice and messaging.*
 

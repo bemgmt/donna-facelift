@@ -2,6 +2,7 @@
 
 import { useEffect, useContext } from 'react'
 import { TourContext } from '@/contexts/TourContext'
+import { toast } from '@/hooks/use-toast'
 import type { TourConfig } from '@/types/onboarding'
 
 /**
@@ -159,6 +160,11 @@ export function TourTrigger() {
         
         if (!tourConfigs || !tourConfigs.dashboardTour) {
           console.warn('Tour configs not available')
+          toast({
+            title: 'Tour unavailable',
+            description: 'The guided tour could not be loaded. Please try again later.',
+            variant: 'destructive'
+          })
           return
         }
 
@@ -193,13 +199,18 @@ export function TourTrigger() {
         }
         
         if (tourConfig && startTour) {
-          startTour(tourConfig)
+          await startTour(tourConfig)
         } else if (startTour && tourConfigs.dashboardTour) {
           console.warn(`Tour not found: ${tourId}. Starting default dashboard tour.`)
-          startTour(tourConfigs.dashboardTour)
+          await startTour(tourConfigs.dashboardTour)
         }
       } catch (error) {
         console.error('Error handling tour request:', error)
+        toast({
+          title: 'Tour error',
+          description: 'Something went wrong starting the tour. Please try again.',
+          variant: 'destructive'
+        })
       }
     }
 

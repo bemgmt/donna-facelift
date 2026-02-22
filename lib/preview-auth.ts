@@ -1,74 +1,51 @@
-import { isFaceliftPreview } from './facelift-preview'
 import { cookies } from 'next/headers'
 
-type ClerkServerModule = typeof import('@clerk/nextjs/server')
-
-let serverModulePromise: Promise<ClerkServerModule> | null = null
-
-async function loadClerkServerModule() {
-  if (!serverModulePromise) {
-    serverModulePromise = import('@clerk/nextjs/server')
-  }
-  return serverModulePromise
+export type AuthResult = {
+  userId: string | null
+  sessionId: string | null
+  getToken: () => Promise<string | null>
+  claims: { sub?: string } | null
 }
 
-type AuthResult = Awaited<ReturnType<ClerkServerModule['auth']>>
-
-const previewAuthResult = {
+const previewAuthResult: AuthResult = {
   userId: null,
   sessionId: null,
   getToken: async () => null,
   claims: null,
-} as AuthResult
+}
 
-const demoAuthResult = {
+const demoAuthResult: AuthResult = {
   userId: 'demo-user-donna',
   sessionId: 'demo-session',
   getToken: async () => 'demo-token',
   claims: { sub: 'demo-user-donna' },
-} as AuthResult
+}
 
+/**
+ * Auth for demo mode (cookie-based).
+ * Returns demo user when donna_demo_session cookie is set.
+ */
 export async function auth(): Promise<AuthResult> {
-  const clerkDisabled = process.env.AUTH_DISABLE_CLERK?.toLowerCase() === 'true'
-  if (isFaceliftPreview) {
-    // Check for demo session cookie
-    const cookieStore = await cookies()
-    const demoSession = cookieStore.get('donna_demo_session')
-    if (demoSession?.value === 'true') {
-      return demoAuthResult
-    }
-    return previewAuthResult
+  const cookieStore = await cookies()
+  const demoSession = cookieStore.get('donna_demo_session')
+  if (demoSession?.value === 'true') {
+    return demoAuthResult
   }
-  if (clerkDisabled) {
-    const cookieStore = await cookies()
-    const demoSession = cookieStore.get('donna_demo_session')
-    if (demoSession?.value === 'true') {
-      return demoAuthResult
-    }
-    return previewAuthResult
-  }
-  const { auth } = await loadClerkServerModule()
-  return auth()
+  return previewAuthResult
 }
 
 export async function currentUser() {
-  if (isFaceliftPreview) {
-    // Check for demo session cookie
-    const cookieStore = await cookies()
-    const demoSession = cookieStore.get('donna_demo_session')
-    if (demoSession?.value === 'true') {
-      const demoUser = cookieStore.get('donna_demo_user')
-      return {
-        id: 'demo-user-donna',
-        username: demoUser?.value || 'DONNA',
-        emailAddresses: [],
-        firstName: 'DONNA',
-        lastName: 'Demo',
-      } as any
-    }
-    return null
+  const cookieStore = await cookies()
+  const demoSession = cookieStore.get('donna_demo_session')
+  if (demoSession?.value === 'true') {
+    const demoUser = cookieStore.get('donna_demo_user')
+    return {
+      id: 'demo-user-donna',
+      username: demoUser?.value || 'DONNA',
+      emailAddresses: [],
+      firstName: 'DONNA',
+      lastName: 'Demo',
+    } as any
   }
-  const { currentUser } = await loadClerkServerModule()
-  return currentUser()
+  return null
 }
-

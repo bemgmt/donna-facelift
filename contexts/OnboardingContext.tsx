@@ -80,8 +80,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         ? prev.completedSteps
         : [...prev.completedSteps, step]
       
-      // Determine next step
-      const stepOrder: OnboardingStep[] = ['welcome', 'profile', 'personality', 'tour', 'complete']
+      // Determine next step (profile omitted - welcome and profile both showed WelcomeStep, causing restart)
+      const stepOrder: OnboardingStep[] = ['welcome', 'personality', 'tour', 'complete']
       const currentIndex = stepOrder.indexOf(step)
       const nextStep = stepOrder[currentIndex + 1] || 'complete'
       

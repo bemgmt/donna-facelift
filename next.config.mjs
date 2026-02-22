@@ -65,6 +65,11 @@ const nextConfig = {
         source: '/api/inbox.php',
         destination: `${devPhpBase}/api/inbox.php`,
       },
+      // Chatbot settings endpoint
+      {
+        source: '/api/chatbot_settings.php',
+        destination: `${devPhpBase}/api/chatbot_settings.php`,
+      },
       // A broader rule for other potential PHP endpoints during development
       {
         source: '/php/:path*',
@@ -125,6 +130,9 @@ const nextConfig = {
     // Optimize package imports
     optimizePackageImports: ['framer-motion', 'lucide-react', '@radix-ui/react-icons']
   },
+
+  // Transpile floating-ui packages to fix ESM re-export issues
+  transpilePackages: ['@floating-ui/core', '@floating-ui/dom', '@floating-ui/utils'],
 }
 
 export default withBundleAnalyzer(withSentryConfig(nextConfig, { silent: true }))

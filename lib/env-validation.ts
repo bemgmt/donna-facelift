@@ -18,9 +18,6 @@ const REQUIRED_PRODUCTION_VARS = [
 ]
 
 const RECOMMENDED_VARS = [
-  'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-  'CLERK_PUBLISHABLE_KEY',
-  'CLERK_SECRET_KEY',
   'SENTRY_DSN',
   'NEXT_PUBLIC_SENTRY_DSN',
   'ALLOWED_ORIGINS',
@@ -29,8 +26,7 @@ const RECOMMENDED_VARS = [
 
 const SECURITY_VARS = [
   'JWT_SECRET',
-  'ENABLE_API_SECURITY',
-  'AUTH_DISABLE_CLERK'
+  'ENABLE_API_SECURITY'
 ]
 
 function validateEnvVar(name: string, value: string | undefined, required: boolean = false): {
@@ -58,13 +54,6 @@ function validateEnvVar(name: string, value: string | undefined, required: boole
     case 'NEXT_PUBLIC_SUPABASE_ANON_KEY':
       if (value.length < 100) return { valid: false, error: `${name} appears to be too short for a Supabase key` }
       break
-    case 'CLERK_PUBLISHABLE_KEY':
-    case 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY':
-      if (!value.startsWith('pk_')) return { valid: false, error: `${name} should start with 'pk_'` }
-      break
-    case 'CLERK_SECRET_KEY':
-      if (!value.startsWith('sk_')) return { valid: false, error: `${name} should start with 'sk_'` }
-      break
     case 'ALLOWED_ORIGINS': {
       const origins = value.split(',').map(o => o.trim())
       for (const origin of origins) {
@@ -75,7 +64,6 @@ function validateEnvVar(name: string, value: string | undefined, required: boole
       break
     }
     case 'ENABLE_API_SECURITY':
-    case 'AUTH_DISABLE_CLERK':
       if (!['true', 'false'].includes(value.toLowerCase())) return { valid: false, error: `${name} must be 'true' or 'false'` }
       break
   }
@@ -112,14 +100,8 @@ export function validateEnvironment(): EnvValidationResult {
   }
 
   if (isProduction) {
-    const hasClerk = (process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) && process.env.CLERK_SECRET_KEY
     const hasJWT = process.env.JWT_SECRET
-    const clerkDisabled = process.env.AUTH_DISABLE_CLERK?.toLowerCase() === 'true'
-    const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY
-    if (publishableKey && publishableKey.includes('_test_')) errors.push('Clerk publishable key must use production credentials')
-    if (process.env.CLERK_SECRET_KEY?.includes('_test_')) errors.push('Clerk secret key must use production credentials')
-    if (clerkDisabled) errors.push('AUTH_DISABLE_CLERK must be false in production')
-    if (!hasClerk && !hasJWT && !clerkDisabled) warnings.push('No authentication method configured (Clerk or JWT)')
+    if (!hasJWT) warnings.push('No JWT_SECRET configured for production; using demo auth')
 
     const securityEnabled = process.env.ENABLE_API_SECURITY?.toLowerCase() === 'true'
     if (!securityEnabled) warnings.push('API security is not explicitly enabled in production')
@@ -133,7 +115,7 @@ export function validateEnvironment(): EnvValidationResult {
 export function getSecurityConfig() {
   return {
     securityEnabled: process.env.NODE_ENV === 'production' || process.env.ENABLE_API_SECURITY === 'true',
-    clerkEnabled: !!((process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) && process.env.CLERK_SECRET_KEY) && process.env.AUTH_DISABLE_CLERK?.toLowerCase() !== 'true',
+    demoAuthEnabled: true,
     jwtEnabled: !!process.env.JWT_SECRET,
     sentryEnabled: !!(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN),
     allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
@@ -161,7 +143,7 @@ export function logEnvironmentValidation() {
   const config = getSecurityConfig()
   console.log('Security configuration:', {
     securityEnabled: config.securityEnabled,
-    clerkEnabled: config.clerkEnabled,
+    demoAuthEnabled: config.demoAuthEnabled,
     jwtEnabled: config.jwtEnabled,
     sentryEnabled: config.sentryEnabled,
     allowedOrigins: (config.allowedOrigins || []).length

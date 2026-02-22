@@ -18,7 +18,6 @@ const services = [
 ];
 
 if (process.env.SUPABASE_URL) services.push({ name: 'Supabase API', url: process.env.SUPABASE_URL, type: 'http-postgrest' });
-if (process.env.CLERK_JWKS_URL) services.push({ name: 'Clerk JWKS', url: process.env.CLERK_JWKS_URL, type: 'http' });
 
 let hasErrors = false;
 

@@ -6,8 +6,9 @@
 
 require_once __DIR__ . '/DataAccessInterface.php';
 require_once __DIR__ . '/FileDataAccess.php';
-require_once __DIR__ . '/PostgreSQLDataAccess.php';
-require_once __DIR__ . '/SupabaseDataAccess.php';
+// Load database implementations only when needed
+// require_once __DIR__ . '/PostgreSQLDataAccess.php';
+// require_once __DIR__ . '/SupabaseDataAccess.php';
 
 class DataAccessFactory {
     private static $instance = null;
@@ -27,7 +28,8 @@ class DataAccessFactory {
         
         switch (strtolower($type)) {
             case 'file':
-                self::$instance = new FileDataAccess();
+                $dataDir = $_ENV['DATA_DIR'] ?? __DIR__ . '/../data';
+                self::$instance = new FileDataAccess($dataDir);
                 break;
                 
             case 'postgresql':
@@ -55,7 +57,8 @@ class DataAccessFactory {
                 // Fallback to file storage if database connection fails
                 if ($type !== 'file') {
                     error_log("DataAccessFactory: Falling back to file storage");
-                    self::$instance = new FileDataAccess();
+                    $dataDir = $_ENV['DATA_DIR'] ?? __DIR__ . '/../data';
+                    self::$instance = new FileDataAccess($dataDir);
                     self::$storageType = 'file';
                 }
             }
@@ -68,6 +71,8 @@ class DataAccessFactory {
      * Create PostgreSQL data access with connection validation
      */
     private static function createPostgreSQLDataAccess() {
+        require_once __DIR__ . '/PostgreSQLDataAccess.php';
+        
         // Validate required environment variables
         $requiredVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
         $missingVars = [];

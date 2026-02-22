@@ -8,10 +8,10 @@ interface TourContextType {
   currentStep: TourStep | null
   currentStepIndex: number
   isActive: boolean
-  startTour: (config: TourConfig) => void
-  nextStep: () => void
-  previousStep: () => void
-  goToStep: (index: number) => void
+  startTour: (config: TourConfig) => void | Promise<void>
+  nextStep: () => void | Promise<void>
+  previousStep: () => void | Promise<void>
+  goToStep: (index: number) => void | Promise<void>
   pauseTour: () => void
   resumeTour: () => void
   endTour: () => void
@@ -62,16 +62,14 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeTour, currentStepIndex, isPaused])
 
-  const startTour = useCallback((config: TourConfig) => {
+  const startTour = useCallback(async (config: TourConfig) => {
+    // Execute beforeShow for first step (await if it returns a Promise)
+    if (config.steps[0]?.beforeShow) {
+      await Promise.resolve(config.steps[0].beforeShow())
+    }
     setActiveTour(config)
     setCurrentStepIndex(0)
     setIsPaused(false)
-    
-    // Execute beforeShow for first step
-    if (config.steps[0]?.beforeShow) {
-      config.steps[0].beforeShow()
-    }
-    
     // Emit step change event for first step
     if (config.steps[0]?.chatMessage) {
       window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
@@ -84,30 +82,25 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const nextStep = useCallback(() => {
+  const nextStep = useCallback(async () => {
     if (!activeTour) return
 
     const nextIndex = currentStepIndex + 1
-    
-    // Execute afterShow for current step
+    // Execute afterShow for current step (await if it returns a Promise)
     if (currentStep?.afterShow) {
-      currentStep.afterShow()
+      await Promise.resolve(currentStep.afterShow())
     }
 
     if (nextIndex >= activeTour.steps.length) {
-      // Tour complete
       activeTour.onComplete?.()
       setActiveTour(null)
       setCurrentStepIndex(0)
     } else {
-      setCurrentStepIndex(nextIndex)
-      
-      // Execute beforeShow for next step
+      // Execute beforeShow for next step (await if it returns a Promise)
       if (activeTour.steps[nextIndex]?.beforeShow) {
-        activeTour.steps[nextIndex].beforeShow()
+        await Promise.resolve(activeTour.steps[nextIndex].beforeShow!())
       }
-      
-      // Emit step change event
+      setCurrentStepIndex(nextIndex)
       if (activeTour.steps[nextIndex]?.chatMessage) {
         window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
           detail: {
@@ -120,18 +113,14 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeTour, currentStepIndex, currentStep])
 
-  const previousStep = useCallback(() => {
+  const previousStep = useCallback(async () => {
     if (!activeTour || currentStepIndex === 0) return
 
     const prevIndex = currentStepIndex - 1
-    setCurrentStepIndex(prevIndex)
-    
-    // Execute beforeShow for previous step
     if (activeTour.steps[prevIndex]?.beforeShow) {
-      activeTour.steps[prevIndex].beforeShow()
+      await Promise.resolve(activeTour.steps[prevIndex].beforeShow!())
     }
-    
-    // Emit step change event
+    setCurrentStepIndex(prevIndex)
     if (activeTour.steps[prevIndex]?.chatMessage) {
       window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
         detail: {
@@ -143,17 +132,12 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeTour, currentStepIndex])
 
-  const goToStep = useCallback((index: number) => {
+  const goToStep = useCallback(async (index: number) => {
     if (!activeTour || index < 0 || index >= activeTour.steps.length) return
-    
-    setCurrentStepIndex(index)
-    
-    // Execute beforeShow for target step
     if (activeTour.steps[index]?.beforeShow) {
-      activeTour.steps[index].beforeShow()
+      await Promise.resolve(activeTour.steps[index].beforeShow!())
     }
-    
-    // Emit step change event
+    setCurrentStepIndex(index)
     if (activeTour.steps[index]?.chatMessage) {
       window.dispatchEvent(new CustomEvent('donna:tour-step-changed', {
         detail: {

@@ -13,34 +13,13 @@ export interface AuthenticatedUser {
 }
 
 /**
- * Helper: determine if Clerk is configured and not explicitly disabled
- */
-function isClerkConfigured(): boolean {
-  const pk = process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  const sk = process.env.CLERK_SECRET_KEY
-  return !!(pk && sk)
-}
-
-function isClerkEnabled(): boolean {
-  const disabled = (process.env.AUTH_DISABLE_CLERK || '').toLowerCase() === 'true'
-  if (disabled) return false
-  return isClerkConfigured()
-}
-
-/**
- * Verify authentication using Clerk
- * Supports both session-based and JWT-based authentication
+ * Verify authentication using demo session (cookie-based)
  */
 export async function verifyAuthentication(): Promise<{
   success: boolean
   user?: AuthenticatedUser
   error?: string
 }> {
-  // Skip Clerk if not configured or explicitly disabled
-  if (!isClerkEnabled()) {
-    return { success: false, error: 'Clerk disabled' }
-  }
-
   try {
     const { userId, sessionId, orgId } = await auth()
 
@@ -60,10 +39,7 @@ export async function verifyAuthentication(): Promise<{
       }
     }
   } catch (error) {
-    // Only log when Clerk is actually configured; otherwise this is expected in dev
-    if (isClerkConfigured()) {
-      console.error('Authentication verification failed:', error)
-    }
+    console.error('Authentication verification failed:', error)
     return {
       success: false,
       error: 'Authentication verification failed'
@@ -187,11 +163,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
   identifier: string
   error?: string
 }> {
-  // Optionally skip Clerk if disabled or not configured
-  let sessionAuth = { success: false, error: 'Clerk disabled' } as Awaited<ReturnType<typeof verifyAuthentication>>
-  if (isClerkEnabled()) {
-    sessionAuth = await verifyAuthentication()
-  }
+  const sessionAuth = await verifyAuthentication()
 
   if (sessionAuth.success && sessionAuth.user) {
     return {

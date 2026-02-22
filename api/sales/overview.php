@@ -61,7 +61,48 @@ switch ($action) {
         }
 
     case 'send_text':
-        ApiResponder::jsonSuccess(['message' => 'Text queued']);
+        $sms = $input['sms'] ?? [];
+        $to = trim($sms['to'] ?? '');
+        $message = trim($sms['message'] ?? '');
+
+        $validation = ApiResponder::validateRequired(['to' => $to, 'message' => $message], ['to', 'message']);
+        if (!$validation['valid']) {
+            ApiResponder::jsonValidationError($validation['message']);
+        }
+
+        try {
+            // Load provider factory
+            require_once __DIR__ . '/../lib/ProviderFactory.php';
+            
+            $messagingProvider = ProviderFactory::createMessagingProvider();
+            
+            // Validate phone number
+            if (!$messagingProvider->validatePhoneNumber($to)) {
+                ApiResponder::jsonValidationError('Invalid phone number format. Please use E.164 format (e.g., +1234567890)');
+            }
+            
+            // Format phone number
+            $formattedTo = $messagingProvider->formatPhoneNumber($to);
+            
+            // Send SMS
+            $result = $messagingProvider->sendSMS($formattedTo, $message, [
+                'webhook_url' => getenv('TELNYX_WEBHOOK_URL') ?: null
+            ]);
+            
+            if ($result['success']) {
+                ApiResponder::jsonSuccess([
+                    'message' => 'SMS sent successfully',
+                    'to' => $formattedTo,
+                    'message_id' => $result['message_id'] ?? null,
+                    'status' => $result['status'] ?? 'queued'
+                ]);
+            } else {
+                ApiResponder::jsonError($result['error'] ?? 'SMS sending failed');
+            }
+        } catch (Exception $e) {
+            ApiResponder::jsonServerError('SMS sending failed: ' . $e->getMessage());
+        }
+        break;
 
     default:
         ApiResponder::jsonSuccess(['action' => $action]);

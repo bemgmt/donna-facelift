@@ -66,18 +66,15 @@ export function WelcomeStep() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Auto-advance when on complete step - use useEffect for reliable timer (survives re-renders)
+  const isCompleteStep = currentQuestion === questions.length - 1
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H3',location:'components/onboarding/WelcomeStep.tsx:71',message:'WelcomeStep message list rendered in AnimatePresence popLayout',data:{messageCount:messages.length,animatePresenceMode:'popLayout',childComponent:'ChatBubble'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  }, [messages.length])
-
-  useEffect(() => {
-    if (!showConfirmation) return
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'initial',hypothesisId:'H4',location:'components/onboarding/WelcomeStep.tsx:79',message:'confirmation animation triggered',data:{showConfirmation,keyframes:[0,1.2,1],transitionType:'spring'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  }, [showConfirmation])
+    if (!isCompleteStep) return
+    const timer = setTimeout(() => {
+      completeStep('welcome')
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [isCompleteStep, completeStep])
 
   const addMessage = (role: 'assistant' | 'user', text: string) => {
     const newMessage: Message = {
@@ -126,26 +123,14 @@ export function WelcomeStep() {
     // Move to next question
     setTimeout(() => {
       const nextQuestion = currentQuestion + 1
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'post-fix',hypothesisId:'H6',location:'components/onboarding/WelcomeStep.tsx:130',message:'attempting to advance onboarding question',data:{currentQuestion,nextQuestion,totalQuestions:questions.length},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       if (nextQuestion < questions.length) {
         setCurrentQuestion(nextQuestion)
         const nextQ = questions[nextQuestion]
-        const text = typeof nextQ.text === 'function' 
+        const text = typeof nextQ.text === 'function'
           ? nextQ.text(userData.name || value, userData.businessName)
           : nextQ.text
         addMessage('assistant', text)
-
-        // If this is the last question, auto-complete after showing message
-        if (nextQuestion === questions.length - 1) {
-          setTimeout(() => {
-            // #region agent log
-            fetch('http://127.0.0.1:7244/ingest/0a1b9e1f-6daf-4456-a763-89705411c976',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'19edd3'},body:JSON.stringify({sessionId:'19edd3',runId:'post-fix',hypothesisId:'H6',location:'components/onboarding/WelcomeStep.tsx:144',message:'completing welcome step from last question',data:{nextQuestion,totalQuestions:questions.length},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
-            completeStep('welcome')
-          }, 3000)
-        }
+        // useEffect handles auto-complete when we reach the last question
       }
     }, 800)
   }
@@ -171,23 +156,16 @@ export function WelcomeStep() {
   }
 
   const handleSkipDocuments = () => {
-    // Move to next question
     setTimeout(() => {
       const nextQuestion = currentQuestion + 1
       if (nextQuestion < questions.length) {
         setCurrentQuestion(nextQuestion)
         const nextQ = questions[nextQuestion]
-        const text = typeof nextQ.text === 'function' 
+        const text = typeof nextQ.text === 'function'
           ? nextQ.text(userData.name, userData.businessName)
           : nextQ.text
         addMessage('assistant', text)
-
-        // If this is the last question, auto-complete after showing message
-        if (nextQuestion === questions.length - 1) {
-          setTimeout(() => {
-            completeStep('welcome')
-          }, 3000)
-        }
+        // useEffect handles auto-complete when we reach the last question
       }
     }, 800)
   }
@@ -283,6 +261,15 @@ export function WelcomeStep() {
             </form>
           )}
 
+          {/* Complete step: visible Continue button (auto-advances in 3s too) */}
+          {isCompleteStep && (
+            <div className="flex justify-end pt-2">
+              <NeonButton onClick={() => completeStep('welcome')}>
+                Continue
+              </NeonButton>
+            </div>
+          )}
+
           {/* Document Upload Section */}
           {currentQuestion < questions.length - 1 && questions[currentQuestion].id === 'documents' && (
             <div className="space-y-4">
@@ -370,16 +357,11 @@ export function WelcomeStep() {
                       if (nextQuestion < questions.length) {
                         setCurrentQuestion(nextQuestion)
                         const nextQ = questions[nextQuestion]
-                        const text = typeof nextQ.text === 'function' 
+                        const text = typeof nextQ.text === 'function'
                           ? nextQ.text(userData.name, userData.businessName)
                           : nextQ.text
                         addMessage('assistant', text)
-
-                        if (nextQuestion === questions.length - 1) {
-                          setTimeout(() => {
-                            completeStep('welcome')
-                          }, 3000)
-                        }
+                        // useEffect handles auto-complete when we reach the last question
                       }
                     }, 800)
                   }}

@@ -11,6 +11,7 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../bootstrap_env.php';
 require_once __DIR__ . '/../voice_system/openai_client.php';
 require_once __DIR__ . '/../voice_system/elevenlabs_client.php';
+require_once __DIR__ . '/../lib/ProviderFactory.php';
 
 try {
     // Only allow POST requests
@@ -41,6 +42,30 @@ try {
 
         case 'test_connection':
             handleTestConnection();
+            break;
+            
+        case 'initiate_call':
+            handleInitiateCall($input);
+            break;
+            
+        case 'answer_call':
+            handleAnswerCall($input);
+            break;
+            
+        case 'hangup_call':
+            handleHangupCall($input);
+            break;
+            
+        case 'transfer_call':
+            handleTransferCall($input);
+            break;
+            
+        case 'get_call_status':
+            handleGetCallStatus($input);
+            break;
+            
+        case 'record_call':
+            handleRecordCall($input);
             break;
 
         default:
@@ -284,6 +309,136 @@ function handleTestConnection() {
         'success' => true,
         'connections' => $results
     ]);
+}
+
+/**
+ * Handle call initiation
+ */
+function handleInitiateCall($input) {
+    $to = $input['to'] ?? '';
+    $from = $input['from'] ?? null;
+    $options = $input['options'] ?? [];
+    
+    if (!$to) {
+        throw new Exception('Destination phone number is required');
+    }
+    
+    try {
+        $voiceProvider = ProviderFactory::createVoiceProvider();
+        
+        // Add webhook URL if configured
+        if (getenv('TELNYX_WEBHOOK_URL')) {
+            $options['webhook_url'] = getenv('TELNYX_WEBHOOK_URL');
+        }
+        
+        $result = $voiceProvider->initiateCall($to, $from, $options);
+        
+        echo json_encode($result);
+    } catch (Exception $e) {
+        throw new Exception('Call initiation failed: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Handle call answer
+ */
+function handleAnswerCall($input) {
+    $callId = $input['call_id'] ?? '';
+    
+    if (!$callId) {
+        throw new Exception('Call ID is required');
+    }
+    
+    try {
+        $voiceProvider = ProviderFactory::createVoiceProvider();
+        $result = $voiceProvider->answerCall($callId);
+        
+        echo json_encode($result);
+    } catch (Exception $e) {
+        throw new Exception('Call answer failed: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Handle call hangup
+ */
+function handleHangupCall($input) {
+    $callId = $input['call_id'] ?? '';
+    
+    if (!$callId) {
+        throw new Exception('Call ID is required');
+    }
+    
+    try {
+        $voiceProvider = ProviderFactory::createVoiceProvider();
+        $result = $voiceProvider->hangupCall($callId);
+        
+        echo json_encode($result);
+    } catch (Exception $e) {
+        throw new Exception('Call hangup failed: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Handle call transfer
+ */
+function handleTransferCall($input) {
+    $callId = $input['call_id'] ?? '';
+    $to = $input['to'] ?? '';
+    
+    if (!$callId || !$to) {
+        throw new Exception('Call ID and destination number are required');
+    }
+    
+    try {
+        $voiceProvider = ProviderFactory::createVoiceProvider();
+        $result = $voiceProvider->transferCall($callId, $to);
+        
+        echo json_encode($result);
+    } catch (Exception $e) {
+        throw new Exception('Call transfer failed: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Handle get call status
+ */
+function handleGetCallStatus($input) {
+    $callId = $input['call_id'] ?? '';
+    
+    if (!$callId) {
+        throw new Exception('Call ID is required');
+    }
+    
+    try {
+        $voiceProvider = ProviderFactory::createVoiceProvider();
+        $result = $voiceProvider->getCallStatus($callId);
+        
+        echo json_encode($result);
+    } catch (Exception $e) {
+        throw new Exception('Get call status failed: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Handle call recording toggle
+ */
+function handleRecordCall($input) {
+    $callId = $input['call_id'] ?? '';
+    $enabled = $input['enabled'] ?? true;
+    
+    if (!$callId) {
+        throw new Exception('Call ID is required');
+    }
+    
+    try {
+        $voiceProvider = ProviderFactory::createVoiceProvider();
+        $result = $voiceProvider->recordCall($callId, (bool)$enabled);
+        
+        echo json_encode($result);
+    } catch (Exception $e) {
+        throw new Exception('Call recording toggle failed: ' . $e->getMessage());
+    }
 }
 
 /**

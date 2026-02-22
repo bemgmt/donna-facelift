@@ -27,17 +27,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 
-# Authentication (Choose one option)
-
-# Option A: Clerk (if using Clerk)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
-CLERK_JWKS_URL=https://your-clerk-domain/.well-known/jwks.json
-
-# Option B: Local Dev Bypass (easier for testing)
-AUTH_DISABLE_CLERK=true
-JWT_SECRET=dev
-NEXT_PUBLIC_DEV_JWT=dev.header.payload
+# Authentication: Demo mode (cookie-based)
+# Sign in at /sign-in with DONNA / DONNA123
 
 # System
 ALLOWED_ORIGINS=http://localhost:3000
@@ -159,6 +150,7 @@ When everything works:
 - Navigation adapts to your selection
 
 Then you're ready to test in production! 🎉
+
 
 
 

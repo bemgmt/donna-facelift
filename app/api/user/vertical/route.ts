@@ -24,25 +24,15 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = getSupabaseAdminOrThrow()
     
-    // First, get the user by clerk_id
+    // Upsert user if they don't exist (e.g. new users from onboarding who haven't been synced yet)
     const { data: userData, error: userError } = await supabaseAdmin
         .from('users')
+        .upsert({ clerk_id: clerkId, vertical }, { onConflict: 'clerk_id' })
         .select('id')
-        .eq('clerk_id', clerkId)
         .single()
 
     if (userError || !userData) {
         return NextResponse.json({ error: 'User not found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
-    }
-
-    // Update the user's vertical
-    const { error: updateError } = await supabaseAdmin
-      .from('users')
-      .update({ vertical })
-      .eq('id', userData.id)
-
-    if (updateError) {
-      throw new Error(updateError.message);
     }
 
     return NextResponse.json({ success: true, vertical }, { headers: { 'Cache-Control': 'no-store' } });

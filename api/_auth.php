@@ -35,6 +35,13 @@ function donna_cors_and_auth(): array {
     exit; 
   }
 
+  // Auth: Check if Clerk is disabled (development mode)
+  $disableClerk = getenv('AUTH_DISABLE_CLERK') === 'true';
+  if ($disableClerk) {
+      // In development mode, return a mock auth array
+      return ['auth' => 'dev', 'user_id' => 'dev-user'];
+  }
+
   // Auth: API_SECRET fallback
   $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
   if (stripos($authHeader, 'Bearer ') === 0) {

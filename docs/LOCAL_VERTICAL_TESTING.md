@@ -13,15 +13,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 
-# For authentication (if using Clerk)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_key
-CLERK_SECRET_KEY=your_secret
-CLERK_JWKS_URL=your_jwks_url
-
-# Or for local dev bypass (see README)
-AUTH_DISABLE_CLERK=true
-JWT_SECRET=dev
-NEXT_PUBLIC_DEV_JWT=dev.header.payload
+# Auth: Demo mode uses cookie-based session from /sign-in (DONNA / DONNA123)
 ```
 
 ### Step 2: Run Database Migration
@@ -123,9 +115,8 @@ http://localhost:3000/protected
 ### Issue: "User not found" error
 
 **Check:**
-1. Is your user in the Supabase `users` table?
-2. Does the user have a `clerk_id` that matches your Clerk user?
-3. Are your Supabase environment variables correct?
+1. Is your user in the Supabase `users` table? (Demo mode creates users with clerk_id `demo-user-donna`)
+2. Are your Supabase environment variables correct?
 
 **Solution:**
 ```sql
@@ -307,6 +298,7 @@ Once local testing is successful:
 2. Run the database migration on production Supabase
 3. Test in production environment
 4. Monitor for any errors in production logs
+
 
 
 

@@ -9,8 +9,10 @@ import DonnaLightBar from '@/components/DonnaLightBar'
 import { VoiceProvider } from '@/components/voice/VoiceProvider'
 import { OnboardingProvider } from '@/contexts/OnboardingContext'
 import { TourProvider } from '@/contexts/TourContext'
+import { DashboardConfigProvider } from '@/contexts/DashboardConfigContext'
 import SettingsButton from '@/components/SettingsButton'
 import { AuthStatus } from '@/components/AuthStatus'
+import { DashboardLink } from '@/components/DashboardLink'
 import { Toaster } from '@/components/ui/toaster'
 import dynamic from 'next/dynamic'
 
@@ -57,17 +59,18 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="alternate icon" href="/favicon.svg" />
-        <style>{`
-html {
+        <style dangerouslySetInnerHTML={{
+          __html: `html {
   font-family: ${inter.style.fontFamily}, system-ui, sans-serif;
   --font-mono: ${GeistMono.variable};
   background: transparent;
-}
-        `}</style>
+}`
+        }} />
       </head>
       <body className={`${inter.variable} min-h-screen text-white`} style={{ background: 'transparent' }}>
         <OnboardingProvider>
           <TourProvider>
+            <DashboardConfigProvider>
             <VoiceProvider>
               <div className="donna-bg min-h-screen text-white relative">
                 <DonnaLightBar />
@@ -75,6 +78,7 @@ html {
                   <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
                     <div className="text-sm opacity-70">🧠 DONNA</div>
                     <div className="flex items-center gap-3 text-xs opacity-70">
+                      <DashboardLink />
                       <AuthStatus />
                       <VoiceNavButton />
                       <SettingsButton />
@@ -94,6 +98,7 @@ html {
                 <Toaster />
               </div>
             </VoiceProvider>
+            </DashboardConfigProvider>
           </TourProvider>
         </OnboardingProvider>
       </body>

@@ -8,11 +8,6 @@ const {
   NEXT_PUBLIC_USE_WS_PROXY,
   NEXT_PUBLIC_ALLOWED_ORIGIN,
   
-  // Authentication
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-  CLERK_SECRET_KEY,
-  AUTH_DISABLE_CLERK,
-  
   // Google OAuth
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
@@ -104,25 +99,9 @@ if (GOOGLE_REDIRECT_URI) {
     );
 }
 
-// Section 3: Authentication Configuration
+// Section 3: Authentication (Demo mode - cookie-based via /sign-in)
 console.log(chalk.cyan.bold("\n3. Authentication Configuration"));
-check("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is set", !!NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, "Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY to your production Clerk publishable key.");
-if (NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    check(
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY uses production credentials",
-        !NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes("_test_"),
-        "Replace the Clerk publishable key with the pk_live value from your Clerk dashboard."
-    );
-}
-check("CLERK_SECRET_KEY is set", !!CLERK_SECRET_KEY, "Set CLERK_SECRET_KEY to your production Clerk secret key.");
-if (CLERK_SECRET_KEY) {
-    check(
-        "CLERK_SECRET_KEY uses production credentials",
-        !CLERK_SECRET_KEY.includes("_test_"),
-        "Replace the Clerk secret key with the sk_live value from your Clerk dashboard."
-    );
-}
-check("AUTH_DISABLE_CLERK is set to 'false'", AUTH_DISABLE_CLERK === 'false', "Ensure AUTH_DISABLE_CLERK is 'false' for production deployments.");
+console.log(chalk.gray("   Using demo mode: cookie-based auth via /sign-in (DONNA/DONNA123)"));
 
 // Section 4: Connectivity Tests
 console.log(chalk.cyan.bold("\n4. Connectivity Tests"));

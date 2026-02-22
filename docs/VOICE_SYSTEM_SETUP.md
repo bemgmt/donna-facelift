@@ -2,7 +2,7 @@
 
 ## Overview
 
-Your DONNA system now supports both **batch processing** (chatbot) and **real-time streaming** (receptionist) with OpenAI's new Realtime API and your custom ElevenLabs voice.
+Your DONNA system now supports both **batch processing** (chatbot) and **real-time streaming** (receptionist) with OpenAI's new Realtime API and your custom ElevenLabs voice. Additionally, DONNA integrates with **Telnyx** for real PSTN phone calls and SMS messaging.
 
 ### System Architecture
 
@@ -32,6 +32,18 @@ ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 DEFAULT_VOICE_ID=XcXEQzuLXRU9RcfWzEJt
 VOICE_MODEL=eleven_multilingual_v2
 
+# Telnyx Configuration (for PSTN calls and SMS)
+TELNYX_API_KEY=your_telnyx_api_key
+TELNYX_MESSAGING_PROFILE_ID=your_messaging_profile_id
+TELNYX_PHONE_NUMBER=+1234567890
+TELNYX_WEBHOOK_SECRET=your_webhook_secret
+TELNYX_WEBHOOK_URL=https://yourdomain.com/api/telnyx/webhook.php
+TELNYX_CONNECTION_ID=your_connection_id
+
+# Provider Selection
+VOICE_PROVIDER=telnyx
+MESSAGING_PROVIDER=telnyx
+
 # System Configuration
 DOMAIN_NAME=your-domain.vercel.app
 ENVIRONMENT=production
@@ -48,19 +60,28 @@ ENVIRONMENT=production
    - Voice synthesis
    - Your custom voice ID: `XcXEQzuLXRU9RcfWzEJt`
 
+3. **Telnyx API Key** with access to:
+   - Call Control API (for PSTN calls)
+   - Messaging API (for SMS/MMS)
+   - Webhook configuration
+
 ### 3. Frontend Dependencies
 
 The system uses these React hooks:
 - `useVoiceChat` - Batch processing for chatbot
 - `useOpenAIRealtime` - Real-time streaming for receptionist
+- `useTelnyxCalls` - Telnyx call management (initiate, answer, hangup, transfer)
 - `useAudioRecorder` - Audio capture
 - `useAudioPlayer` - Audio playback
 
 ### 4. Backend Endpoints
 
 Available API endpoints:
-- `/api/voice-chat.php` - Batch voice processing
+- `/api/voice-chat.php` - Batch voice processing and call control
 - `/api/realtime-websocket.php` - Realtime API proxy
+- `/api/telnyx/webhook.php` - Telnyx webhook handler for call/message events
+- `/api/call-history.php` - Call history retrieval
+- `/api/sales/overview.php` - SMS sending (via Telnyx)
 - `/donna_logic.php` - Core AI logic
 
 ## 🎯 Features
@@ -73,10 +94,11 @@ Available API endpoints:
 - **Latency**: ~3-5 seconds (higher quality)
 
 ### Receptionist Interface
-- **Mode**: Real-time streaming
+- **Mode**: Real-time streaming with PSTN integration
 - **Voice**: OpenAI Realtime → ElevenLabs post-processing
 - **Pipeline**: Direct WebSocket to OpenAI Realtime API
-- **Use Case**: Natural conversation flow
+- **Phone Calls**: Telnyx Call Control API for inbound/outbound PSTN calls
+- **Use Case**: Natural conversation flow with real phone calls
 - **Latency**: ~500ms-1s (real-time)
 
 ## 🚀 Usage
@@ -90,10 +112,21 @@ Available API endpoints:
 
 ### Testing the Receptionist
 1. Navigate to the receptionist interface
-2. Click "Test Call" to simulate an incoming call
-3. The system auto-connects to OpenAI Realtime API
+2. Click "Dial" to make an outbound call, or wait for incoming calls via webhooks
+3. The system auto-connects to OpenAI Realtime API for AI processing
 4. Speak naturally - responses are real-time
 5. Click "End Call" to finish
+
+### Making Outbound Calls
+1. Click the "Dial" button in the receptionist interface
+2. Enter phone number in E.164 format (e.g., +1234567890)
+3. Click "Call" to initiate
+4. The call will connect via Telnyx and use OpenAI Realtime for AI conversation
+
+### Receiving Inbound Calls
+1. Configure webhook URL in Telnyx dashboard: `https://yourdomain.com/api/telnyx/webhook.php`
+2. Incoming calls will automatically appear in the receptionist interface
+3. Calls are answered automatically and processed with AI
 
 ## 🔧 Configuration Options
 
@@ -173,12 +206,36 @@ Monitor these metrics:
 - Error rates
 - User engagement
 
+## 📞 Telnyx Setup
+
+### 1. Get Telnyx Credentials
+1. Sign up at [telnyx.com](https://telnyx.com)
+2. Navigate to API Keys section
+3. Create a new API key
+4. Copy your Messaging Profile ID from the Messaging section
+5. Provision a phone number for calls and SMS
+
+### 2. Configure Webhooks
+1. Go to Telnyx Dashboard → Webhooks
+2. Add webhook URL: `https://yourdomain.com/api/telnyx/webhook.php`
+3. Select events:
+   - Call events: `call.initiated`, `call.answered`, `call.ended`
+   - Messaging events: `message.received`, `message.finalized`
+4. Set webhook secret and add to `.env` as `TELNYX_WEBHOOK_SECRET`
+
+### 3. Test Integration
+1. Send a test SMS via the sales interface
+2. Make a test outbound call from receptionist interface
+3. Check webhook logs at `/api/telnyx/webhook.php`
+4. Verify call history at `/api/call-history.php`
+
 ## 🎉 Next Steps
 
 1. Test both interfaces thoroughly
-2. Adjust voice settings as needed
-3. Monitor API usage and costs
-4. Gather user feedback
-5. Optimize based on usage patterns
+2. Configure Telnyx webhooks and phone numbers
+3. Adjust voice settings as needed
+4. Monitor API usage and costs
+5. Gather user feedback
+6. Optimize based on usage patterns
 
-Your DONNA system is now ready with both batch and real-time voice capabilities using your custom ElevenLabs voice!
+Your DONNA system is now ready with both batch and real-time voice capabilities, plus real PSTN calling and SMS messaging via Telnyx!

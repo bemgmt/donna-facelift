@@ -38,6 +38,7 @@ interface NavItem {
   label: string
   icon: React.ReactNode
   tooltip: string
+  description?: string
 }
 
 const commonNavItems: NavItem[] = [
@@ -46,12 +47,14 @@ const commonNavItems: NavItem[] = [
     label: "Dashboard",
     icon: <LayoutDashboard className="w-4 h-4" />,
     tooltip: "Dashboard",
+    description: "Your vertical-specific overview: metrics, leads, and quick actions",
   },
   {
     href: "/",
     label: "DONNA Grid",
     icon: <Brain className="w-4 h-4" />,
     tooltip: "Main Grid",
+    description: "AI-powered main interface: email, analytics, and chat",
   },
 ]
 
@@ -65,6 +68,7 @@ const verticalNavItems: VerticalNavItem[] = [
     label: "Properties",
     icon: <Building2 className="w-4 h-4" />,
     tooltip: "Properties",
+    description: "Manage listings, details, and property inventory",
     verticals: ["real_estate"],
   },
   {
@@ -72,6 +76,7 @@ const verticalNavItems: VerticalNavItem[] = [
     label: "Showings",
     icon: <Calendar className="w-4 h-4" />,
     tooltip: "Showings",
+    description: "Schedule and track property viewings",
     verticals: ["real_estate"],
   },
   {
@@ -79,6 +84,7 @@ const verticalNavItems: VerticalNavItem[] = [
     label: "Reservations",
     icon: <Calendar className="w-4 h-4" />,
     tooltip: "Reservations",
+    description: "Manage bookings and availability",
     verticals: ["hospitality"],
   },
   {
@@ -86,6 +92,7 @@ const verticalNavItems: VerticalNavItem[] = [
     label: "Guest Management",
     icon: <Users className="w-4 h-4" />,
     tooltip: "Guest Management",
+    description: "Guest profiles, preferences, and stay history",
     verticals: ["hospitality"],
   },
   {
@@ -93,6 +100,7 @@ const verticalNavItems: VerticalNavItem[] = [
     label: "Clients",
     icon: <Users className="w-4 h-4" />,
     tooltip: "Clients",
+    description: "Client database and relationship tracking",
     verticals: ["professional_services"],
   },
   {
@@ -100,6 +108,7 @@ const verticalNavItems: VerticalNavItem[] = [
     label: "Projects",
     icon: <Briefcase className="w-4 h-4" />,
     tooltip: "Projects",
+    description: "Project pipeline and deliverables",
     verticals: ["professional_services"],
   },
 ]
@@ -158,7 +167,20 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive(item.href)}
-                    tooltip={item.tooltip}
+                    tooltip={
+                      item.description
+                        ? {
+                            children: (
+                              <span>
+                                <span className="font-medium">{item.label}</span>
+                                <span className="block text-[10px] opacity-80 mt-0.5">
+                                  {item.description}
+                                </span>
+                              </span>
+                            ),
+                          }
+                        : item.tooltip
+                    }
                     className={cn(
                       "text-white/60 hover:text-white hover:bg-white/8",
                       isActive(item.href) &&
@@ -190,7 +212,20 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive(item.href)}
-                        tooltip={item.tooltip}
+                        tooltip={
+                          item.description
+                            ? {
+                                children: (
+                                  <span>
+                                    <span className="font-medium">{item.label}</span>
+                                    <span className="block text-[10px] opacity-80 mt-0.5">
+                                      {item.description}
+                                    </span>
+                                  </span>
+                                ),
+                              }
+                            : item.tooltip
+                        }
                         className={cn(
                           "text-white/60 hover:text-white hover:bg-white/8",
                           isActive(item.href) &&

@@ -13,9 +13,24 @@ if ($docRoot && is_dir($docRoot)) {
     $envDir = dirname(__DIR__, 2);
 }
 
-$envPath = $envDir . DIRECTORY_SEPARATOR . '.env';
+// For development, also check project root for .env.local or .env
+// bootstrap_env.php is in project root, so __DIR__ is the project root
+$projectRoot = __DIR__;
+$envPaths = [
+    $projectRoot . DIRECTORY_SEPARATOR . '.env.local',
+    $projectRoot . DIRECTORY_SEPARATOR . '.env',
+    $envDir . DIRECTORY_SEPARATOR . '.env',
+];
 
-if (is_readable($envPath)) {
+$envPath = null;
+foreach ($envPaths as $path) {
+    if (is_readable($path)) {
+        $envPath = $path;
+        break;
+    }
+}
+
+if ($envPath && is_readable($envPath)) {
     // Simple .env parser: KEY=VALUE per line, ignores comments and blank lines
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {

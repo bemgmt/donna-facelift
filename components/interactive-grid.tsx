@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useDashboardConfigOptional } from "@/contexts/DashboardConfigContext"
 import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -171,8 +172,20 @@ const gridItems: GridItem[] = [
 ]
 
 export default function InteractiveGrid() {
+  const dashboardConfig = useDashboardConfigOptional()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<string | null>(null)
+
+  const visibleGridItems = useMemo(() => {
+    const visible = dashboardConfig?.config?.mainInterface?.visibleModules
+    if (!visible || !Array.isArray(visible) || visible.length === 0) return gridItems
+    const idSet = new Set(visible)
+    const ordered = visible
+      .map((id) => gridItems.find((g) => g.id === id))
+      .filter((g): g is GridItem => !!g)
+    const rest = gridItems.filter((g) => !idSet.has(g.id))
+    return [...ordered, ...rest]
+  }, [dashboardConfig?.config?.mainInterface?.visibleModules])
   const [zoomLevel, setZoomLevel] = useState(0) // 0 to 100, smooth continuous zoom
   const [zoomVelocity, setZoomVelocity] = useState(0)
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 }) // Viewport coordinates
@@ -276,7 +289,7 @@ export default function InteractiveGrid() {
   }
 
   if (selectedItem) {
-    const item = gridItems.find((item) => item.id === selectedItem)
+    const item = visibleGridItems.find((item) => item.id === selectedItem)
     return (
       <AnimatePresence>
         <motion.div
@@ -357,7 +370,7 @@ export default function InteractiveGrid() {
             transition: "transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
           }}
         >
-          {gridItems.map((item) => {
+          {visibleGridItems.map((item) => {
             const isHovered = hoveredItem === item.id
             const itemZoomProgress = isHovered ? easeOutProgress : 0
 

@@ -5,6 +5,7 @@ import { Mic, MicOff, Volume2, VolumeX, PhoneCall, PhoneOff, Settings, User } fr
 import { useState, useEffect } from "react"
 import { useOpenAIRealtime } from "@/hooks/use-openai-realtime"
 import { formatTime } from "@/hooks/use-audio-player"
+import { useTelnyxCalls } from "@/hooks/use-telnyx-calls"
 
 // Declare window augmentation for latch mode without using `any`
 declare global {
@@ -14,9 +15,15 @@ declare global {
 export default function ReceptionistInterface() {
   const [isCallActive, setIsCallActive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showDialer, setShowDialer] = useState(false)
+  const [dialNumber, setDialNumber] = useState("")
   const [currentCaller, setCurrentCaller] = useState<string | null>(null)
   const [callStartTime, setCallStartTime] = useState<Date | null>(null)
   const [callDuration, setCallDuration] = useState(0)
+  const [currentCallId, setCurrentCallId] = useState<string | null>(null)
+
+  // Telnyx call management hook
+  const [telnyxState, telnyxActions] = useTelnyxCalls()
 
   // OpenAI Realtime API hook for real-time streaming
   const [realtimeState, realtimeActions] = useOpenAIRealtime({
@@ -104,6 +111,15 @@ export default function ReceptionistInterface() {
     // Stop real-time listening
     realtimeActions.stopListening()
 
+    // Hang up via Telnyx if we have a call ID
+    if (currentCallId) {
+      try {
+        await telnyxActions.hangupCall(currentCallId)
+      } catch (error) {
+        console.error('Error hanging up call:', error)
+      }
+    }
+
     // Add to call history
     if (currentCaller && callStartTime) {
       const newCall = {
@@ -119,6 +135,7 @@ export default function ReceptionistInterface() {
 
     setIsCallActive(false)
     setCurrentCaller(null)
+    setCurrentCallId(null)
     setCallStartTime(null)
     setCallDuration(0)
   }
@@ -132,11 +149,51 @@ export default function ReceptionistInterface() {
     }
   }
 
-  // Simulate incoming call
+  // Simulate incoming call (for testing)
   const simulateIncomingCall = () => {
     const callers = ["Alex Thompson", "Maria Garcia", "David Chen", "Lisa Anderson"]
     const randomCaller = callers[Math.floor(Math.random() * callers.length)]
     handleIncomingCall(randomCaller)
+  }
+
+  // Initiate outbound call via Telnyx
+  const handleOutboundCall = async () => {
+    if (!dialNumber.trim()) {
+      alert('Please enter a phone number')
+      return
+    }
+
+    try {
+      const result = await telnyxActions.initiateCall(dialNumber)
+      
+      if (result.success && result.call_id) {
+        setCurrentCallId(result.call_id)
+        setCurrentCaller(dialNumber)
+        setIsCallActive(true)
+        setCallStartTime(new Date())
+        setCallDuration(0)
+        setShowDialer(false)
+        setDialNumber("")
+        
+        // Start real-time listening for the call
+        realtimeActions.startListening()
+      } else {
+        alert(`Call failed: ${result.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Call initiation error:', error)
+      alert('Failed to initiate call')
+    }
+  }
+
+  // Handle incoming call from webhook (would be called by webhook handler)
+  const handleIncomingCallFromWebhook = (callData: { call_id: string; from: string; to: string }) => {
+    setCurrentCallId(callData.call_id)
+    setCurrentCaller(callData.from)
+    setIsCallActive(true)
+    setCallStartTime(new Date())
+    setCallDuration(0)
+    realtimeActions.startListening()
   }
 
   return (
@@ -173,17 +230,72 @@ export default function ReceptionistInterface() {
               <Settings className="w-4 h-4" />
             </button>
             {!isCallActive && (
-              <button
-                onClick={simulateIncomingCall}
-                className="px-3 py-1 text-xs bg-green-500/20 border border-green-500/40 text-green-400 rounded hover:bg-green-500/30 transition-colors"
-                title="Simulate incoming call"
-              >
-                Test Call
-              </button>
+              <>
+                <button
+                  onClick={() => setShowDialer(!showDialer)}
+                  className="px-3 py-1 text-xs bg-blue-500/20 border border-blue-500/40 text-blue-400 rounded hover:bg-blue-500/30 transition-colors"
+                  title="Make outbound call"
+                >
+                  <PhoneCall className="w-3 h-3 inline mr-1" />
+                  Dial
+                </button>
+                <button
+                  onClick={simulateIncomingCall}
+                  className="px-3 py-1 text-xs bg-green-500/20 border border-green-500/40 text-green-400 rounded hover:bg-green-500/30 transition-colors"
+                  title="Simulate incoming call"
+                >
+                  Test Call
+                </button>
+              </>
             )}
           </div>
         </div>
       </div>
+
+      {/* Dialer Panel */}
+      {showDialer && !isCallActive && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="border-b border-white/20 p-4 donna-glass donna-gradient-border"
+        >
+          <h3 className="text-sm font-medium mb-3">Make Outbound Call</h3>
+          <div className="flex gap-2">
+            <input
+              type="tel"
+              value={dialNumber}
+              onChange={(e) => setDialNumber(e.target.value)}
+              placeholder="Enter phone number (e.g., +1234567890)"
+              className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-blue-500/60"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleOutboundCall()
+                }
+              }}
+            />
+            <button
+              onClick={handleOutboundCall}
+              disabled={!dialNumber.trim() || telnyxState.isCalling}
+              className="px-4 py-2 bg-blue-500/20 border border-blue-500/40 text-blue-400 rounded hover:bg-blue-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {telnyxState.isCalling ? 'Calling...' : 'Call'}
+            </button>
+            <button
+              onClick={() => {
+                setShowDialer(false)
+                setDialNumber("")
+              }}
+              className="px-4 py-2 bg-white/10 border border-white/20 text-white/60 rounded hover:bg-white/20 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+          {telnyxState.error && (
+            <p className="text-xs text-red-400 mt-2">{telnyxState.error}</p>
+          )}
+        </motion.div>
+      )}
 
       {/* Voice Settings Panel */}
       {showSettings && (

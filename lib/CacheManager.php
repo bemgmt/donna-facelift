@@ -250,6 +250,7 @@ class CacheManager {
                 return new APCuCacheAdapter();
             case 'file':
             default:
+                require_once __DIR__ . '/FileCacheAdapter.php';
                 return new FileCacheAdapter();
         }
     }

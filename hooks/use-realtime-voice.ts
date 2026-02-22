@@ -2,7 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { startRealtimeSession } from '@/lib/realtime-webrtc'
-import { utils } from '@openai/agents-realtime'
+
+// Dynamically import to handle missing package gracefully
+let realtimeUtils: any = null
+if (typeof window !== 'undefined') {
+  try {
+    // @ts-ignore - dynamic import
+    import('@openai/agents-realtime').then(module => {
+      realtimeUtils = module.utils
+    }).catch(() => {
+      console.warn('@openai/agents-realtime not available')
+    })
+  } catch (e) {
+    console.warn('@openai/agents-realtime not available:', e)
+  }
+}
 
 export type RealtimeVoiceState = {
   connecting: boolean
@@ -60,7 +74,7 @@ export function useRealtimeVoice(): [RealtimeVoiceState, RealtimeVoiceActions] {
       session.on('history_added', (item: any) => {
         // Attempt to grab assistant text for logs when a response item is added
         try {
-          const text = utils.getLastTextFromAudioOutputMessage?.(item as any)
+          const text = realtimeUtils?.getLastTextFromAudioOutputMessage?.(item as any)
           if (text) {
             fetch('/api/voice/events', {
               method: 'POST',

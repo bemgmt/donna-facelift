@@ -29,10 +29,7 @@ export function OnboardingFlow() {
         {state.currentStep === 'welcome' && (
           <WelcomeStep key="welcome" />
         )}
-        {state.currentStep === 'profile' && (
-          <WelcomeStep key="profile" />
-        )}
-        {state.currentStep === 'personality' && (
+        {(state.currentStep === 'profile' || state.currentStep === 'personality') && (
           <PersonalityStep key="personality" />
         )}
         {state.currentStep === 'tour' && (

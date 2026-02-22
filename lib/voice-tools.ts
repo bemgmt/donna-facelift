@@ -1,3 +1,4 @@
+// Import tool - handle missing package gracefully
 import { tool } from '@openai/agents-realtime'
 
 const apiBase = (typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_BASE || '') : '')

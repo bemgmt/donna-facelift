@@ -26,7 +26,7 @@ import NotificationsSection from "@/components/settings/NotificationsSection"
 import BillingPlanSection from "@/components/settings/BillingPlanSection"
 import AdvancedDeveloperSection from "@/components/settings/AdvancedDeveloperSection"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Loader2, Save } from "lucide-react"
 
 const settingsSections = [
