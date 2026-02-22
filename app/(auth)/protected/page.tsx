@@ -1,45 +1,59 @@
 "use client"
 
-import { VerticalNavigation } from "@/components/VerticalNavigation"
 import { useVertical } from "@/hooks/use-vertical"
-import { VERTICALS } from "@/lib/constants/verticals"
+import { VERTICALS, type VerticalKey } from "@/lib/constants/verticals"
+import { RealEstateDashboard } from "@/components/dashboard/RealEstateDashboard"
+import { HospitalityDashboard } from "@/components/dashboard/HospitalityDashboard"
+import { ProfessionalServicesDashboard } from "@/components/dashboard/ProfessionalServicesDashboard"
+
+const dashboardComponents: Record<VerticalKey, React.ComponentType> = {
+  real_estate: RealEstateDashboard,
+  hospitality: HospitalityDashboard,
+  professional_services: ProfessionalServicesDashboard,
+}
 
 export default function ProtectedPage() {
   const { vertical, isLoading } = useVertical()
-  
-  const verticalLabel = vertical 
-    ? VERTICALS.find(v => v.key === vertical)?.label 
+
+  const verticalLabel = vertical
+    ? VERTICALS.find((v) => v.key === vertical)?.label
     : null
+
+  const DashboardContent = vertical ? dashboardComponents[vertical] : null
 
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-white">
-          {verticalLabel ? `Welcome to DONNA - ${verticalLabel} Edition` : "Welcome to DONNA"}
+          {verticalLabel
+            ? `Welcome to DONNA - ${verticalLabel} Edition`
+            : "Welcome to DONNA"}
         </h1>
-        <p className="text-white/70 mt-2">
-          {isLoading 
-            ? "Loading your dashboard..." 
-            : verticalLabel 
+        <p className="text-white/70 mt-1 text-sm">
+          {isLoading
+            ? "Loading your dashboard..."
+            : verticalLabel
               ? `Your ${verticalLabel} dashboard is ready.`
               : "Please complete onboarding to access your dashboard."}
         </p>
       </div>
 
-      {vertical && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white">Quick Access</h2>
-          <VerticalNavigation />
+      {isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="p-4 rounded-xl bg-white/5 border border-white/10 animate-pulse"
+            >
+              <div className="h-3 bg-white/10 rounded w-1/2 mb-4" />
+              <div className="h-6 bg-white/10 rounded w-1/3 mb-2" />
+              <div className="h-2 bg-white/8 rounded w-2/3" />
+            </div>
+          ))}
         </div>
       )}
 
-      <div className="mt-8 p-6 bg-white/5 rounded-lg border border-white/10">
-        <h3 className="text-sm font-semibold text-white mb-2">Dashboard Overview</h3>
-        <p className="text-sm text-white/60">
-          Your vertical-specific modules and features will appear here. Use the navigation above to access industry-specific tools.
-        </p>
-      </div>
+      {DashboardContent && <DashboardContent />}
     </div>
   )
 }
-

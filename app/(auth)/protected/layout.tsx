@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/AppSidebar"
 
 export default function ProtectedLayout({
   children,
@@ -11,54 +13,46 @@ export default function ProtectedLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [isChecking, setIsChecking] = useState(true)
+  const isOnboarding = pathname?.includes("/onboarding")
 
   useEffect(() => {
-    // Skip check if already on onboarding page
-    if (pathname?.includes('/onboarding')) {
+    if (isOnboarding) {
       setIsChecking(false)
       return
     }
 
-    // Check for demo session
-    const demoSession = localStorage.getItem('donna_demo_session')
-    if (demoSession === 'true') {
-      // Demo user - allow access
+    const demoSession = localStorage.getItem("donna_demo_session")
+    if (demoSession === "true") {
       setIsChecking(false)
       return
     }
 
-    // Check if user has selected a vertical
     const checkVertical = async () => {
       try {
-        const response = await fetch('/api/user/vertical')
-        
+        const response = await fetch("/api/user/vertical")
+
         if (!response.ok) {
-          // If unauthorized or error, let the page handle it
           setIsChecking(false)
           return
         }
 
         const data = await response.json()
-        
-        // If user doesn't have a vertical, redirect to onboarding
+
         if (!data.vertical) {
-          router.push('/protected/onboarding')
+          router.push("/protected/onboarding")
           return
         }
 
-        // User has vertical, allow access
         setIsChecking(false)
       } catch (error) {
-        console.error('Error checking vertical:', error)
-        // On error, allow access (fail open) - the page can handle errors
+        console.error("Error checking vertical:", error)
         setIsChecking(false)
       }
     }
 
     checkVertical()
-  }, [pathname, router])
+  }, [pathname, router, isOnboarding])
 
-  // Show loading state while checking
   if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -67,6 +61,19 @@ export default function ProtectedLayout({
     )
   }
 
-  return <>{children}</>
-}
+  if (isOnboarding) {
+    return <>{children}</>
+  }
 
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="bg-transparent">
+        <div className="flex items-center gap-2 px-4 py-2 md:hidden">
+          <SidebarTrigger className="text-white/60 hover:text-white" />
+        </div>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
