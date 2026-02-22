@@ -6,14 +6,10 @@ import { useVertical } from "@/hooks/use-vertical"
 import { VERTICALS, type VerticalKey } from "@/lib/constants/verticals"
 import {
   LayoutDashboard,
-  Mail,
-  BarChart3,
-  Settings,
   Building2,
   Calendar,
   Users,
   Briefcase,
-  ChevronLeft,
   Brain,
 } from "lucide-react"
 import { cn } from "@/lib/utils"

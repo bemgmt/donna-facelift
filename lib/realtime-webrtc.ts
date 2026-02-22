@@ -11,9 +11,9 @@ async function loadRealtimeModule() {
   if (RealtimeAgent && RealtimeSession) return { RealtimeAgent, RealtimeSession }
   
   try {
-    const module = await import('@openai/agents-realtime')
-    RealtimeAgent = module.RealtimeAgent
-    RealtimeSession = module.RealtimeSession
+    const realtimeModule = await import('@openai/agents-realtime')
+    RealtimeAgent = realtimeModule.RealtimeAgent
+    RealtimeSession = realtimeModule.RealtimeSession
     return { RealtimeAgent, RealtimeSession }
   } catch (e) {
     console.warn('@openai/agents-realtime not available:', e)

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback } from 'react'
-import { Plus, Pencil2, Trash2, BarChart3, LayoutGrid, Table2 } from 'lucide-react'
+import { useState, useCallback, useMemo } from 'react'
+import { Plus, SquarePen, Trash2, BarChart3, LayoutGrid, Table2 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDashboardConfig, type DashboardWidget } from '@/contexts/DashboardConfigContext'
 
@@ -110,7 +110,7 @@ function WidgetCard({
               onClick={() => setIsInputFocused(true)}
               className="flex items-center gap-1 text-xs text-white/60 hover:text-white w-full px-2 py-1 rounded hover:bg-white/5"
             >
-              <Pencil2 className="w-3 h-3" />
+              <SquarePen className="w-3 h-3" />
               {displayName}
             </button>
           )}
@@ -124,7 +124,7 @@ export function CustomDashboardTab() {
   const { config, updateConfig, isLoading } = useDashboardConfig()
   const [isEditing, setIsEditing] = useState(false)
 
-  const widgets = config?.widgets ?? []
+  const widgets = useMemo(() => config?.widgets ?? [], [config?.widgets])
 
   const addWidget = useCallback(
     (type: DashboardWidget['type']) => {
