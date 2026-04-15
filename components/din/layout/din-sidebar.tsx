@@ -11,7 +11,6 @@ import {
   History,
   TrendingUp,
   Zap,
-  RefreshCw,
   MessageSquare,
   Settings,
   CreditCard,
@@ -65,8 +64,7 @@ export function DinSidebar() {
 
         <DinSidebarGroup label="Intelligence">
           <DinSidebarItem href="/din/intelligence" icon={<TrendingUp className="w-4 h-4" />} label="Trends overview" />
-          <DinSidebarItem href="/din/intelligence/new-skills" icon={<Zap className="w-4 h-4" />} label="New skills" />
-          <DinSidebarItem href="/din/intelligence/updated-skills" icon={<RefreshCw className="w-4 h-4" />} label="Updated skills" />
+          <DinSidebarItem href="/din/intelligence/skills" icon={<Zap className="w-4 h-4" />} label="Skills" />
         </DinSidebarGroup>
 
         <DinSidebarItem href="/din/forum" icon={<MessageSquare className="w-4 h-4" />} label="Discussion forum" />

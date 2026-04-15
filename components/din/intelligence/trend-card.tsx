@@ -6,6 +6,7 @@ import type { TrendItem } from "@/lib/din/types"
 
 interface TrendCardProps {
   trend: TrendItem
+  graphData?: number[]
 }
 
 const demandColors = {
@@ -14,9 +15,57 @@ const demandColors = {
   low: "default",
 } as const
 
-export function TrendCard({ trend }: TrendCardProps) {
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const width = 200
+  const height = 48
+  const padding = 2
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+
+  const points = data.map((val, i) => {
+    const x = padding + (i / (data.length - 1)) * (width - padding * 2)
+    const y = padding + (1 - (val - min) / range) * (height - padding * 2)
+    return `${x},${y}`
+  })
+
+  const polyline = points.join(" ")
+
+  const gradientId = `grad-${data.join("-")}`
+  const areaPoints = `${padding},${height - padding} ${polyline} ${width - padding},${height - padding}`
+
   return (
-    <GlowCard glowColor={demandColors[trend.demandSignal]} className="p-5">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-12" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={areaPoints} fill={`url(#${gradientId})`} />
+      <polyline
+        points={polyline}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const sparklineColors: Record<string, string> = {
+  emerald: "rgb(52, 211, 153)",
+  cyan: "rgb(103, 232, 249)",
+  default: "rgba(255, 255, 255, 0.3)",
+}
+
+export function TrendCard({ trend, graphData }: TrendCardProps) {
+  const colorKey = demandColors[trend.demandSignal]
+
+  return (
+    <GlowCard glowColor={colorKey} className="p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <h3 className="text-sm font-medium text-white">{trend.title}</h3>
@@ -39,15 +88,26 @@ export function TrendCard({ trend }: TrendCardProps) {
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <TagPill variant={demandColors[trend.demandSignal] === "emerald" ? "emerald" : demandColors[trend.demandSignal]}>
+        <TagPill variant={colorKey === "emerald" ? "emerald" : colorKey}>
           {trend.demandSignal} demand
         </TagPill>
         <span className="text-xs text-white/35">{trend.relatedRequests} requests</span>
       </div>
-      {trend.lastUpdated && (
+
+      {graphData && graphData.length > 1 && (
+        <div className="mt-4 -mx-1">
+          <Sparkline data={graphData} color={sparklineColors[colorKey] ?? sparklineColors.default} />
+          <div className="flex justify-between text-[9px] text-white/20 mt-1 px-1">
+            <span>6mo ago</span>
+            <span>Now</span>
+          </div>
+        </div>
+      )}
+
+      {!graphData && trend.lastUpdated && (
         <p className="text-[10px] text-white/25 mt-3">Updated {trend.lastUpdated}</p>
       )}
-      {trend.relatedCategories && trend.relatedCategories.length > 0 && (
+      {!graphData && trend.relatedCategories && trend.relatedCategories.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3">
           {trend.relatedCategories.map((cat) => (
             <TagPill key={cat}>{cat}</TagPill>

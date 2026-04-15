@@ -5,7 +5,7 @@ import { IntelligenceHero } from "@/components/din/intelligence/intelligence-her
 import { MarketSignalCard } from "@/components/din/intelligence/market-signal-card"
 import { TrendCard } from "@/components/din/intelligence/trend-card"
 import { SectionShell } from "@/components/din/ui/section-shell"
-import { trendOverview, marketSignals } from "@/lib/din/mock-data/intelligence"
+import { trendOverview, marketSignals, trendGraphData } from "@/lib/din/mock-data/intelligence"
 
 export default function IntelligencePage() {
   return (
@@ -27,7 +27,7 @@ export default function IntelligencePage() {
       <SectionShell title="Rising Trends" subtitle="Categories and skills gaining momentum">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {trendOverview.map((trend) => (
-            <TrendCard key={trend.id} trend={trend} />
+            <TrendCard key={trend.id} trend={trend} graphData={trendGraphData[trend.id]} />
           ))}
         </div>
       </SectionShell>
