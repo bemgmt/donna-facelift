@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import '@/styles/donna-theme.css'
+import Link from 'next/link'
+import { Globe } from 'lucide-react'
 import ChatWidget from '@/components/chat/ChatWidget'
 import SettingsModal from '@/components/SettingsModal'
 import DonnaLightBar from '@/components/DonnaLightBar'
@@ -78,6 +80,13 @@ export default function RootLayout({
                   <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
                     <div className="text-sm opacity-70">🧠 DONNA</div>
                     <div className="flex items-center gap-3 text-xs opacity-70">
+                      <Link
+                        href="/din"
+                        className="flex items-center gap-1.5 text-xs opacity-70 hover:opacity-100 transition-opacity"
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>Access the DIN</span>
+                      </Link>
                       <DashboardLink />
                       <AuthStatus />
                       <VoiceNavButton />
