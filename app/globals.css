@@ -195,3 +195,33 @@
 .donna-orb-pulse {
   animation: donna-orb-pulse 4s ease-in-out infinite;
 }
+
+/* Investor preview — block direct edits while keeping scroll on plain containers */
+.investor-readonly-root[data-investor-readonly="true"] :is(
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"],
+  [role="switch"],
+  [role="checkbox"],
+  [role="menuitem"]
+) {
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+@keyframes investor-chat-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(34, 211, 238, 0);
+  }
+}
+
+.investor-chat-pulse {
+  animation: investor-chat-pulse 2s ease-in-out infinite;
+}

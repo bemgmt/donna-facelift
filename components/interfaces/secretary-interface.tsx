@@ -26,6 +26,14 @@ import { GlassCard } from "@/components/ui/glass-card"
 import { NeonButton } from "@/components/ui/neon-button"
 import { FuturisticInput } from "@/components/ui/futuristic-input"
 import { ChatBubble } from "@/components/ui/chat-bubble"
+import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
+import { toast } from "@/hooks/use-toast"
+import {
+  getDemoSecretaryDeadlines,
+  getDemoSecretaryMeetings,
+  getDemoSecretaryNotes,
+  getDemoSecretaryTasks,
+} from "@/lib/investor/demo-seed"
 
 interface Meeting {
   id: string
@@ -67,6 +75,9 @@ interface Deadline {
 }
 
 export default function SecretaryInterface(): JSX.Element {
+  const investorCtx = useInvestorPreviewOptional()
+  const isInvestorPreview = investorCtx?.isInvestorPreview ?? false
+
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [notes, setNotes] = useState<Note[]>([])
@@ -81,76 +92,33 @@ export default function SecretaryInterface(): JSX.Element {
   const [newNoteContent, setNewNoteContent] = useState("")
   const [showAddNote, setShowAddNote] = useState(false)
 
-  // Initialize with mock data
+  const simulateSecretaryCommand = (
+    commandId: string,
+    detail: string,
+    toastDescription: string
+  ) => {
+    if (!isInvestorPreview) return
+    toast({
+      title: "Secretary (simulated)",
+      description: toastDescription,
+    })
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `sim-${Date.now()}`,
+        role: "donna",
+        content: `[Demo] Simulated command “${commandId}”: ${detail}`,
+        timestamp: new Date().toISOString(),
+      },
+    ])
+  }
+
+  // Initialize with shared demo seed (relative dates)
   useEffect(() => {
-    const mockMeetings: Meeting[] = [
-      {
-        id: '1',
-        title: 'Q1 Strategy Review',
-        date: '2024-01-25',
-        time: '10:00',
-        duration: 60,
-        participants: ['John Doe', 'Sarah Smith', 'Mike Johnson'],
-        location: 'Conference Room A',
-        meetingUrl: 'https://meet.example.com/q1-review',
-        description: 'Review Q1 goals and discuss strategy adjustments',
-        isDONNAInvited: true,
-        prepNotes: 'Review Q1 metrics, prepare talking points on budget allocation'
-      },
-      {
-        id: '2',
-        title: 'Client Presentation - TechCorp',
-        date: '2024-01-26',
-        time: '14:00',
-        duration: 45,
-        participants: ['Jane Williams', 'Client Team'],
-        meetingUrl: 'https://zoom.us/j/123456789',
-        description: 'Present new product features to TechCorp stakeholders',
-        isDONNAInvited: false,
-        prepNotes: 'Prepare demo, review client requirements, prepare Q&A'
-      },
-      {
-        id: '3',
-        title: 'Team Standup',
-        date: '2024-01-24',
-        time: '09:00',
-        duration: 30,
-        participants: ['Team Members'],
-        location: 'Virtual',
-        isDONNAInvited: true
-      }
-    ]
-
-    const mockTasks: Task[] = [
-      { id: '1', text: 'Prepare Q1 metrics report', completed: false, dueDate: '2024-01-25', priority: 'high' },
-      { id: '2', text: 'Send follow-up email to TechCorp', completed: false, dueDate: '2024-01-24', priority: 'medium' },
-      { id: '3', text: 'Review contract terms', completed: true, dueDate: '2024-01-23', priority: 'high' },
-      { id: '4', text: 'Schedule team offsite', completed: false, dueDate: '2024-01-30', priority: 'low' },
-      { id: '5', text: 'Update project documentation', completed: false, dueDate: '2024-01-28', priority: 'medium' }
-    ]
-
-    const mockNotes: Note[] = [
-      {
-        id: '1',
-        title: 'Q1 Strategy Notes',
-        content: 'Key points: Budget increased by 15%, need to prioritize marketing initiatives, consider expanding team',
-        createdAt: '2024-01-20T10:00:00',
-        tags: ['strategy', 'budget']
-      },
-      {
-        id: '2',
-        title: 'TechCorp Meeting Prep',
-        content: 'Client interested in AI features, mentioned budget approval pending, follow up in 2 weeks',
-        createdAt: '2024-01-22T14:30:00',
-        tags: ['client', 'sales']
-      }
-    ]
-
-    const mockDeadlines: Deadline[] = [
-      { id: '1', title: 'Q1 Report Submission', date: '2024-01-28', time: '17:00', priority: 'high' },
-      { id: '2', title: 'Contract Review', date: '2024-01-25', priority: 'medium', relatedMeeting: '1' },
-      { id: '3', title: 'Budget Proposal', date: '2024-02-01', priority: 'high' }
-    ]
+    const mockMeetings = getDemoSecretaryMeetings() as Meeting[]
+    const mockTasks = getDemoSecretaryTasks() as Task[]
+    const mockNotes = getDemoSecretaryNotes() as Note[]
+    const mockDeadlines = getDemoSecretaryDeadlines() as Deadline[]
 
     setMeetings(mockMeetings)
     setTasks(mockTasks)
@@ -190,6 +158,11 @@ export default function SecretaryInterface(): JSX.Element {
     ))
     setShowAddMeeting(false)
     setSelectedMeeting(newMeeting)
+    simulateSecretaryCommand(
+      "add_meeting",
+      "Calendar write skipped in preview — local placeholder event created.",
+      "Create meeting — simulated calendar sync."
+    )
   }
 
   const handleAddMeetingFromURL = () => {
@@ -212,6 +185,11 @@ export default function SecretaryInterface(): JSX.Element {
     setMeetingURL("")
     setShowAddURL(false)
     setSelectedMeeting(newMeeting)
+    simulateSecretaryCommand(
+      "add_from_url",
+      `Parsed meeting URL host; would attach conferencing metadata in production.`,
+      "Import from URL — simulated join link enrichment."
+    )
   }
 
   const handleSendChat = () => {
@@ -226,6 +204,11 @@ export default function SecretaryInterface(): JSX.Element {
     
     setChatMessages([...chatMessages, userMessage])
     setChatInput("")
+    simulateSecretaryCommand(
+      "prep_chat_user",
+      `Recorded your note for “${selectedMeeting?.title ?? "meeting"}” (demo transcript only).`,
+      "Meeting prep chat — simulated capture."
+    )
     
     // Simulate DONNA response
     setTimeout(() => {
@@ -240,9 +223,16 @@ export default function SecretaryInterface(): JSX.Element {
   }
 
   const handleToggleTask = (taskId: string) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
+    const task = tasks.find((t) => t.id === taskId)
+    const wasCompleted = task?.completed ?? false
+    setTasks(tasks.map((t) =>
+      t.id === taskId ? { ...t, completed: !t.completed } : t
     ))
+    simulateSecretaryCommand(
+      "toggle_task",
+      `Task “${task?.text ?? taskId}” ${wasCompleted ? "reopened" : "marked complete"} in preview.`,
+      "Task update — simulated workspace sync."
+    )
   }
 
   const handleAddTask = (text: string) => {
@@ -253,6 +243,11 @@ export default function SecretaryInterface(): JSX.Element {
       priority: 'medium'
     }
     setTasks([...tasks, newTask])
+    simulateSecretaryCommand(
+      "add_task",
+      `Created task “${text}” — would sync to task graph in production DONNA.`,
+      "Task created — simulated PM integration."
+    )
   }
 
   const handleAddNote = () => {
@@ -268,6 +263,11 @@ export default function SecretaryInterface(): JSX.Element {
     setNewNoteTitle("")
     setNewNoteContent("")
     setShowAddNote(false)
+    simulateSecretaryCommand(
+      "add_note",
+      `Stored note “${newNote.title}” locally (no cloud persistence in preview).`,
+      "Note saved — simulated knowledge base write."
+    )
   }
 
   const nextMeeting = meetings.find(m => new Date(m.date + 'T' + m.time) >= new Date()) || meetings[0]

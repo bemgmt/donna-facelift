@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useDashboardConfigOptional } from "@/contexts/DashboardConfigContext"
 import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList } from "lucide-react"
 import dynamic from "next/dynamic"
+import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
+import { InvestorReadonlyShell } from "@/components/investor/investor-readonly-shell"
 
 const HybridEmailInterface = dynamic(
   () => import("./interfaces/hybrid-email-interface"),
@@ -172,6 +174,7 @@ const gridItems: GridItem[] = [
 ]
 
 export default function InteractiveGrid() {
+  const investor = useInvestorPreviewOptional()
   const dashboardConfig = useDashboardConfigOptional()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<string | null>(null)
@@ -306,7 +309,11 @@ export default function InteractiveGrid() {
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm font-light">back to grid</span>
           </button>
-          {item?.component}
+          <InvestorReadonlyShell
+            active={Boolean(investor?.isInvestorPreview && selectedItem !== "secretary")}
+          >
+            {item?.component}
+          </InvestorReadonlyShell>
         </motion.div>
       </AnimatePresence>
     )

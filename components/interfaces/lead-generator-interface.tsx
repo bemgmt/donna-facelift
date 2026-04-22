@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Users, Target, TrendingUp, Plus, Search, Filter, Download, Upload, Eye, Mail, Phone, CheckCircle, XCircle, FileText } from "lucide-react"
+import { getDemoLeadGeneratorData } from "@/lib/investor/demo-seed"
 
 interface Lead {
   id: string
@@ -49,59 +50,13 @@ const LeadGeneratorInterface: React.FC = () => {
     keywords: ''
   })
 
-  // Shell mode - static demo data
+  // Shell mode — shared investor demo seed
   useEffect(() => {
+    const seeded = getDemoLeadGeneratorData()
     const mockData: LeadGeneratorData = {
-        leads: [
-          {
-            id: '1',
-            name: 'John Smith',
-            email: 'john@techcorp.com',
-            phone: '(555) 123-4567',
-            company: 'TechCorp Inc',
-            source: 'website',
-            score: 85,
-            status: 'qualified',
-            created_at: '2025-09-01',
-            last_contact: '2025-09-01',
-            notes: 'Interested in enterprise solution'
-          },
-          {
-            id: '2',
-            name: 'Sarah Johnson',
-            email: 'sarah@startup.io',
-            company: 'Startup.io',
-            source: 'social',
-            score: 72,
-            status: 'contacted',
-            created_at: '2025-08-30',
-            notes: 'Follow up next week'
-          },
-          {
-            id: '3',
-            name: 'Mike Chen',
-            email: 'mike@consulting.com',
-            phone: '(555) 987-6543',
-            company: 'Chen Consulting',
-            source: 'referral',
-            score: 91,
-            status: 'new',
-            created_at: '2025-09-02'
-          }
-        ],
-        stats: {
-          total_leads: 127,
-          qualified_leads: 34,
-          conversion_rate: 12.5,
-          avg_score: 73
-        },
-        sources: {
-          website: 45,
-          social: 32,
-          referral: 28,
-          event: 15,
-          cold_outreach: 7
-        }
+        leads: seeded.leads as Lead[],
+        stats: seeded.stats,
+        sources: { ...seeded.sources }
       }
       
       setLeadData(mockData)

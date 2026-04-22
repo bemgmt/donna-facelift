@@ -37,6 +37,7 @@ export default function Page() {
       // Store demo session in localStorage (for client-side checks)
       localStorage.setItem('donna_demo_session', 'true')
       localStorage.setItem('donna_demo_user', username)
+      localStorage.setItem('donna_investor_preview', 'true')
       
       // Set cookie for server-side API routes (accessible in preview mode)
       document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
@@ -49,7 +50,7 @@ export default function Page() {
         router.push('/')
       }, 500)
     } else {
-      setError('Invalid username or password. Use DONNA / DONNA123 for demo.')
+      setError('Invalid username or password. Use DONNA / DONNA123 for the investor preview.')
     }
   }
 

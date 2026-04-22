@@ -7,6 +7,7 @@ import { NeonButton } from "@/components/ui/neon-button"
 import { FuturisticInput } from "@/components/ui/futuristic-input"
 import { GlassCard } from "@/components/ui/glass-card"
 import { useTour } from "@/contexts/TourContext"
+import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
 
 interface ChatMessage {
   id: string
@@ -14,8 +15,58 @@ interface ChatMessage {
   text: string
 }
 
+const DEFAULT_SHELL_MESSAGES: ChatMessage[] = [
+  { id: "1", role: "assistant", text: "Hello! I'm DONNA, your AI assistant. This is a design preview." },
+  { id: "2", role: "user", text: "Hi DONNA!" },
+  { id: "3", role: "assistant", text: "Welcome! The full functionality will be available when the backend is connected." },
+]
+
+const INVESTOR_SEED_MESSAGES: ChatMessage[] = [
+  {
+    id: "inv-1",
+    role: "assistant",
+    text: "Welcome to the DONNA investor preview. Ask me about capabilities, financing, GTM, SAFE-style instruments, or the DONNA Intelligence Network (DIN). This chat is fully interactive; dashboard modules are read-only except Secretary (simulated).",
+  },
+]
+
+function investorAssistantReply(lower: string): string | null {
+  if (
+    lower.includes("live demo") ||
+    lower.includes("request access") ||
+    lower.includes("credentials") ||
+    lower.includes("login url")
+  ) {
+    return "To move beyond this legacy shell, email the founders for a live demo. They can provision credentials, a private URL, and a functional DONNA workspace for your diligence."
+  }
+  if (
+    lower.includes("schedule") ||
+    lower.includes("meeting") ||
+    lower.includes("founders") ||
+    lower.includes("investment opportunity")
+  ) {
+    return "Use the founders email or the Google Calendar booking link from the investor welcome flow to schedule time. That is the right channel for investment conversations and deeper product access."
+  }
+  if (lower.includes("din") || lower.includes("intelligence network")) {
+    return "The DIN (DONNA Intelligence Network) is highlighted in the header as “Access the DIN.” It showcases intelligence, bids, and skills-style experiences—browse it in preview; controls there are read-only like the main modules."
+  }
+  if (lower.includes("safe") || lower.includes("priced round") || lower.includes("financing")) {
+    return "DONNA is built for serious operating teams and investors. I can discuss SAFE vs priced rounds, diligence workflows, and how GTM motions plug into the product story—at a conversational level in this preview (no legal or tax advice)."
+  }
+  if (lower.includes("gtm") || lower.includes("go to market") || lower.includes("go-to-market")) {
+    return "For GTM: think coordinated outreach, pipeline intelligence, and execution surfaces that compound. The tiles you see are a stylized slice; production DONNA replaces several of these with newer tools."
+  }
+  if (lower.includes("capabilit") || lower.includes("what can donna")) {
+    return "DONNA orchestrates sales, marketing, communications, and operator workflows with AI-native guardrails. This preview shows layout and narrative; the live stack adds enterprise controls, integrations, and the latest agent tooling."
+  }
+  if (lower.includes("legacy") || lower.includes("old interface") || lower.includes("outdated")) {
+    return "Yes—this UI is intentionally an older DONNA interface for storytelling. New capabilities ship in the live product; treat this grid as a museum-quality walkthrough, not a feature checklist."
+  }
+  return null
+}
+
 // Shell version - visual only, no API calls
 export default function ChatWidget() {
+  const investor = useInvestorPreviewOptional()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
   const [isMicOn, setIsMicOn] = useState(false)
@@ -23,13 +74,8 @@ export default function ChatWidget() {
   const [isReady, setIsReady] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { isActive: isTourActive } = useTour()
-  
-  // Messages state - now updatable
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', role: 'assistant', text: 'Hello! I\'m DONNA, your AI assistant. This is a design preview.' },
-    { id: '2', role: 'user', text: 'Hi DONNA!' },
-    { id: '3', role: 'assistant', text: 'Welcome! The full functionality will be available when the backend is connected.' }
-  ])
+
+  const [messages, setMessages] = useState<ChatMessage[]>(DEFAULT_SHELL_MESSAGES)
 
   // Check if user is authenticated and main UI is ready
   useEffect(() => {
@@ -71,12 +117,28 @@ export default function ChatWidget() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isReady) return
+    const isInv = localStorage.getItem("donna_investor_preview") === "true"
+    setMessages(isInv ? INVESTOR_SEED_MESSAGES : DEFAULT_SHELL_MESSAGES)
+  }, [isReady])
+
+  useEffect(() => {
+    const onOpen = () => {
+      setOpen(true)
+      investor?.markChatOpened()
+    }
+    window.addEventListener("donna:open", onOpen)
+    return () => window.removeEventListener("donna:open", onOpen)
+  }, [investor])
+
   // Keep chat open during tour
   useEffect(() => {
     if (isTourActive && !open) {
       setOpen(true)
+      investor?.markChatOpened()
     }
-  }, [isTourActive, open])
+  }, [isTourActive, open, investor])
 
   // Listen for tour step changes to display chat messages
   useEffect(() => {
@@ -163,6 +225,26 @@ export default function ChatWidget() {
       
       return
     }
+
+    if (investor?.isInvestorPreview) {
+      const investorReply = investorAssistantReply(lowerText)
+      if (investorReply) {
+        const userMessage: ChatMessage = {
+          id: Date.now().toString(),
+          role: "user",
+          text,
+        }
+        setMessages((prev) => [...prev, userMessage])
+        setInput("")
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev,
+            { id: (Date.now() + 1).toString(), role: "assistant", text: investorReply },
+          ])
+        }, 450)
+        return
+      }
+    }
     
     // Check if user is requesting a tour
     const tourKeywords = ['tour', 'show me around', 'guide me', 'walkthrough', 'tutorial', 'help me navigate']
@@ -238,7 +320,9 @@ export default function ChatWidget() {
         const donnaMessage: ChatMessage = {
           id: Date.now().toString(),
           role: 'assistant',
-          text: 'I understand. How can I help you further?'
+          text: investor?.isInvestorPreview
+            ? "In this investor preview I answer conversationally about DONNA, DIN, financing themes, and how to request a live demo. What angle should we go deeper on?"
+            : 'I understand. How can I help you further?'
         }
         setMessages(prev => [...prev, donnaMessage])
       }, 2000)
@@ -268,8 +352,16 @@ export default function ChatWidget() {
     <>
       {/* Floating button - bottom right */}
       <NeonButton
-        onClick={() => setOpen((v) => !v)}
-        className="fixed z-50 rounded-full p-4 glow-soft"
+        onClick={() =>
+          setOpen((v) => {
+            const next = !v
+            if (next) investor?.markChatOpened()
+            return next
+          })
+        }
+        className={`fixed z-50 rounded-full p-4 glow-soft ${
+          investor?.shouldPulseChatbot ? "investor-chat-pulse" : ""
+        }`}
         style={{ 
           bottom: '24px', 
           right: '24px',
@@ -365,7 +457,11 @@ export default function ChatWidget() {
             </div>
             <div className="mt-2 text-[10px] text-white/40 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
-              <span>Design Preview Mode</span>
+              <span>
+                {investor?.isInvestorPreview
+                  ? "Investor preview — conversational assistant (no backend)"
+                  : "Design Preview Mode"}
+              </span>
             </div>
           </div>
         </GlassCard>

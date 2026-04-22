@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { TrendingUp, Users, DollarSign, Activity, Mail, UserPlus, MessageSquare } from "lucide-react"
 import { useState, useEffect } from "react"
+import { getDemoAnalyticsData } from "@/lib/investor/demo-seed"
 
 interface AnalyticsData {
   revenue?: { total: string; change: string }
@@ -18,17 +19,9 @@ export default function AnalyticsInterface() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Shell mode - static demo data
+  // Shell mode — shared investor demo seed
   useEffect(() => {
-    setAnalyticsData({
-      revenue: { total: '$124,592', change: '+12.5%' },
-      users: { active: '8,429', change: '+8.2%' },
-      conversion: { rate: '3.24%', change: '-2.1%' },
-      engagement: { score: '94.2%', change: '+5.7%' },
-      emails: { total: 2139, change: '+15.3%' },
-      contacts: { new: 156, change: '+22.1%' },
-      texts: { sent: 423, change: '+18.7%' }
-    })
+    setAnalyticsData(getDemoAnalyticsData())
     setLoading(false)
   }, [])
 

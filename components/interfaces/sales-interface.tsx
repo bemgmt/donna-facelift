@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Users, TrendingUp, Mail, Phone, Plus, Search, Calendar, DollarSign, Target, BarChart3, Filter, Download, Eye, Edit, Trash2, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import CampaignBuilder, { type Campaign } from "../campaigns/CampaignBuilder"
 import CampaignDashboard from "../CampaignDashboard"
+import { getDemoSalesData } from "@/lib/investor/demo-seed"
 
 interface Contact {
   id: string
@@ -45,7 +46,7 @@ interface Deal {
   created_at: string
 }
 
-interface SalesData {
+export interface SalesData {
   contacts: Contact[]
   leads: Lead[]
   deals: Deal[]
@@ -81,57 +82,9 @@ const SalesInterface: React.FC = () => {
   // Campaign type matches CampaignBuilder's expected shape
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
 
-  // Shell mode - static demo data with extensive dummy data
+  // Shell mode — shared investor demo seed (relative dates)
   useEffect(() => {
-    const mockContacts: Contact[] = [
-      { id: '1', name: 'John Doe', email: 'john@techcorp.com', phone: '+1-555-0101', company: 'TechCorp Inc', status: 'qualified', score: 85, created_at: '2024-01-15', last_contact: '2024-01-20', notes: 'Very interested in enterprise solution', value: 50000, source: 'Website' },
-      { id: '2', name: 'Jane Smith', email: 'jane@startup.io', phone: '+1-555-0102', company: 'Startup.io', status: 'contacted', score: 72, created_at: '2024-01-14', last_contact: '2024-01-19', notes: 'Follow up scheduled for next week', value: 25000, source: 'Referral' },
-      { id: '3', name: 'Bob Johnson', email: 'bob@consulting.com', phone: '+1-555-0103', company: 'Johnson Consulting', status: 'new', score: 45, created_at: '2024-01-13', value: 15000, source: 'LinkedIn' },
-      { id: '4', name: 'Sarah Williams', email: 'sarah@enterprise.com', phone: '+1-555-0104', company: 'Enterprise Solutions', status: 'converted', score: 95, created_at: '2024-01-10', last_contact: '2024-01-18', notes: 'Closed deal - Premium package', value: 75000, source: 'Event' },
-      { id: '5', name: 'Michael Chen', email: 'michael@innovate.com', phone: '+1-555-0105', company: 'Innovate Labs', status: 'qualified', score: 78, created_at: '2024-01-12', last_contact: '2024-01-17', notes: 'Requested demo', value: 40000, source: 'Website' },
-      { id: '6', name: 'Emily Davis', email: 'emily@digital.com', phone: '+1-555-0106', company: 'Digital Marketing Pro', status: 'contacted', score: 68, created_at: '2024-01-11', last_contact: '2024-01-16', value: 30000, source: 'Social Media' },
-      { id: '7', name: 'David Martinez', email: 'david@finance.com', phone: '+1-555-0107', company: 'Finance Corp', status: 'new', score: 52, created_at: '2024-01-09', value: 20000, source: 'Cold Outreach' },
-      { id: '8', name: 'Lisa Anderson', email: 'lisa@retail.com', company: 'Retail Solutions', status: 'qualified', score: 82, created_at: '2024-01-08', last_contact: '2024-01-15', notes: 'Interested in bulk pricing', value: 60000, source: 'Referral' },
-    ]
-
-    const mockLeads: Lead[] = [
-      { id: '1', contact_id: '1', contact_name: 'John Doe', status: 'hot', score: 90, last_contact: '2024-01-20', notes: 'Interested in premium plan, budget approved', estimated_value: 50000, probability: 85 },
-      { id: '2', contact_id: '2', contact_name: 'Jane Smith', status: 'warm', score: 65, last_contact: '2024-01-19', notes: 'Follow up scheduled', estimated_value: 25000, probability: 60 },
-      { id: '3', contact_id: '5', contact_name: 'Michael Chen', status: 'hot', score: 88, last_contact: '2024-01-17', notes: 'Demo completed, very positive feedback', estimated_value: 40000, probability: 80 },
-      { id: '4', contact_id: '8', contact_name: 'Lisa Anderson', status: 'warm', score: 70, last_contact: '2024-01-15', notes: 'Requested pricing information', estimated_value: 60000, probability: 55 },
-      { id: '5', contact_id: '3', contact_name: 'Bob Johnson', status: 'cold', score: 45, last_contact: '2024-01-13', notes: 'Initial contact made', estimated_value: 15000, probability: 25 },
-    ]
-
-    const mockDeals: Deal[] = [
-      { id: '1', name: 'Enterprise Package - TechCorp', contact_id: '1', contact_name: 'John Doe', value: 50000, stage: 'negotiation', probability: 75, expected_close: '2024-02-15', created_at: '2024-01-10' },
-      { id: '2', name: 'Premium Solution - Enterprise Solutions', contact_id: '4', contact_name: 'Sarah Williams', value: 75000, stage: 'closed_won', probability: 100, expected_close: '2024-01-18', created_at: '2024-01-05' },
-      { id: '3', name: 'Standard Package - Innovate Labs', contact_id: '5', contact_name: 'Michael Chen', value: 40000, stage: 'proposal', probability: 65, expected_close: '2024-02-28', created_at: '2024-01-12' },
-      { id: '4', name: 'Bulk License - Retail Solutions', contact_id: '8', contact_name: 'Lisa Anderson', value: 60000, stage: 'qualification', probability: 50, expected_close: '2024-03-10', created_at: '2024-01-08' },
-    ]
-
-    const mockActivities = [
-      { id: '1', type: 'call', contact_name: 'John Doe', description: 'Discussed enterprise features and pricing', date: '2024-01-20T10:30:00' },
-      { id: '2', type: 'email', contact_name: 'Jane Smith', description: 'Sent follow-up email with proposal', date: '2024-01-19T14:15:00' },
-      { id: '3', type: 'meeting', contact_name: 'Michael Chen', description: 'Product demo completed successfully', date: '2024-01-17T09:00:00' },
-      { id: '4', type: 'note', contact_name: 'Sarah Williams', description: 'Deal closed - Premium package', date: '2024-01-18T16:45:00' },
-      { id: '5', type: 'call', contact_name: 'Lisa Anderson', description: 'Initial discovery call', date: '2024-01-15T11:20:00' },
-    ]
-
-    setSalesData({
-      contacts: mockContacts,
-      leads: mockLeads,
-      deals: mockDeals,
-      stats: {
-        total_contacts: mockContacts.length,
-        hot_leads: mockLeads.filter(l => l.status === 'hot').length,
-        conversion_rate: 28.5,
-        total_revenue: 125000,
-        pipeline_value: 150000,
-        avg_deal_size: 56250,
-        win_rate: 25.0
-      },
-      activities: mockActivities
-    })
+    setSalesData(getDemoSalesData())
     setLoading(false)
   }, [])
 

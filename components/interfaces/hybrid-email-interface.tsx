@@ -7,6 +7,10 @@ import type { gmail_v1 } from 'googleapis'
 import DOMPurify from 'isomorphic-dompurify'
 import { motion } from "framer-motion"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  getDemoEmailStats,
+  getDemoMarketingEmails,
+} from "@/lib/investor/demo-seed"
 // Simple type definitions
 type EmailCategory = 'personal' | 'work' | 'marketing' | 'social' | 'updates' | 'forums' | 'promotions'
 type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent'
@@ -98,52 +102,11 @@ export default function HybridEmailInterface() {
   const bulkSelection = useBulkSelection(emails.map(email => email.id))
   const emailTemplates = useEmailTemplates()
 
-  // Shell mode - static demo data only
+  // Shell mode — shared investor demo seed
   useEffect(() => {
-    // Static demo emails for design preview
-    setEmails([
-      {
-        id: '1',
-        from: 'John Doe',
-        from_email: 'john@example.com',
-        subject: 'Meeting Request',
-        preview: 'Hi, I would like to schedule a meeting...',
-        time: '2 hours ago',
-        dateISO: new Date().toISOString(),
-        starred: false,
-        unread: true,
-        category: 'work',
-        priority: 'high'
-      },
-      {
-        id: '2',
-        from: 'Sarah Smith',
-        from_email: 'sarah@example.com',
-        subject: 'Project Update',
-        preview: 'Here is the latest update on the project...',
-        time: '5 hours ago',
-        dateISO: new Date().toISOString(),
-        starred: true,
-        unread: false,
-        category: 'work',
-        priority: 'medium'
-      },
-      {
-        id: '3',
-        from: 'Newsletter',
-        from_email: 'news@example.com',
-        subject: 'Weekly Newsletter',
-        preview: 'Check out this week\'s highlights...',
-        time: '1 day ago',
-        dateISO: new Date().toISOString(),
-        starred: false,
-        unread: true,
-        category: 'marketing',
-        priority: 'low'
-      }
-    ])
+    setEmails(getDemoMarketingEmails() as Email[])
     setLoading(false)
-    setStats({ inbox: 3, starred: 1, sent: 0 })
+    setStats(getDemoEmailStats())
   }, [])
 
   // Shell mode - visual only, no API calls

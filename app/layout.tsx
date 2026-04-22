@@ -3,8 +3,6 @@ import { Inter } from 'next/font/google'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import '@/styles/donna-theme.css'
-import Link from 'next/link'
-import { Globe } from 'lucide-react'
 import ChatWidget from '@/components/chat/ChatWidget'
 import SettingsModal from '@/components/SettingsModal'
 import DonnaLightBar from '@/components/DonnaLightBar'
@@ -12,11 +10,10 @@ import { VoiceProvider } from '@/components/voice/VoiceProvider'
 import { OnboardingProvider } from '@/contexts/OnboardingContext'
 import { TourProvider } from '@/contexts/TourContext'
 import { DashboardConfigProvider } from '@/contexts/DashboardConfigContext'
-import SettingsButton from '@/components/SettingsButton'
-import { AuthStatus } from '@/components/AuthStatus'
-import { DashboardLink } from '@/components/DashboardLink'
 import { Toaster } from '@/components/ui/toaster'
 import dynamic from 'next/dynamic'
+import { InvestorPreviewProvider } from '@/contexts/InvestorPreviewContext'
+import { InvestorHeaderToolbar } from '@/components/layout/investor-header-toolbar'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,13 +21,18 @@ const inter = Inter({
   display: 'swap',
 })
 
-// load nav mic button client-side only
-const VoiceNavButton = dynamic(() => import('@/components/voice/VoiceNavButton'), { ssr: false })
-
 // Load tour system client-side only (they use hooks that require client context)
 const TourSystem = dynamic(() => import('@/components/tour/TourSystem'), { ssr: false })
 
 // Load web vitals tracking client-side only with error handling
+const InvestorWelcomeHost = dynamic(
+  () =>
+    import('@/components/investor/investor-welcome-host').then((m) => ({
+      default: m.InvestorWelcomeHost,
+    })),
+  { ssr: false }
+)
+
 const WebVitalsTracker = dynamic(() => import('./web-vitals').then(mod => {
   // Only call initWebVitals if it exists and we're in browser
   if (typeof window !== 'undefined' && typeof mod.initWebVitals === 'function') {
@@ -73,40 +75,31 @@ export default function RootLayout({
         <OnboardingProvider>
           <TourProvider>
             <DashboardConfigProvider>
-            <VoiceProvider>
-              <div className="donna-bg min-h-screen text-white relative">
-                <DonnaLightBar />
-                <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
-                  <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-                    <div className="text-sm opacity-70">🧠 DONNA</div>
-                    <div className="flex items-center gap-3 text-xs opacity-70">
-                      <Link
-                        href="/din"
-                        className="flex items-center gap-1.5 text-xs opacity-70 hover:opacity-100 transition-opacity"
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                        <span>Access the DIN</span>
-                      </Link>
-                      <DashboardLink />
-                      <AuthStatus />
-                      <VoiceNavButton />
-                      <SettingsButton />
-                    </div>
+              <InvestorPreviewProvider>
+                <VoiceProvider>
+                  <div className="donna-bg min-h-screen text-white relative">
+                    <DonnaLightBar />
+                    <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
+                      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+                        <div className="text-sm opacity-70">🧠 DONNA</div>
+                        <InvestorHeaderToolbar />
+                      </div>
+                    </header>
+                    <main className="relative z-10">{children}</main>
+                    <InvestorWelcomeHost />
+                    {/* Floating DONNA chat widget (client component) */}
+                    <ChatWidget />
+                    {/* Settings modal */}
+                    <SettingsModal />
+                    {/* Tour system */}
+                    <TourSystem />
+                    {/* Web vitals tracking */}
+                    <WebVitalsTracker />
+                    {/* Toast notifications */}
+                    <Toaster />
                   </div>
-                </header>
-                <main className="relative z-10">{children}</main>
-                {/* Floating DONNA chat widget (client component) */}
-                <ChatWidget />
-                {/* Settings modal */}
-                <SettingsModal />
-                {/* Tour system */}
-                <TourSystem />
-                {/* Web vitals tracking */}
-                <WebVitalsTracker />
-                {/* Toast notifications */}
-                <Toaster />
-              </div>
-            </VoiceProvider>
+                </VoiceProvider>
+              </InvestorPreviewProvider>
             </DashboardConfigProvider>
           </TourProvider>
         </OnboardingProvider>
