@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { MessageCircle, X, Mic, MicOff, Send, Bot } from "lucide-react"
 import { ChatBubble } from "@/components/ui/chat-bubble"
 import { NeonButton } from "@/components/ui/neon-button"
@@ -374,7 +375,12 @@ export default function ChatWidget() {
     return null
   }
 
-  return (
+  // Portal keeps FAB + modal out of the layout flex column (Fragment children were flex items and jittered).
+  if (typeof document === "undefined") {
+    return null
+  }
+
+  const chatLayer = (
     <>
       {/* Full-screen dimmer: chat reads as an overlay on the dashboard grid */}
       {open && (
@@ -402,7 +408,6 @@ export default function ChatWidget() {
           right: "24px",
           left: "auto",
           top: "auto",
-          position: "fixed",
         }}
         aria-label={open ? "Close DONNA Chat" : "Open DONNA Chat"}
         aria-expanded={open}
@@ -506,5 +511,7 @@ export default function ChatWidget() {
       )}
     </>
   )
+
+  return createPortal(chatLayer, document.body)
 }
 
