@@ -400,10 +400,11 @@ export default function ChatWidget() {
             return next
           })
         }
-        className={`fixed z-[103] rounded-full p-4 glow-soft ${
+        className={`!fixed z-[103] rounded-full p-4 glow-soft ${
           investor?.shouldPulseChatbot ? "investor-chat-pulse" : ""
         }`}
         style={{
+          position: "fixed",
           bottom: "24px",
           right: "24px",
           left: "auto",
@@ -416,13 +417,13 @@ export default function ChatWidget() {
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </NeonButton>
 
-      {/* Centered modal on the grid — hard to miss vs. a bottom-corner popout */}
+      {/* Docked panel above the FAB — aligned bottom-right with the launcher */}
       {open && (
         <GlassCard
           role="dialog"
           aria-modal="true"
           aria-labelledby="donna-chat-title"
-          className="fixed z-[101] left-1/2 top-1/2 w-[min(92vw,460px)] max-h-[min(82vh,640px)] min-h-[300px] -translate-x-1/2 -translate-y-1/2 rounded-xl shadow-2xl flex flex-col overflow-hidden border border-white/20 animate-in fade-in zoom-in-95 duration-200"
+          className="!fixed z-[101] bottom-[calc(24px+4.75rem+12px)] right-6 left-auto top-auto w-[min(92vw,460px)] max-h-[min(82vh,640px)] min-h-[300px] rounded-xl shadow-2xl flex flex-col overflow-hidden border border-white/20 animate-in fade-in slide-in-from-bottom-4 duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
