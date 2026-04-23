@@ -168,36 +168,41 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
     try {
       setState(prev => ({ ...prev, isProcessing: true, error: null }))
 
-      // Add user message immediately
+      const historyForApi = [
+        ...state.messages.map((m) => ({
+          role: (m.type === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+          content: m.text,
+        })),
+        { role: 'user' as const, content: text },
+      ]
+
       addMessage({
         type: 'user',
         text,
         timestamp: new Date()
       })
 
-      // Send to DONNA logic for processing
-      const response = await fetch(`${apiBaseUrl}/api/donna_logic.php`, {
+      const response = await fetch('/api/knowledge-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: text,
-          user_id: userId
-        })
+        credentials: 'include',
+        body: JSON.stringify({ messages: historyForApi }),
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      const result = (await response.json()) as {
+        success?: boolean
+        reply?: string
+        error?: string
       }
 
-      const result = await response.json()
-
-      if (!result.success) {
-        throw new Error(result.error || 'Message processing failed')
+      if (!response.ok || !result.success || !result.reply) {
+        throw new Error(
+          typeof result.error === 'string' ? result.error : 'Message processing failed'
+        )
       }
 
-      // Convert response to speech using ElevenLabs
       const voiceResponse = await fetch(`${apiBaseUrl}/api/voice-chat.php`, {
         method: 'POST',
         headers: {
@@ -206,8 +211,8 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
         body: JSON.stringify({
           action: 'text_to_speech',
           text: result.reply,
-          voice_id: state.currentVoiceId
-        })
+          voice_id: state.currentVoiceId,
+        }),
       })
 
       let audioData = null
@@ -218,14 +223,12 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
         }
       }
 
-      // Add assistant message
       addMessage({
         type: 'assistant',
         text: result.reply,
-        timestamp: new Date()
+        timestamp: new Date(),
       })
 
-      // Play the audio response if available
       if (audioData) {
         await playerActions.play(audioData)
       }
@@ -241,7 +244,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
       }))
       onError?.(errorMessage)
     }
-  }, [apiBaseUrl, userId, state.currentVoiceId, addMessage, playerActions, onError])
+  }, [apiBaseUrl, state.messages, state.currentVoiceId, addMessage, playerActions, onError])
 
   // Set voice ID
   const setVoiceId = useCallback((voiceId: string) => {

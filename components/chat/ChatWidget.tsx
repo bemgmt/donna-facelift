@@ -29,6 +29,7 @@ const INVESTOR_SEED_MESSAGES: ChatMessage[] = [
   },
 ]
 
+/** Instant canned replies for investor CTAs (everything else uses /api/knowledge-chat + markdown KB). */
 function investorAssistantReply(lower: string): string | null {
   if (
     lower.includes("live demo") ||
@@ -46,25 +47,9 @@ function investorAssistantReply(lower: string): string | null {
   ) {
     return "Use the founders email or the Google Calendar booking link from the investor welcome flow to schedule time. That is the right channel for investment conversations and deeper product access."
   }
-  if (lower.includes("din") || lower.includes("intelligence network")) {
-    return "The DIN (DONNA Intelligence Network) is highlighted in the header as “Access the DIN.” It showcases intelligence, bids, and skills-style experiences—browse it in preview; controls there are read-only like the main modules."
-  }
-  if (lower.includes("safe") || lower.includes("priced round") || lower.includes("financing")) {
-    return "DONNA is built for serious operating teams and investors. I can discuss SAFE vs priced rounds, diligence workflows, and how GTM motions plug into the product story—at a conversational level in this preview (no legal or tax advice)."
-  }
-  if (lower.includes("gtm") || lower.includes("go to market") || lower.includes("go-to-market")) {
-    return "For GTM: think coordinated outreach, pipeline intelligence, and execution surfaces that compound. The tiles you see are a stylized slice; production DONNA replaces several of these with newer tools."
-  }
-  if (lower.includes("capabilit") || lower.includes("what can donna")) {
-    return "DONNA orchestrates sales, marketing, communications, and operator workflows with AI-native guardrails. This preview shows layout and narrative; the live stack adds enterprise controls, integrations, and the latest agent tooling."
-  }
-  if (lower.includes("legacy") || lower.includes("old interface") || lower.includes("outdated")) {
-    return "Yes—this UI is intentionally an older DONNA interface for storytelling. New capabilities ship in the live product; treat this grid as a museum-quality walkthrough, not a feature checklist."
-  }
   return null
 }
 
-// Shell version - visual only, no API calls
 export default function ChatWidget() {
   const investor = useInvestorPreviewOptional()
   const [open, setOpen] = useState(false)
@@ -76,6 +61,7 @@ export default function ChatWidget() {
   const { isActive: isTourActive } = useTour()
 
   const [messages, setMessages] = useState<ChatMessage[]>(DEFAULT_SHELL_MESSAGES)
+  const [knowledgeChatLoading, setKnowledgeChatLoading] = useState(false)
 
   // Check if user is authenticated and main UI is ready
   useEffect(() => {
@@ -170,6 +156,20 @@ export default function ChatWidget() {
     }
   }, [open, messages])
 
+  useEffect(() => {
+    if (!open) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener("keydown", onKey)
+    }
+  }, [open])
+
   // Simulate Donna speaking when messages appear
   useEffect(() => {
     if (messages.length > 0) {
@@ -194,8 +194,8 @@ export default function ChatWidget() {
 
   const sendText = () => {
     const text = input.trim()
-    if (!text) return
-    
+    if (!text || knowledgeChatLoading) return
+
     const lowerText = text.toLowerCase()
     
     // Check for "stop the tour" command
@@ -306,27 +306,53 @@ export default function ChatWidget() {
       return
     }
 
-    // Simulate Donna responding for other messages
-    setTimeout(() => {
-      setIsDonnaSpeaking(true)
-      window.dispatchEvent(new CustomEvent('donna:start-speaking', {
-        detail: { intensity: 0.9 }
-      }))
+    const historyForApi = [...messages, userMessage].map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.text,
+    }))
 
-      setTimeout(() => {
-        setIsDonnaSpeaking(false)
-        window.dispatchEvent(new Event('donna:stop-speaking'))
-        // Add a generic response
-        const donnaMessage: ChatMessage = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          text: investor?.isInvestorPreview
-            ? "In this investor preview I answer conversationally about DONNA, DIN, financing themes, and how to request a live demo. What angle should we go deeper on?"
-            : 'I understand. How can I help you further?'
+    void (async () => {
+      setKnowledgeChatLoading(true)
+      try {
+        const res = await fetch("/api/knowledge-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ messages: historyForApi }),
+        })
+        const data = (await res.json()) as {
+          success?: boolean
+          reply?: string
+          error?: string
         }
-        setMessages(prev => [...prev, donnaMessage])
-      }, 2000)
-    }, 500)
+        if (!res.ok || !data.success || !data.reply) {
+          const errMsg =
+            typeof data.error === "string"
+              ? data.error
+              : "Sorry, I could not generate a response. Please try again."
+          setMessages((prev) => [
+            ...prev,
+            { id: `err_${Date.now()}`, role: "assistant", text: errMsg },
+          ])
+          return
+        }
+        setMessages((prev) => [
+          ...prev,
+          { id: `kb_${Date.now()}`, role: "assistant", text: data.reply },
+        ])
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `err_${Date.now()}`,
+            role: "assistant",
+            text: "Network error. Please try again.",
+          },
+        ])
+      } finally {
+        setKnowledgeChatLoading(false)
+      }
+    })()
   }
 
   const toggleMic = () => {
@@ -350,7 +376,16 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating button - bottom right */}
+      {/* Full-screen dimmer: chat reads as an overlay on the dashboard grid */}
+      {open && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          aria-hidden
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* Floating launcher — stays above the overlay so users can toggle */}
       <NeonButton
         onClick={() =>
           setOpen((v) => {
@@ -359,43 +394,38 @@ export default function ChatWidget() {
             return next
           })
         }
-        className={`fixed z-50 rounded-full p-4 glow-soft ${
+        className={`fixed z-[103] rounded-full p-4 glow-soft ${
           investor?.shouldPulseChatbot ? "investor-chat-pulse" : ""
         }`}
-        style={{ 
-          bottom: '24px', 
-          right: '24px',
-          left: 'auto',
-          top: 'auto',
-          position: 'fixed'
+        style={{
+          bottom: "24px",
+          right: "24px",
+          left: "auto",
+          top: "auto",
+          position: "fixed",
         }}
-        aria-label="Open DONNA Chat"
+        aria-label={open ? "Close DONNA Chat" : "Open DONNA Chat"}
+        aria-expanded={open}
         size="icon"
       >
-        <MessageCircle className="w-6 h-6" />
+        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </NeonButton>
 
-      {/* Popup panel - opens upward from bottom right, attached to button */}
+      {/* Centered modal on the grid — hard to miss vs. a bottom-corner popout */}
       {open && (
-        <GlassCard 
-          className="fixed z-50 w-[380px] rounded-xl shadow-2xl flex flex-col overflow-hidden" 
-          style={{ 
-            position: 'fixed',
-            bottom: '88px', 
-            right: '24px', 
-            left: 'unset',
-            top: 'unset',
-            maxHeight: 'calc(100vh - 140px)',
-            display: 'flex',
-            flexDirection: 'column',
-            transform: 'translateY(0)',
-            zIndex: 50
-          }}
+        <GlassCard
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="donna-chat-title"
+          className="fixed z-[101] left-1/2 top-1/2 w-[min(92vw,460px)] max-h-[min(82vh,640px)] min-h-[300px] -translate-x-1/2 -translate-y-1/2 rounded-xl shadow-2xl flex flex-col overflow-hidden border border-white/20 animate-in fade-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-2">
               <Bot className="w-4 h-4 text-donna-cyan glow-cyan" />
-              <span className="text-sm text-white/90 font-medium">DONNA Assistant</span>
+              <span id="donna-chat-title" className="text-sm text-white/90 font-medium">
+                DONNA Assistant
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <button 
@@ -408,8 +438,8 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {/* Messages - scrolls from bottom */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 relative donna-glow flex flex-col">
+          {/* Messages */}
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-3 relative donna-glow flex flex-col">
             {messages.length === 0 && (
               <div className="text-center text-white/50 text-sm py-8">
                 Talk to DONNA. Type or hold the mic to speak.
@@ -426,7 +456,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <div className="p-3 border-t border-white/10 glass-dark">
+          <div className="p-3 border-t border-white/10 glass-dark shrink-0">
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleMic}
@@ -442,25 +472,33 @@ export default function ChatWidget() {
               <FuturisticInput
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendText()}
+                onKeyDown={(e) => e.key === "Enter" && !knowledgeChatLoading && sendText()}
                 placeholder="Type a message..."
                 className="flex-1 text-sm"
+                disabled={knowledgeChatLoading}
               />
               <NeonButton
                 onClick={sendText}
                 size="icon"
                 className="p-2"
                 title="Send"
+                disabled={knowledgeChatLoading}
               >
                 <Send className="w-4 h-4" />
               </NeonButton>
             </div>
             <div className="mt-2 text-[10px] text-white/40 flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+              <div
+                className={`w-1.5 h-1.5 rounded-full ${
+                  knowledgeChatLoading ? "bg-donna-cyan animate-pulse" : "bg-white/30"
+                }`}
+              />
               <span>
-                {investor?.isInvestorPreview
-                  ? "Investor preview — conversational assistant (no backend)"
-                  : "Design Preview Mode"}
+                {knowledgeChatLoading
+                  ? "Thinking…"
+                  : investor?.isInvestorPreview
+                    ? "Investor preview — answers use internal GTM / ICP / memo / product docs"
+                    : "Knowledge-backed chat — internal product & GTM docs"}
               </span>
             </div>
           </div>

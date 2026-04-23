@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Send, Bot, User, Loader2, Mic, MicOff, Volume2, VolumeX, Settings } from "lucide-react"
 import { useVoiceChat } from "@/hooks/use-voice-chat"
@@ -13,11 +13,9 @@ export default function ChatbotInterface() {
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
-  // Local realtime messages for text-only mode
+  // Local messages for text-only mode (knowledge-backed HTTP chat)
   const [rtMessages, setRtMessages] = useState<{ id: string; type: 'user' | 'assistant'; text: string }[]>([])
-  const assistantBufferRef = useRef<string>("")
-  const rafRef = useRef<number | null>(null)
-  const [, setTick] = useState(0)
+  const [textChatLoading, setTextChatLoading] = useState(false)
 
   // Voice chat hook - using batch processing for chatbot
   const [voiceState, voiceActions] = useVoiceChat({
@@ -39,105 +37,65 @@ export default function ChatbotInterface() {
   const handleSend = async () => {
     const userMessage = input.trim()
     if (!userMessage || voiceState.isProcessing) return
+    if (!isVoiceMode && textChatLoading) return
     setInput("")
 
     if (isVoiceMode) {
-      // Use existing batch voice flow for voice mode
       await voiceActions.sendTextMessage(userMessage)
     } else {
-      // Realtime over WebSocket using the same semantics as the Realtime API
+      const userEntry = { id: `rt_${Date.now()}`, type: "user" as const, text: userMessage }
+      const historyForApi = [
+        ...rtMessages.map((m) => ({
+          role: (m.type === "user" ? "user" : "assistant") as "user" | "assistant",
+          content: m.text,
+        })),
+        { role: "user" as const, content: userMessage },
+      ]
+
+      setRtMessages((prev) => [...prev, userEntry])
+      setTextChatLoading(true)
       try {
-        // Create a WS connection if not connected
-        const windowWithWS = window as Window & { __DONNA_WS__?: WebSocket }
-        if (!windowWithWS.__DONNA_WS__ || windowWithWS.__DONNA_WS__.readyState !== WebSocket.OPEN) {
-          const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || ''
-          if (!wsUrl) throw new Error('Realtime disabled: NEXT_PUBLIC_WEBSOCKET_URL not set')
-          windowWithWS.__DONNA_WS__ = new WebSocket(wsUrl)
-          await new Promise<void>((resolve, reject) => {
-            const wsTmp = windowWithWS.__DONNA_WS__!
-            wsTmp.onopen = () => {
-              // Notify backend proxy to connect to OpenAI
-              wsTmp.send(JSON.stringify({ type: 'connect_realtime' }))
-              resolve()
-            }
-            wsTmp.onerror = () => reject(new Error('WebSocket error'))
-          })
-
-          // Attach message handler (once)
-          windowWithWS.__DONNA_WS__!.onmessage = (evt: MessageEvent) => {
-            try {
-              const data = JSON.parse(evt.data)
-              switch (data.type) {
-                case 'session.created':
-                case 'session.updated':
-                  // connected
-                  break
-                case 'response.output_text.delta':
-                  assistantBufferRef.current += data.delta || ''
-                  if (rafRef.current == null) {
-                    rafRef.current = requestAnimationFrame(() => {
-                      setTick((n) => n + 1)
-                      rafRef.current = null
-                    })
-                  }
-                  break
-                case 'response.completed':
-                case 'response.done':
-                  if (assistantBufferRef.current) {
-                    setRtMessages(prev => ([...prev, { id: `rt_${Date.now()}`, type: 'assistant', text: assistantBufferRef.current }]))
-                    assistantBufferRef.current = ''
-                  }
-                  break
-                default:
-                  // ignore other events for now
-                  break
-              }
-            } catch {
-              // ignore bad frames
-            }
-          }
+        const res = await fetch("/api/knowledge-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ messages: historyForApi }),
+        })
+        const data = (await res.json()) as {
+          success?: boolean
+          reply?: string
+          error?: string
         }
-
-        const ws = windowWithWS.__DONNA_WS__!
-
-        // Append user message locally
-        setRtMessages(prev => ([...prev, { id: `rt_${Date.now()}`, type: 'user', text: userMessage }]))
-
-        // 1) Add user message to the conversation
-        ws.send(JSON.stringify({
-          type: 'conversation.item.create',
-          item: {
-            type: 'message',
-            role: 'user',
-            content: [ { type: 'input_text', text: userMessage } ]
-          }
-        }))
-
-        // 2) Ask the model to respond
-        ws.send(JSON.stringify({
-          type: 'response.create',
-          response: {
-            conversation: 'default',
-            modalities: ['text', 'audio'],
-            instructions: 'Respond as Donna normally would.'
-          }
-        }))
+        if (!res.ok || !data.success || !data.reply) {
+          const errMsg =
+            typeof data.error === "string"
+              ? data.error
+              : "Sorry, I could not generate a response."
+          setRtMessages((prev) => [
+            ...prev,
+            { id: `rt_err_${Date.now()}`, type: "assistant", text: errMsg },
+          ])
+          return
+        }
+        setRtMessages((prev) => [
+          ...prev,
+          { id: `rt_kb_${Date.now()}`, type: "assistant", text: data.reply },
+        ])
       } catch (err) {
-        console.error('Realtime send failed:', err)
+        console.error("Knowledge chat failed:", err)
+        setRtMessages((prev) => [
+          ...prev,
+          {
+            id: `rt_err_${Date.now()}`,
+            type: "assistant",
+            text: "Network error. Please try again.",
+          },
+        ])
+      } finally {
+        setTextChatLoading(false)
       }
     }
   }
-
-  // Cleanup WS on unmount to avoid leaks and stale handlers
-  useEffect(() => {
-    return () => {
-      const w = window as Window & { __DONNA_WS__?: WebSocket }
-      if (w.__DONNA_WS__ && (w.__DONNA_WS__.readyState === WebSocket.OPEN || w.__DONNA_WS__.readyState === WebSocket.CONNECTING)) {
-        try { w.__DONNA_WS__.close(1000, 'unmount') } catch {}
-      }
-      w.__DONNA_WS__ = undefined
-    }
-  }, [])
 
   // Traditional text-only message (no voice response) - currently unused but may be needed for future text-only mode
   // const sendTextOnlyMessage = async (userMessage: string) => {
@@ -191,7 +149,9 @@ export default function ChatbotInterface() {
           <div>
             <h2 className="text-xl font-light">DONNA - AI Assistant</h2>
             <p className="text-sm text-white/60 mt-1">
-              {isVoiceMode ? 'Voice mode enabled - Batch processing (Whisper -> GPT -> ElevenLabs)' : 'Text mode - Type your message'}
+              {isVoiceMode
+                ? "Voice mode enabled - Batch processing (Whisper -> GPT -> ElevenLabs)"
+                : "Text mode — answers use internal GTM / ICP / investor memo / product docs"}
               {voiceState.connectionStatus === 'connected' && ' — Custom ElevenLabs voice ready'}
             </p>
           </div>
@@ -290,7 +250,7 @@ export default function ChatbotInterface() {
         ))}
 
         {/* Loading indicator - show for voice mode processing or when assistant is typing in realtime */}
-        {(isVoiceMode && voiceState.isProcessing) || (!isVoiceMode && !!assistantBufferRef.current) ? (
+        {(isVoiceMode && voiceState.isProcessing) || (!isVoiceMode && textChatLoading) ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -339,7 +299,7 @@ export default function ChatbotInterface() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder={isVoiceMode ? "Type or speak your message..." : "Type your message..."}
-            disabled={voiceState.isProcessing}
+            disabled={voiceState.isProcessing || textChatLoading}
             className="flex-1 glass border border-white/20 rounded px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-white/40 disabled:opacity-50"
           />
 
@@ -361,7 +321,7 @@ export default function ChatbotInterface() {
 
           <button
             onClick={handleSend}
-            disabled={voiceState.isProcessing || !input.trim()}
+            disabled={voiceState.isProcessing || textChatLoading || !input.trim()}
             className="bg-white text-black px-4 py-2 rounded hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {voiceState.isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

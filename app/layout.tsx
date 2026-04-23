@@ -14,6 +14,7 @@ import { Toaster } from '@/components/ui/toaster'
 import dynamic from 'next/dynamic'
 import { InvestorPreviewProvider } from '@/contexts/InvestorPreviewContext'
 import { InvestorHeaderToolbar } from '@/components/layout/investor-header-toolbar'
+import { InvestorWelcomeRestartControl } from '@/components/investor/investor-welcome-restart-control'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -80,8 +81,11 @@ export default function RootLayout({
                   <div className="donna-bg min-h-screen text-white relative">
                     <DonnaLightBar />
                     <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
-                      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-                        <div className="text-sm opacity-70">🧠 DONNA</div>
+                      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div className="text-sm opacity-70 shrink-0">🧠 DONNA</div>
+                          <InvestorWelcomeRestartControl />
+                        </div>
                         <InvestorHeaderToolbar />
                       </div>
                     </header>

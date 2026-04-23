@@ -23,6 +23,8 @@ export type InvestorPreviewContextValue = {
   /** Pulse the floating chat launcher until wizard done or chat opened. */
   shouldPulseChatbot: boolean
   completeWelcome: () => void
+  /** Clear welcome + chat-opened flags so the investor wizard and guided flow can run again this session. */
+  restartInvestorWelcome: () => void
   markChatOpened: () => void
   refreshFromStorage: () => void
 }
@@ -88,6 +90,14 @@ export function InvestorPreviewProvider({
     setWelcomeComplete(true)
   }, [])
 
+  const restartInvestorWelcome = useCallback(() => {
+    if (typeof window === "undefined") return
+    sessionStorage.removeItem(WELCOME_SESSION_KEY)
+    sessionStorage.removeItem(CHAT_OPENED_SESSION_KEY)
+    setWelcomeComplete(false)
+    setChatOpened(false)
+  }, [])
+
   const markChatOpened = useCallback(() => {
     if (typeof window === "undefined") return
     if (!readPreviewFlag()) return
@@ -112,6 +122,7 @@ export function InvestorPreviewProvider({
       welcomeNeedsShow,
       shouldPulseChatbot,
       completeWelcome,
+      restartInvestorWelcome,
       markChatOpened,
       refreshFromStorage,
     }),
@@ -121,6 +132,7 @@ export function InvestorPreviewProvider({
       welcomeNeedsShow,
       shouldPulseChatbot,
       completeWelcome,
+      restartInvestorWelcome,
       markChatOpened,
       refreshFromStorage,
     ]

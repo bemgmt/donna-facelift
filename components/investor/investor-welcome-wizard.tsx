@@ -157,20 +157,22 @@ export function InvestorWelcomeWizard({ open, onClose }: Props) {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="investor-welcome-title"
+          onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             transition={{ type: "spring", damping: 26, stiffness: 320 }}
-            className="w-full max-w-lg"
+            className="w-full max-w-lg cursor-default"
+            onClick={(e) => e.stopPropagation()}
           >
             <GlassCard className="p-6 md:p-8 border border-white/20 shadow-2xl">
               <div className="flex items-center justify-between gap-2 mb-4">
