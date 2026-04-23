@@ -79,28 +79,33 @@ export default function RootLayout({
               <InvestorPreviewProvider>
                 <VoiceProvider>
                   <div className="donna-bg min-h-screen text-white relative">
-                    <DonnaLightBar />
-                    <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-dark backdrop-blur">
-                      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                          <div className="text-sm opacity-70 shrink-0">🧠 DONNA</div>
-                          <InvestorWelcomeRestartControl />
+                    {/* Single direct child so .donna-bg > * does not force position:relative on fixed overlays */}
+                    <div className="relative z-[1] flex min-h-screen flex-col">
+                      <DonnaLightBar />
+                      <header className="sticky top-0 z-40 w-full shrink-0 border-b border-white/10 glass-dark backdrop-blur">
+                        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                            <div className="text-sm opacity-70 shrink-0">🧠 DONNA</div>
+                            <InvestorWelcomeRestartControl />
+                          </div>
+                          <InvestorHeaderToolbar />
                         </div>
-                        <InvestorHeaderToolbar />
-                      </div>
-                    </header>
-                    <main className="relative z-10">{children}</main>
-                    <InvestorWelcomeHost />
-                    {/* Floating DONNA chat widget (client component) */}
-                    <ChatWidget />
-                    {/* Settings modal */}
-                    <SettingsModal />
-                    {/* Tour system */}
-                    <TourSystem />
-                    {/* Web vitals tracking */}
-                    <WebVitalsTracker />
-                    {/* Toast notifications */}
-                    <Toaster />
+                      </header>
+                      <main className="relative z-10 flex min-h-0 flex-1 flex-col">
+                        {children}
+                      </main>
+                      <InvestorWelcomeHost />
+                      {/* Floating DONNA chat widget (client component) */}
+                      <ChatWidget />
+                      {/* Settings modal */}
+                      <SettingsModal />
+                      {/* Tour system */}
+                      <TourSystem />
+                      {/* Web vitals tracking */}
+                      <WebVitalsTracker />
+                      {/* Toast notifications */}
+                      <Toaster />
+                    </div>
                   </div>
                 </VoiceProvider>
               </InvestorPreviewProvider>
