@@ -488,6 +488,50 @@ export const comprehensiveDashboardTour: TourConfig = {
       chatMessage: 'This is your main dashboard grid. Each card is a different business function. We\'ll explore each one together!'
     },
     {
+      id: 'data-room-nav-step',
+      target: '[data-tour="data-room-nav"]',
+      title: 'Data Room',
+      description: 'Open diligence materials from the header anytime: pitch deck, investor memo, proposed SAFE tiers, and supporting PDFs.',
+      placement: 'bottom',
+      highlightPadding: 8,
+      chatMessage: 'Use Data Room for investor documents—the deck, SAFE structure, memo, GTM, and product PDFs. Next, we\'ll open it in a new view.',
+      beforeShow: async () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        await new Promise((resolve) => setTimeout(resolve, 350))
+      }
+    },
+    {
+      id: 'data-room-page-step',
+      target: '[data-tour="data-room-content"]',
+      title: 'Data Room',
+      description: 'Review the proposed SAFE economics and download PDFs. Materials are for diligence and demo purposes.',
+      placement: 'top',
+      highlightPadding: 16,
+      chatMessage: 'Here\'s the Data Room: deck link, SAFE table, and document downloads. When you\'re done exploring, we\'ll return to the dashboard grid.',
+      beforeShow: async () => {
+        const link = document.querySelector('[data-tour="data-room-nav"]') as HTMLElement | null
+        link?.click()
+        await new Promise((resolve) => setTimeout(resolve, 900))
+      }
+    },
+    {
+      id: 'leave-data-room-step',
+      target: 'body',
+      title: 'Continuing the tour',
+      description: 'Returning to your dashboard grid to explore Sales and the rest of DONNA.',
+      placement: 'center',
+      chatMessage: 'Heading back to the main grid—next up is the Sales dashboard.',
+      beforeShow: async () => {
+        if (window.location.pathname.startsWith('/data-room')) {
+          const back = document.querySelector(
+            '[data-tour="data-room-back-dashboard"]'
+          ) as HTMLElement | null
+          back?.click()
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
+      }
+    },
+    {
       id: 'sales-card',
       target: '[data-tour="sales-interface"]',
       title: 'Sales Dashboard',

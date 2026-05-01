@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Globe } from "lucide-react"
+import { FolderArchive, Globe } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
 import { DashboardLink } from "@/components/DashboardLink"
@@ -22,6 +22,14 @@ export function InvestorHeaderToolbar() {
       >
         <Globe className="w-3.5 h-3.5" />
         <span>Access the DIN</span>
+      </Link>
+      <Link
+        href="/data-room"
+        data-tour="data-room-nav"
+        className="flex items-center gap-1.5 text-xs opacity-70 hover:opacity-100 transition-opacity"
+      >
+        <FolderArchive className="w-3.5 h-3.5" />
+        <span>Data Room</span>
       </Link>
       <DashboardLink />
       <AuthStatus />
