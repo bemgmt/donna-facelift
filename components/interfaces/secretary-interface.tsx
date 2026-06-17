@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { GlassCard } from "@/components/ui/glass-card"
 import { NeonButton } from "@/components/ui/neon-button"
+import FacilitatorPanel from "../drive/FacilitatorPanel"
 import { FuturisticInput } from "@/components/ui/futuristic-input"
 import { ChatBubble } from "@/components/ui/chat-bubble"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
@@ -678,6 +679,9 @@ export default function SecretaryInterface(): JSX.Element {
           </div>
         </div>
       </div>
+      
+      {/* Facilitator Panel for Demo Events */}
+      <FacilitatorPanel facilitatorSecret="donna-drive-dev" />
     </div>
   )
 }

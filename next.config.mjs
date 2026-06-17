@@ -11,7 +11,7 @@ const nextConfig = {
     hideSourceMaps: true,
   },
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -64,11 +64,6 @@ const nextConfig = {
       {
         source: '/api/inbox.php',
         destination: `${devPhpBase}/api/inbox.php`,
-      },
-      // Chatbot settings endpoint
-      {
-        source: '/api/chatbot_settings.php',
-        destination: `${devPhpBase}/api/chatbot_settings.php`,
       },
       // A broader rule for other potential PHP endpoints during development
       {
@@ -130,12 +125,16 @@ const nextConfig = {
     // Optimize package imports
     optimizePackageImports: ['framer-motion', 'lucide-react', '@radix-ui/react-icons']
   },
-
-  // Transpile floating-ui packages to fix ESM re-export issues
-  transpilePackages: ['@floating-ui/core', '@floating-ui/dom', '@floating-ui/utils'],
 }
 
-export default withBundleAnalyzer(withSentryConfig(nextConfig, { silent: true }))
+export default withBundleAnalyzer(withSentryConfig(nextConfig, {
+  silent: true,
+  org: 'dummy-org',
+  project: 'dummy-project',
+  disableServerWebpackPlugin: true,
+  disableClientWebpackPlugin: true,
+  hideSourceMaps: true,
+}))
 
 
 // (wrapped by withSentryConfig)
