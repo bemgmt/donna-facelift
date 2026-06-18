@@ -21,16 +21,17 @@ export default function Page() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // If already authenticated and initialized, redirect to home
+  // Clear any existing sessions when visiting the sign-in portal
   useEffect(() => {
-    const demoSession = localStorage.getItem('donna_demo_session')
-    const isInitialized = sessionStorage.getItem('donna_context_initialized')
+    localStorage.removeItem('donna_demo_session')
+    localStorage.removeItem('donna_demo_user')
+    localStorage.removeItem('donna_investor_preview')
+    document.cookie = 'donna_demo_session=; path=/; max-age=0'
+    document.cookie = 'donna_demo_user=; path=/; max-age=0'
     
-    if (demoSession === 'true' && isInitialized === 'true') {
-      // User is authenticated and initialized, redirect to home
-      router.push('/')
-    }
-  }, [router])
+    // Also sign out of Supabase to ensure a clean state
+    supabase.auth.signOut().catch(console.error)
+  }, [])
 
   const setLocalSession = (userEmail: string) => {
     localStorage.setItem('donna_demo_session', 'true')
