@@ -32,18 +32,33 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Check if user is admin by checking the 'profile' column in public.users table
-    const { data: userData, error: userError } = await supabase
+    let { data: userData, error: userError } = await supabase
       .from('users')
       .select('profile')
       .eq('email', user.email)
       .single()
 
     if (userError || !userData) {
-      return NextResponse.json({ success: false, message: 'User record not found' }, { status: 403 })
+      // Auto-provision the user in the public.users table as a facilitator
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          email: user.email,
+          name: user.email?.split('@')[0] || 'Demo User',
+          profile: { role: 'facilitator' }
+        })
+        .select('profile')
+        .single()
+      
+      if (insertError) {
+        console.error('[DONNA Drive] Auto-provisioning failed:', insertError)
+        return NextResponse.json({ success: false, message: 'User record not found and auto-provisioning failed' }, { status: 403 })
+      }
+      userData = newUser
     }
 
     // Check role column from profile JSONB
-    const role = userData.profile?.role
+    const role = userData?.profile?.role
     if (role !== 'admin' && role !== 'facilitator') {
       return NextResponse.json({ success: false, message: 'Access denied: User is not an admin' }, { status: 403 })
     }

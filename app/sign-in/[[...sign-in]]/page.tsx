@@ -79,12 +79,28 @@ export default function Page() {
         // Route to the appropriate drive page based on their role
         // Query by email since users.id is a separate UUID from auth.users.id
         try {
-          const { data: userData } = await supabase
+          let { data: userData, error: userError } = await supabase
             .from('users')
             .select('profile')
             .eq('email', data.user.email)
             .single()
             
+          if (userError || !userData) {
+            const { data: newUser, error: insertError } = await supabase
+              .from('users')
+              .insert({
+                email: data.user.email,
+                name: data.user.email?.split('@')[0] || 'Demo User',
+                profile: { role: 'facilitator' }
+              })
+              .select('profile')
+              .single()
+            
+            if (!insertError && newUser) {
+              userData = newUser
+            }
+          }
+
           const role = userData?.profile?.role
           if (role === 'admin' || role === 'facilitator') {
             router.push('/drive/facilitator')

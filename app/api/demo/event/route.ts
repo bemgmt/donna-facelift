@@ -50,11 +50,27 @@ export async function POST(request: NextRequest) {
       const token = authHeader.replace('Bearer ', '')
       const { data: { user } } = await supabase.auth.getUser(token)
       if (user) {
-        const { data: userData } = await supabase
+        let { data: userData, error: userError } = await supabase
           .from('users')
           .select('profile')
           .eq('email', user.email)
           .single()
+
+        if (userError || !userData) {
+          const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert({
+              email: user.email,
+              name: user.email?.split('@')[0] || 'Demo User',
+              profile: { role: 'facilitator' }
+            })
+            .select('profile')
+            .single()
+
+          if (!insertError && newUser) {
+            userData = newUser
+          }
+        }
         
         const role = userData?.profile?.role
         if (role === 'admin' || role === 'facilitator') {
