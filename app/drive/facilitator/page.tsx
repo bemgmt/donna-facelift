@@ -92,9 +92,13 @@ export default function FacilitatorDashboard() {
       const data = await res.json()
       if (data.success && data.events) {
         setEvents(data.events)
+      } else {
+        // Events endpoint returned but no events — set empty so UI doesn't show "Loading"
+        setEvents([])
       }
     } catch (err) {
       console.error("Failed to fetch events", err)
+      setEvents([]) // ensure we exit the loading state
     }
   }
 
@@ -111,9 +115,14 @@ export default function FacilitatorDashboard() {
         // User is not an admin, sign out automatically
         toast.error(data.message || "Unauthorized")
         supabase.auth.signOut()
+      } else {
+        // Stats failed (maybe tables don't exist yet) — set empty stats so UI renders
+        setStats({ totalUsersInQueue: 0, progressByRole: {} })
       }
     } catch (err) {
       console.error("Failed to fetch stats", err)
+      // Set empty stats so UI doesn't stay in loading state
+      setStats({ totalUsersInQueue: 0, progressByRole: {} })
     } finally {
       setIsFetchingStats(false)
     }
@@ -399,7 +408,7 @@ export default function FacilitatorDashboard() {
 
             <div className="flex-1 space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {events.length === 0 ? (
-                <div className="text-white/40 text-sm text-center py-8">Loading events...</div>
+                <div className="text-white/40 text-sm text-center py-8">No events available. Ensure DONNA_DRIVE_ENABLED is set to true.</div>
               ) : (
                 events.map((event) => {
                   const Icon = ICONS[event.icon] || Play

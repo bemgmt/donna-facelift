@@ -21,16 +21,15 @@ export default function Page() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Clear any existing sessions when visiting the sign-in portal
+  // Clear any existing demo/investor sessions when visiting the sign-in portal
+  // NOTE: We do NOT sign out of Supabase here — that would kill the session
+  // before the target page (e.g. /drive/facilitator) can read it.
   useEffect(() => {
     localStorage.removeItem('donna_demo_session')
     localStorage.removeItem('donna_demo_user')
     localStorage.removeItem('donna_investor_preview')
     document.cookie = 'donna_demo_session=; path=/; max-age=0'
     document.cookie = 'donna_demo_user=; path=/; max-age=0'
-    
-    // Also sign out of Supabase to ensure a clean state
-    supabase.auth.signOut().catch(console.error)
   }, [])
 
   const setLocalSession = (userEmail: string) => {
@@ -78,11 +77,12 @@ export default function Page() {
 
       if (data.user) {
         // Route to the appropriate drive page based on their role
+        // Query by email since users.id is a separate UUID from auth.users.id
         try {
           const { data: userData } = await supabase
             .from('users')
             .select('profile')
-            .eq('id', data.user.id)
+            .eq('email', data.user.email)
             .single()
             
           const role = userData?.profile?.role
