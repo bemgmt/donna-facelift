@@ -35,6 +35,7 @@ const LeadGeneratorInterface = dynamic(
 )
 
 import ChatbotControlInterface from "./interfaces/chatbot-control-interface"
+import FacilitatorSupportChat from "@/components/drive/FacilitatorSupportChat"
 
 type GridItem = {
   id: string
@@ -463,6 +464,7 @@ export default function InteractiveGrid() {
       <div className="absolute bottom-8 right-8">
         <div className="text-xs text-white/40 glass border border-white/20 px-2 py-1 rounded">click to enter</div>
       </div>
+      <FacilitatorSupportChat />
     </div>
   )
 }

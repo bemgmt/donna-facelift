@@ -76,24 +76,31 @@ export default function Page() {
       }
 
       if (data.user) {
-        // Route to the appropriate drive page based on their role
-        // Query by email since users.id is a separate UUID from auth.users.id
+        // Set local session parameters
+        localStorage.setItem('donna_demo_session', 'true')
+        localStorage.setItem('donna_demo_user', data.user.email || '')
+        document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+        document.cookie = `donna_demo_user=${data.user.email}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+
         try {
           let { data: userData, error: userError } = await supabase
             .from('users')
-            .select('profile')
+            .select('profile, name, vertical')
             .eq('email', data.user.email)
             .single()
             
           if (userError || !userData) {
+            // Check if this is a known facilitator email (you can customize this)
+            const isFacilitatorEmail = data.user.email?.includes('admin') || data.user.email?.includes('facilitator')
             const { data: newUser, error: insertError } = await supabase
               .from('users')
               .insert({
+                id: data.user.id,
                 email: data.user.email,
                 name: data.user.email?.split('@')[0] || 'Demo User',
-                profile: { role: 'facilitator' }
+                profile: { role: isFacilitatorEmail ? 'facilitator' : 'attendee' }
               })
-              .select('profile')
+              .select('profile, name, vertical')
               .single()
             
             if (!insertError && newUser) {
@@ -105,11 +112,60 @@ export default function Page() {
           if (role === 'admin' || role === 'facilitator') {
             router.push('/drive/facilitator')
           } else {
-            router.push('/drive/dashboard')
+            // Find or create member entry in donna_drive_members
+            const { data: memberData, error: memberError } = await supabase
+              .from('donna_drive_members')
+              .select('*')
+              .eq('user_id', data.user.id)
+              .eq('org_id', 'dd-org-001')
+              .maybeSingle()
+
+            if (memberData) {
+              localStorage.setItem("donna_drive_member_id", memberData.id)
+              localStorage.setItem("donna_drive_user_name", memberData.display_name)
+              localStorage.setItem("donna_drive_industry", memberData.industry)
+              
+              // We need to fetch the actual role slug from the role_id if assigned
+              if (memberData.role_id) {
+                const { data: roleRow } = await supabase
+                  .from('donna_drive_roles')
+                  .select('slug')
+                  .eq('id', memberData.role_id)
+                  .single()
+                localStorage.setItem("donna_drive_role", roleRow?.slug || "")
+              } else {
+                localStorage.setItem("donna_drive_role", "")
+              }
+            } else {
+              // User has a Supabase account but not registered as a member for this event, auto-join them
+              const memberId = `dd-member-${Date.now()}`
+              const friendlyIndustry = userData?.vertical === 'hospitality' ? 'Hospitality' : 
+                                       userData?.vertical === 'professional_services' ? 'Professional Services' : 'Real Estate'
+              
+              await supabase.from('donna_drive_members').insert({
+                id: memberId,
+                org_id: 'dd-org-001',
+                user_id: data.user.id,
+                display_name: userData?.name || data.user.email?.split('@')[0] || 'Attendee',
+                company: '',
+                phone: '',
+                industry: friendlyIndustry,
+                email: data.user.email,
+                role_id: null,
+                is_facilitator: false
+              })
+
+              localStorage.setItem("donna_drive_member_id", memberId)
+              localStorage.setItem("donna_drive_user_name", userData?.name || 'Attendee')
+              localStorage.setItem("donna_drive_industry", userData?.vertical || 'real_estate')
+              localStorage.setItem("donna_drive_role", "")
+            }
+
+            router.push('/drive/waiting-room')
           }
         } catch (err) {
-          // Fallback if role check fails
-          router.push('/drive/dashboard')
+          console.error("Login routing error:", err)
+          router.push('/drive/waiting-room')
         }
       }
     } catch (err: any) {
@@ -362,7 +418,7 @@ export default function Page() {
                 )}
 
                 <div className="pt-6 border-t border-white/10 text-center space-y-4">
-                  <p className="text-sm text-white/60">Don't have an account?</p>
+                  <p className="text-sm text-white/60">Don&apos;t have an account?</p>
                   <Link 
                     href="/drive"
                     className="block w-full py-2.5 rounded-xl border border-donna-cyan/30 text-donna-cyan hover:bg-donna-cyan/10 transition-colors text-sm font-medium"

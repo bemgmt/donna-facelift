@@ -2,21 +2,15 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, ArrowRight, Building2, User, Briefcase, Mail, Phone, Globe } from "lucide-react"
+import { ArrowLeft, ArrowRight, Building2, User, Briefcase, Mail, Phone, Globe, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 
-const ROLES = [
-  { slug: "commercial_broker", label: "Commercial Broker" },
-  { slug: "commercial_lender", label: "Commercial Lender" },
-  { slug: "title_company", label: "Title Company" },
-  { slug: "escrow_officer", label: "Escrow Officer" },
-  { slug: "insurance_broker", label: "Insurance Broker" },
-  { slug: "appraiser", label: "Appraiser" },
-  { slug: "environmental_consultant", label: "Environmental Consultant" },
-  { slug: "surveyor", label: "Surveyor" },
-  { slug: "real_estate_attorney", label: "Real Estate Attorney" },
-  { slug: "property_manager", label: "Property Manager" },
+const INDUSTRIES = [
+  { slug: "real_estate", label: "Real Estate" },
+  { slug: "hospitality", label: "Hospitality" },
+  { slug: "professional_services", label: "Professional Services" },
 ]
 
 export default function DriveRegisterPage() {
@@ -28,9 +22,9 @@ export default function DriveRegisterPage() {
     name: "",
     company: "",
     email: "",
+    password: "",
     phone: "",
-    industry: "",
-    role_slug: "",
+    industry: "real_estate",
   })
 
   const update = (field: string, value: string) => {
@@ -41,8 +35,8 @@ export default function DriveRegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!form.name || !form.email || !form.role_slug) {
-      setError("Please fill in your name, email, and select a role.")
+    if (!form.name || !form.email || !form.password || !form.industry) {
+      setError("Please fill in your name, email, password, and select an industry.")
       return
     }
 
@@ -50,17 +44,45 @@ export default function DriveRegisterPage() {
     setError("")
 
     try {
-      const res = await fetch("/api/demo/roles", {
+      let userId = "preview-user-id"
+
+      // 1. Supabase Auth Signup (if database is configured)
+      if (isSupabaseConfigured) {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: form.email,
+          password: form.password,
+          options: {
+            data: {
+              name: form.name,
+              vertical: form.industry
+            }
+          }
+        })
+
+        if (authError) {
+          setError(authError.message || "Authentication signup failed.")
+          setLoading(false)
+          return
+        }
+
+        if (authData?.user) {
+          userId = authData.user.id
+        }
+      }
+
+      // 2. Call backend register API to save user and member records
+      const friendlyIndustry = INDUSTRIES.find(ind => ind.slug === form.industry)?.label || form.industry
+      const res = await fetch("/api/demo/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          user_id: userId,
           org_id: "dd-org-001",
-          role_slug: form.role_slug,
-          user_name: form.name,
-          user_company: form.company,
-          user_email: form.email,
-          user_phone: form.phone,
-          user_industry: form.industry,
+          name: form.name,
+          company: form.company,
+          email: form.email,
+          phone: form.phone,
+          industry: friendlyIndustry,
         }),
       })
 
@@ -72,14 +94,19 @@ export default function DriveRegisterPage() {
         return
       }
 
-      // Store role in localStorage for the dashboard
-      localStorage.setItem("donna_drive_role", form.role_slug)
+      // Store in localStorage for application context/navigation
       localStorage.setItem("donna_drive_member_id", data.member_id)
       localStorage.setItem("donna_drive_user_name", form.name)
+      localStorage.setItem("donna_drive_industry", form.industry)
+      localStorage.setItem("donna_drive_role", "") // Assigned by facilitator later
+      
+      // Cookie helper for server-side route guards if Clerk middleware is disabled
+      document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+      document.cookie = `donna_demo_user=${form.email}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
 
-      router.push(`/drive/dashboard?role=${form.role_slug}`)
-    } catch {
-      setError("Something went wrong. Please try again.")
+      router.push("/drive/waiting-room")
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.")
       setLoading(false)
     }
   }
@@ -110,10 +137,10 @@ export default function DriveRegisterPage() {
               <Building2 className="w-7 h-7 text-white/80" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              Join DONNA Drive
+              Register for DONNA Drive
             </h1>
             <p className="mt-2 text-sm text-white/50">
-              Register with your real information — this creates a real DONNA account.
+              Create an account with your credentials to join the live simulation event.
             </p>
           </motion.div>
 
@@ -140,84 +167,85 @@ export default function DriveRegisterPage() {
               />
             </div>
 
-            {/* Company */}
-            <div>
-              <label className="flex items-center gap-2 text-sm text-white/60 mb-1.5">
-                <Briefcase className="w-3.5 h-3.5" /> Company
-              </label>
-              <input
-                type="text"
-                value={form.company}
-                onChange={(e) => update("company", e.target.value)}
-                placeholder="ABC Mortgage"
-                className="donna-input text-sm"
-              />
-            </div>
-
             {/* Email */}
             <div>
               <label className="flex items-center gap-2 text-sm text-white/60 mb-1.5">
-                <Mail className="w-3.5 h-3.5" /> Email *
+                <Mail className="w-3.5 h-3.5" /> Email Address *
               </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => update("email", e.target.value)}
-                placeholder="john@abcmortgage.com"
+                placeholder="john@example.com"
                 className="donna-input text-sm"
                 required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="flex items-center gap-2 text-sm text-white/60 mb-1.5">
+                <Lock className="w-3.5 h-3.5" /> Password *
+              </label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => update("password", e.target.value)}
+                placeholder="••••••••"
+                className="donna-input text-sm"
+                required
+              />
+            </div>
+
+            {/* Company */}
+            <div>
+              <label className="flex items-center gap-2 text-sm text-white/60 mb-1.5">
+                <Briefcase className="w-3.5 h-3.5" /> Company Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={form.company}
+                onChange={(e) => update("company", e.target.value)}
+                placeholder="Acme Real Estate"
+                className="donna-input text-sm"
               />
             </div>
 
             {/* Phone */}
             <div>
               <label className="flex items-center gap-2 text-sm text-white/60 mb-1.5">
-                <Phone className="w-3.5 h-3.5" /> Phone
+                <Phone className="w-3.5 h-3.5" /> Phone Number (Optional)
               </label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => update("phone", e.target.value)}
-                placeholder="(555) 555-0101"
+                placeholder="(555) 555-0100"
                 className="donna-input text-sm"
               />
             </div>
 
-            {/* Industry */}
+            {/* Industry selection */}
             <div>
-              <label className="flex items-center gap-2 text-sm text-white/60 mb-1.5">
-                <Globe className="w-3.5 h-3.5" /> Industry
+              <label className="flex items-center gap-2 text-sm text-white/60 mb-2">
+                <Globe className="w-3.5 h-3.5" /> Choose Your Industry *
               </label>
-              <input
-                type="text"
-                value={form.industry}
-                onChange={(e) => update("industry", e.target.value)}
-                placeholder="Commercial Real Estate"
-                className="donna-input text-sm"
-              />
-            </div>
-
-            {/* Role selection */}
-            <div>
-              <label className="text-sm text-white/60 mb-2 block">
-                Select Your Demo Role *
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {ROLES.map((role) => (
+              <div className="grid grid-cols-3 gap-2">
+                {INDUSTRIES.map((ind) => (
                   <button
-                    key={role.slug}
+                    key={ind.slug}
                     type="button"
-                    onClick={() => update("role_slug", role.slug)}
+                    onClick={() => update("industry", ind.slug)}
                     className={`
-                      px-3 py-2 rounded-lg text-xs font-medium text-left transition-all duration-150
+                      px-3 py-3 rounded-lg text-xs font-medium text-center transition-all duration-150
                       ${
-                        form.role_slug === role.slug
+                        form.industry === ind.slug
                           ? "bg-gradient-to-r from-purple-500/30 to-cyan-500/30 border-purple-400/50 text-white border"
                           : "bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
                       }
                     `}
                   >
-                    {role.label}
+                    {ind.label}
                   </button>
                 ))}
               </div>
@@ -237,13 +265,13 @@ export default function DriveRegisterPage() {
               className="w-full donna-btn text-sm py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 justify-center">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Registering…
                 </span>
               ) : (
                 <span className="flex items-center gap-2 justify-center">
-                  Enter DONNA Drive
+                  Register & Enter Waiting Room
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
@@ -251,7 +279,7 @@ export default function DriveRegisterPage() {
 
             <div className="pt-4 border-t border-white/10 text-center space-y-3">
               <p className="text-xs text-white/50">
-                By registering, you agree to create a real DONNA account. No credit card required.
+                After registering, wait in the waiting room for the facilitator to start the live event.
               </p>
               <p className="text-sm text-white/60">
                 Already have an account?{' '}

@@ -39,6 +39,8 @@ const priorityColors: Record<string, string> = {
   urgent: "text-red-400",
 }
 
+import FacilitatorSupportChat from "@/components/drive/FacilitatorSupportChat"
+
 function getRoleLabel(slug: DemoRoleSlug): string {
   return DEMO_ROLES.find((r) => r.slug === slug)?.label ?? slug
 }
@@ -399,6 +401,7 @@ function DriveDashboardContent() {
           </motion.div>
         </AnimatePresence>
       </div>
+      <FacilitatorSupportChat />
     </div>
   )
 }

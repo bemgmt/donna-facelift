@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { 
   ClipboardList, 
   Plus, 
@@ -35,6 +35,7 @@ import {
   getDemoSecretaryNotes,
   getDemoSecretaryTasks,
 } from "@/lib/investor/demo-seed"
+import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 
 interface Meeting {
   id: string
@@ -93,6 +94,21 @@ export default function SecretaryInterface(): JSX.Element {
   const [newNoteContent, setNewNoteContent] = useState("")
   const [showAddNote, setShowAddNote] = useState(false)
 
+  // Donna Drive Live Simulation states
+  const [isLiveDemo, setIsLiveDemo] = useState(false)
+  const [roleSlug, setRoleSlug] = useState("")
+  const [showScenarioBriefing, setShowScenarioBriefing] = useState(false)
+  const [scenarioBriefing, setScenarioBriefing] = useState({ title: "", body: "" })
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const live = localStorage.getItem("donna_demo_session") === "true" && !!localStorage.getItem("donna_drive_member_id")
+      const rSlug = localStorage.getItem("donna_drive_role") || ""
+      setIsLiveDemo(live)
+      setRoleSlug(rSlug)
+    }
+  }, [])
+
   const simulateSecretaryCommand = (
     commandId: string,
     detail: string,
@@ -114,35 +130,109 @@ export default function SecretaryInterface(): JSX.Element {
     ])
   }
 
-  // Initialize with shared demo seed (relative dates)
+  // Initialize and load simulation data
   useEffect(() => {
-    const mockMeetings = getDemoSecretaryMeetings() as Meeting[]
-    const mockTasks = getDemoSecretaryTasks() as Task[]
-    const mockNotes = getDemoSecretaryNotes() as Note[]
-    const mockDeadlines = getDemoSecretaryDeadlines() as Deadline[]
+    if (isLiveDemo && roleSlug) {
+      const loadLiveSimulationData = async () => {
+        try {
+          const res = await fetch(`/api/demo/data?role=${roleSlug}`)
+          const data = await res.json()
+          
+          if (data.success) {
+            // Map live meetings
+            const liveMeetings: Meeting[] = data.calendar_events.map((e: any) => ({
+              id: e.id,
+              title: e.title,
+              date: e.start_time.split('T')[0],
+              time: new Date(e.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+              duration: Math.round((new Date(e.end_time).getTime() - new Date(e.start_time).getTime()) / 60000) || 30,
+              participants: e.attendees || [],
+              location: e.location || '',
+              isDONNAInvited: true,
+              prepNotes: e.description || ''
+            }))
+            setMeetings(liveMeetings)
 
-    setMeetings(mockMeetings)
-    setTasks(mockTasks)
-    setNotes(mockNotes)
-    setDeadlines(mockDeadlines)
-    
-    // Set first upcoming meeting as selected
-    const upcoming = mockMeetings.find(m => new Date(m.date) >= new Date()) || mockMeetings[0]
-    if (upcoming) {
-      setSelectedMeeting(upcoming)
-      // Initialize chat with prep notes if available
-      if (upcoming.prepNotes) {
-        setChatMessages([
-          {
-            id: '1',
-            role: 'donna',
-            content: `I've prepared some notes for "${upcoming.title}". ${upcoming.prepNotes}`,
-            timestamp: new Date().toISOString()
+            // Map live tasks
+            const liveTasks: Task[] = data.tasks.map((t: any) => ({
+              id: t.id,
+              text: t.title + ': ' + t.description,
+              completed: t.status === 'completed',
+              dueDate: t.due_date?.split('T')[0],
+              priority: t.priority
+            }))
+            setTasks(liveTasks)
+
+            // Map live deadlines
+            const liveDeadlines: Deadline[] = data.tasks
+              .filter((t: any) => t.due_date)
+              .map((t: any) => ({
+                id: `dl-${t.id}`,
+                title: t.title,
+                date: t.due_date.split('T')[0],
+                priority: t.priority
+              }))
+            setDeadlines(liveDeadlines)
+
+            // Check for urgent briefing popup notification
+            const urgentNotif = data.notifications.find((n: any) => n.type === 'urgent' && !n.read)
+            if (urgentNotif) {
+              setScenarioBriefing({ title: urgentNotif.title, body: urgentNotif.body })
+              setShowScenarioBriefing(true)
+              
+              // Mark the notification as read locally/in db
+              if (isSupabaseConfigured) {
+                await supabase
+                  .from('donna_drive_notifications')
+                  .update({ read: true })
+                  .eq('id', urgentNotif.id)
+              }
+            }
+
+            // Set selected meeting
+            if (liveMeetings.length > 0 && !selectedMeeting) {
+              const upcoming = liveMeetings.find(m => new Date(m.date) >= new Date()) || liveMeetings[0]
+              setSelectedMeeting(upcoming)
+            }
           }
-        ])
+        } catch (err) {
+          console.error("Failed to load live simulation data in secretary:", err)
+        }
+      }
+
+      loadLiveSimulationData()
+      
+      // Poll every 5 seconds for live event updates/injections
+      const interval = setInterval(loadLiveSimulationData, 5000)
+      return () => clearInterval(interval)
+    } else {
+      // Load static mocks
+      const mockMeetings = getDemoSecretaryMeetings() as Meeting[]
+      const mockTasks = getDemoSecretaryTasks() as Task[]
+      const mockNotes = getDemoSecretaryNotes() as Note[]
+      const mockDeadlines = getDemoSecretaryDeadlines() as Deadline[]
+
+      setMeetings(mockMeetings)
+      setTasks(mockTasks)
+      setNotes(mockNotes)
+      setDeadlines(mockDeadlines)
+
+      const upcoming = mockMeetings.find(m => new Date(m.date) >= new Date()) || mockMeetings[0]
+      if (upcoming) {
+        setSelectedMeeting(upcoming)
+        if (upcoming.prepNotes) {
+          setChatMessages([
+            {
+              id: '1',
+              role: 'donna',
+              content: `I've prepared some notes for "${upcoming.title}". ${upcoming.prepNotes}`,
+              timestamp: new Date().toISOString()
+            }
+          ])
+        }
       }
     }
-  }, [])
+  }, [isLiveDemo, roleSlug])
 
   const handleAddMeeting = () => {
     const newMeeting: Meeting = {
@@ -223,17 +313,31 @@ export default function SecretaryInterface(): JSX.Element {
     }, 1000)
   }
 
-  const handleToggleTask = (taskId: string) => {
+  const handleToggleTask = async (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId)
     const wasCompleted = task?.completed ?? false
+    
+    // Optimistic UI update
     setTasks(tasks.map((t) =>
       t.id === taskId ? { ...t, completed: !t.completed } : t
     ))
-    simulateSecretaryCommand(
-      "toggle_task",
-      `Task “${task?.text ?? taskId}” ${wasCompleted ? "reopened" : "marked complete"} in preview.`,
-      "Task update — simulated workspace sync."
-    )
+
+    if (isLiveDemo && isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('donna_drive_tasks')
+          .update({ status: wasCompleted ? 'in_progress' : 'completed' })
+          .eq('id', taskId)
+      } catch (err) {
+        console.error("Failed to update task status in db:", err)
+      }
+    } else {
+      simulateSecretaryCommand(
+        "toggle_task",
+        `Task “${task?.text ?? taskId}” ${wasCompleted ? "reopened" : "marked complete"} in preview.`,
+        "Task update — simulated workspace sync."
+      )
+    }
   }
 
   const handleAddTask = (text: string) => {
@@ -682,6 +786,40 @@ export default function SecretaryInterface(): JSX.Element {
       
       {/* Facilitator Panel for Demo Events */}
       <FacilitatorPanel facilitatorSecret="donna-drive-dev" />
+
+      {/* Scenario Live Briefing Alert Popup */}
+      <AnimatePresence>
+        {showScenarioBriefing && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-lg glass-heavy border border-red-500/30 rounded-2xl p-6 bg-[#0E0B0B]/90 shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500" />
+              <div className="flex items-start gap-4 mt-2">
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                  <AlertCircle className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="space-y-3 flex-1">
+                  <h3 className="text-lg font-bold text-white tracking-wide">{scenarioBriefing.title}</h3>
+                  <p className="text-xs text-white/70 leading-relaxed whitespace-pre-wrap">{scenarioBriefing.body}</p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowScenarioBriefing(false)}
+                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-black text-xs font-bold rounded-xl transition-colors shadow-lg"
+                >
+                  Understood & Enter Simulation
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   )
 }
