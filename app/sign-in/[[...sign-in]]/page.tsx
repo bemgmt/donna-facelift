@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Sparkles, Lock, User } from 'lucide-react'
+import { Sparkles, Lock, Mail } from 'lucide-react'
 import { NeonButton } from '@/components/ui/neon-button'
 import { FuturisticInput } from '@/components/ui/futuristic-input'
 import { GlassCard } from '@/components/ui/glass-card'
+import { supabase } from '@/lib/supabase'
 
 export default function Page() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -26,31 +27,52 @@ export default function Page() {
     }
   }, [router])
 
+  const setLocalSession = (userEmail: string) => {
+    // Store demo session in localStorage (for client-side checks)
+    localStorage.setItem('donna_demo_session', 'true')
+    localStorage.setItem('donna_demo_user', userEmail)
+    localStorage.setItem('donna_investor_preview', 'true')
+    
+    // Set cookie for server-side API routes (accessible in preview mode)
+    document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+    document.cookie = `donna_demo_user=${userEmail}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
 
-    // Demo credentials
-    if (username === 'DONNA' && password === 'DONNA123') {
-      setIsLoading(true)
-      
-      // Store demo session in localStorage (for client-side checks)
-      localStorage.setItem('donna_demo_session', 'true')
-      localStorage.setItem('donna_demo_user', username)
-      localStorage.setItem('donna_investor_preview', 'true')
-      
-      // Set cookie for server-side API routes (accessible in preview mode)
-      document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
-      document.cookie = `donna_demo_user=${username}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
-      
-      // Simulate login delay
+    // Demo credentials fallback
+    if (email.toUpperCase() === 'DONNA' && password === 'DONNA123') {
+      setLocalSession('DONNA')
       setTimeout(() => {
         setIsLoading(false)
-        // Redirect to home - initialization will happen there if needed
         router.push('/')
       }, 500)
-    } else {
-      setError('Invalid username or password. Use DONNA / DONNA123 for the investor preview.')
+      return
+    }
+
+    try {
+      // Real Supabase Auth
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        setError(signInError.message)
+        setIsLoading(false)
+        return
+      }
+
+      if (data.user) {
+        setLocalSession(data.user.email || 'user')
+        router.push('/')
+      }
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred during login.')
+      setIsLoading(false)
     }
   }
 
@@ -79,26 +101,26 @@ export default function Page() {
           {/* Demo Credentials Info */}
           <div className="p-4 rounded-lg bg-donna-purple/10 border border-donna-purple/20">
             <p className="text-xs text-white/60 mb-2">Demo Credentials:</p>
-            <p className="text-sm text-white/80 font-mono">Username: DONNA</p>
+            <p className="text-sm text-white/80 font-mono">Email: DONNA</p>
             <p className="text-sm text-white/80 font-mono">Password: DONNA123</p>
           </div>
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm text-white/70 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Username
+              <label htmlFor="email" className="text-sm text-white/70 flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Email / Username
               </label>
               <FuturisticInput
-                id="username"
+                id="email"
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value.toUpperCase())}
-                placeholder="Enter username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email"
                 className="w-full"
                 autoFocus
-                autoComplete="username"
+                autoComplete="email"
                 required
               />
             </div>
@@ -133,7 +155,7 @@ export default function Page() {
             <NeonButton
               type="submit"
               className="w-full"
-              disabled={isLoading || !username || !password}
+              disabled={isLoading || !email || !password}
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -153,7 +175,7 @@ export default function Page() {
           {/* Footer */}
           <div className="text-center pt-4 border-t border-white/10">
             <p className="text-xs text-white/50">
-              This is a demo environment. Use the credentials above to sign in.
+              Sign in with your DONNA account or use the demo credentials above.
             </p>
           </div>
         </GlassCard>

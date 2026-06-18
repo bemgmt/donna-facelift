@@ -13,10 +13,15 @@ import {
   Clock,
   TrendingDown,
   FileX,
-  Zap
+  Zap,
+  Users,
+  CheckCircle,
+  Mail,
+  LogOut
 } from "lucide-react"
 import { toast } from "sonner"
 import type { EventDefinition } from "@/lib/donna-drive/constants"
+import { supabase } from "@/lib/supabase"
 
 const ICONS: Record<string, React.ElementType> = {
   AlertTriangle: AlertTriangle,
@@ -35,44 +40,117 @@ const SCENARIOS = [
 ]
 
 export default function FacilitatorDashboard() {
-  const [secret, setSecret] = useState("")
+  const [session, setSession] = useState<any>(null)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isAuthenticating, setIsAuthenticating] = useState(true)
+
   const [selectedScenario, setSelectedScenario] = useState("vernon")
   const [events, setEvents] = useState<EventDefinition[]>([])
   const [isSeeding, setIsSeeding] = useState(false)
   const [injectingEvent, setInjectingEvent] = useState<string | null>(null)
+  
+  // Stats state
+  const [stats, setStats] = useState<any>(null)
+  const [isFetchingStats, setIsFetchingStats] = useState(false)
 
   useEffect(() => {
-    async function fetchEvents() {
-      try {
-        const res = await fetch("/api/demo/event")
-        const data = await res.json()
-        if (data.success && data.events) {
-          setEvents(data.events)
-        }
-      } catch (err) {
-        console.error("Failed to fetch events", err)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setIsAuthenticating(false)
+      if (session) {
+        fetchEvents()
+        fetchStats(session.access_token)
       }
-    }
-    fetchEvents()
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      if (session) {
+        fetchEvents()
+        fetchStats(session.access_token)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const handleSeed = async () => {
-    if (!secret) {
-      toast.error("Please enter the facilitator secret")
-      return
+  // Poll stats every 10 seconds
+  useEffect(() => {
+    if (!session) return
+    const interval = setInterval(() => {
+      fetchStats(session.access_token)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [session])
+
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch("/api/demo/event")
+      const data = await res.json()
+      if (data.success && data.events) {
+        setEvents(data.events)
+      }
+    } catch (err) {
+      console.error("Failed to fetch events", err)
     }
+  }
+
+  const fetchStats = async (token: string) => {
+    setIsFetchingStats(true)
+    try {
+      const res = await fetch("/api/demo/facilitator/stats", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (data.success && data.stats) {
+        setStats(data.stats)
+      } else if (res.status === 403 || res.status === 401) {
+        // User is not an admin, sign out automatically
+        toast.error(data.message || "Unauthorized")
+        supabase.auth.signOut()
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats", err)
+    } finally {
+      setIsFetchingStats(false)
+    }
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsAuthenticating(true)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      toast.error(error.message)
+      setIsAuthenticating(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+  }
+
+  const handleSeed = async () => {
+    if (!session) return
 
     setIsSeeding(true)
     try {
       const res = await fetch("/api/demo/seed", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ facilitator_secret: secret, scenario: selectedScenario }),
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ scenario: selectedScenario }),
       })
 
       const data = await res.json()
       if (data.success) {
         toast.success(`Seeded ${selectedScenario} scenario successfully!`)
+        fetchStats(session.access_token)
       } else {
         toast.error(data.message || "Failed to seed data")
       }
@@ -85,18 +163,17 @@ export default function FacilitatorDashboard() {
   }
 
   const handleInjectEvent = async (eventType: string) => {
-    if (!secret) {
-      toast.error("Please enter the facilitator secret")
-      return
-    }
+    if (!session) return
 
     setInjectingEvent(eventType)
     try {
       const res = await fetch("/api/demo/event", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
-          facilitator_secret: secret,
           event_type: eventType,
           org_id: "dd-org-001",
         }),
@@ -107,6 +184,7 @@ export default function FacilitatorDashboard() {
         toast.success(
           `Event injected! Created: ${data.emails_created} emails, ${data.tasks_created} tasks, ${data.notifications_created} notifications.`
         )
+        fetchStats(session.access_token)
       } else {
         toast.error(data.message || "Failed to inject event")
       }
@@ -118,47 +196,147 @@ export default function FacilitatorDashboard() {
     }
   }
 
+  if (isAuthenticating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#0C0F16] to-[#10121A]">
+        <RefreshCw className="w-8 h-8 text-rose-400 animate-spin" />
+      </div>
+    )
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#0C0F16] to-[#10121A]">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+          <div className="glass rounded-2xl border border-white/10 p-8 space-y-6 bg-black/40 backdrop-blur-md">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-500/20 mb-4">
+                <Lock className="w-8 h-8 text-rose-400" />
+              </div>
+              <h1 className="text-2xl font-semibold text-white">Admin Access Required</h1>
+              <p className="text-white/70">Sign in to access the Facilitator Dashboard</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm text-white/70 flex items-center gap-2">
+                  <Mail className="w-4 h-4" /> Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-rose-500/50 outline-none"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm text-white/70 flex items-center gap-2">
+                  <Lock className="w-4 h-4" /> Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-rose-500/50 outline-none"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-3 rounded-xl transition-colors mt-6"
+              >
+                Sign In
+              </button>
+            </form>
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-transparent text-white overflow-hidden py-16 px-4 sm:px-6 lg:px-8">
-      {/* Background glow */}
+    <div className="min-h-screen bg-transparent text-white overflow-hidden py-16 px-4 sm:px-6 lg:px-8 relative">
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-rose-600/10 via-orange-500/5 to-transparent rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-10 text-center"
+          className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6"
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <Settings className="w-8 h-8 text-rose-400" />
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/5 border border-white/10">
+              <Settings className="w-7 h-7 text-rose-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Facilitator Dashboard</h1>
+              <p className="mt-1 text-white/50">Control the DONNA Drive demo environment</p>
+            </div>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">Facilitator Dashboard</h1>
-          <p className="mt-4 text-white/50 text-lg">
-            Control the DONNA Drive demo environment
-          </p>
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-sm"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </motion.div>
 
-        {/* Secret Input */}
+        {/* Live Stats Row */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="glass rounded-2xl border border-white/10 p-6 mb-8 max-w-md mx-auto"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
         >
-          <label className="block text-sm font-medium text-white/70 mb-2 flex items-center gap-2">
-            <Lock className="w-4 h-4" />
-            Facilitator Secret
-          </label>
-          <input
-            type="password"
-            value={secret}
-            onChange={(e) => setSecret(e.target.value)}
-            placeholder="Enter secret to unlock controls"
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/50 transition-all"
-          />
+          <div className="glass rounded-2xl border border-white/10 p-6 flex flex-col justify-between">
+            <div className="flex items-center gap-3 text-white/60 mb-2">
+              <Users className="w-5 h-5 text-blue-400" />
+              <span className="font-medium">Active Participants</span>
+            </div>
+            <div className="text-4xl font-bold">
+              {stats ? stats.totalUsersInQueue : '-'}
+            </div>
+          </div>
+          
+          <div className="glass rounded-2xl border border-white/10 p-6 md:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 text-white/60">
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+                <span className="font-medium">Live Task Progress</span>
+              </div>
+              {isFetchingStats && <RefreshCw className="w-4 h-4 animate-spin text-white/30" />}
+            </div>
+            
+            <div className="space-y-4 max-h-[120px] overflow-y-auto custom-scrollbar pr-2">
+              {!stats || !stats.progressByRole ? (
+                <div className="text-white/30 text-sm">Loading progress...</div>
+              ) : Object.keys(stats.progressByRole).length === 0 ? (
+                <div className="text-white/30 text-sm">No tasks assigned yet. Seed database to begin.</div>
+              ) : (
+                Object.entries(stats.progressByRole).map(([roleSlug, data]: [string, any]) => {
+                  const percentage = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0
+                  return (
+                    <div key={roleSlug} className="space-y-1">
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-white/80 capitalize">{roleSlug.replace(/_/g, ' ')}</span>
+                        <span className="text-white/60">{data.completed} / {data.total} ({percentage}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500 ease-in-out"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

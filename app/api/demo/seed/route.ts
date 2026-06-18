@@ -2,9 +2,9 @@
  * POST /api/demo/seed
  *
  * Seeds the demo organization, roles, and all transaction data into Supabase.
- * Protected by a facilitator secret.
+ * Protected by a facilitator secret or an admin Supabase session.
  *
- * Body: { facilitator_secret: string }
+ * Body: { facilitator_secret?: string, scenario?: string }
  * Returns: { success, org_id, roles[], message }
  */
 
@@ -42,10 +42,35 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Verify facilitator secret
-  if (body.facilitator_secret !== FACILITATOR_SECRET) {
+  const supabase = getSupabaseAdmin()
+
+  // Verify auth: check facilitator_secret OR an admin Supabase session
+  let isAuthorized = false
+  if (body.facilitator_secret === FACILITATOR_SECRET) {
+    isAuthorized = true
+  } else if (supabase) {
+    const authHeader = request.headers.get('authorization')
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user } } = await supabase.auth.getUser(token)
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role, profile')
+          .eq('email', user.email)
+          .single()
+        
+        const role = userData?.role || userData?.profile?.role
+        if (role === 'admin' || role === 'facilitator') {
+          isAuthorized = true
+        }
+      }
+    }
+  }
+
+  if (!isAuthorized) {
     return NextResponse.json(
-      { success: false, message: 'Invalid facilitator secret' },
+      { success: false, message: 'Invalid facilitator secret or admin session' },
       { status: 401 }
     )
   }
@@ -54,7 +79,6 @@ export async function POST(request: NextRequest) {
   const orgId = 'dd-org-001'
   const seedData = generateDemoSeedData(scenarioKey, orgId)
 
-  const supabase = getSupabaseAdmin()
   if (!supabase) {
     // Fallback: return seed data shape without persisting (useful for preview)
     return NextResponse.json({

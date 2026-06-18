@@ -38,9 +38,35 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (body.facilitator_secret !== FACILITATOR_SECRET) {
+  const supabase = getSupabaseAdmin()
+
+  // Verify auth: check facilitator_secret OR an admin Supabase session
+  let isAuthorized = false
+  if (body.facilitator_secret === FACILITATOR_SECRET) {
+    isAuthorized = true
+  } else if (supabase) {
+    const authHeader = request.headers.get('authorization')
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user } } = await supabase.auth.getUser(token)
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role, profile')
+          .eq('email', user.email)
+          .single()
+        
+        const role = userData?.role || userData?.profile?.role
+        if (role === 'admin' || role === 'facilitator') {
+          isAuthorized = true
+        }
+      }
+    }
+  }
+
+  if (!isAuthorized) {
     return NextResponse.json(
-      { success: false, message: 'Invalid facilitator secret' },
+      { success: false, message: 'Invalid facilitator secret or admin session' },
       { status: 401 }
     )
   }
@@ -54,7 +80,7 @@ export async function POST(request: NextRequest) {
 
   const payload = getEventPayload(body.event_type)
 
-  const supabase = getSupabaseAdmin()
+  // Removed duplicate const supabase declaration
   if (!supabase) {
     // Preview mode — return the payload without persisting
     return NextResponse.json({
