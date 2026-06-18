@@ -48,6 +48,16 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
     status VARCHAR(50) DEFAULT 'active'
 );
 
+-- Ensure columns exist for older schemas (v0-landing-page-for-donna compatibility)
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS chat_id VARCHAR(255);
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS title VARCHAR(255);
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS profile VARCHAR(50) DEFAULT 'general';
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS last_message_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS message_count INTEGER DEFAULT 0;
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+
 -- Indexes for chat_sessions table
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_chat_id ON chat_sessions(chat_id);
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id ON chat_sessions(user_id);
