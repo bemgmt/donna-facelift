@@ -77,8 +77,23 @@ export default function Page() {
       }
 
       if (data.user) {
-        setLocalSession(data.user.email || 'user')
-        router.push('/')
+        // Route to the appropriate drive page based on their role
+        try {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', data.user.id)
+            .single()
+            
+          if (profile?.role === 'admin' || profile?.role === 'facilitator') {
+            router.push('/drive/facilitator')
+          } else {
+            router.push('/drive/dashboard')
+          }
+        } catch (err) {
+          // Fallback if role check fails
+          router.push('/drive/dashboard')
+        }
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred during login.')
