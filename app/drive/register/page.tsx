@@ -249,9 +249,17 @@ export default function DriveRegisterPage() {
               )}
             </button>
 
-            <p className="text-xs text-white/30 text-center">
-              By registering, you agree to create a real DONNA account. No credit card required.
-            </p>
+            <div className="pt-4 border-t border-white/10 text-center space-y-3">
+              <p className="text-xs text-white/50">
+                By registering, you agree to create a real DONNA account. No credit card required.
+              </p>
+              <p className="text-sm text-white/60">
+                Already have an account?{' '}
+                <Link href="/sign-in" className="text-donna-cyan hover:underline transition-all">
+                  Sign In
+                </Link>
+              </p>
+            </div>
           </motion.form>
         </div>
       </div>

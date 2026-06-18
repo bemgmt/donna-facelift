@@ -31,10 +31,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Invalid session' }, { status: 401 })
     }
 
-    // 2. Check if user is admin by checking the 'role' column in public.users table
+    // 2. Check if user is admin by checking the 'profile' column in public.users table
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('*')
+      .select('profile')
       .eq('email', user.email)
       .single()
 
@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'User record not found' }, { status: 403 })
     }
 
-    // Check role column, or fallback to profile->role
-    const role = userData.role || userData.profile?.role
+    // Check role column from profile JSONB
+    const role = userData.profile?.role
     if (role !== 'admin' && role !== 'facilitator') {
       return NextResponse.json({ success: false, message: 'Access denied: User is not an admin' }, { status: 403 })
     }

@@ -79,13 +79,14 @@ export default function Page() {
       if (data.user) {
         // Route to the appropriate drive page based on their role
         try {
-          const { data: profile } = await supabase
+          const { data: userData } = await supabase
             .from('users')
-            .select('role')
+            .select('profile')
             .eq('id', data.user.id)
             .single()
             
-          if (profile?.role === 'admin' || profile?.role === 'facilitator') {
+          const role = userData?.profile?.role
+          if (role === 'admin' || role === 'facilitator') {
             router.push('/drive/facilitator')
           } else {
             router.push('/drive/dashboard')

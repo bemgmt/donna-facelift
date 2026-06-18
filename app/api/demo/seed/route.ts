@@ -56,11 +56,11 @@ export async function POST(request: NextRequest) {
       if (user) {
         const { data: userData } = await supabase
           .from('users')
-          .select('role, profile')
+          .select('profile')
           .eq('email', user.email)
           .single()
         
-        const role = userData?.role || userData?.profile?.role
+        const role = userData?.profile?.role
         if (role === 'admin' || role === 'facilitator') {
           isAuthorized = true
         }
