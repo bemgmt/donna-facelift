@@ -7,6 +7,7 @@ import NoSSR from "@/components/no-ssr"
 import GridLoading from "@/components/grid-loading"
 import ServiceStatus from "@/components/ServiceStatus"
 import DonnaContextInitializer from "@/components/donna-context-initializer"
+import { supabase } from "@/lib/supabase"
 
 // Dynamically import the InteractiveGrid with no SSR
 const InteractiveGrid = dynamic(
@@ -24,13 +25,35 @@ export default function Home() {
   const [flowState, setFlowState] = useState<FlowState>('loading')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  const checkAuthentication = useCallback(() => {
-    // After initialization, always redirect to login
-    // This ensures the flow is: Loading → Initialize → Login → Grid
-    // The login page will handle redirecting to home if already authenticated
-    setIsAuthenticated(false)
-    setFlowState('unauthenticated')
-    router.push('/sign-in')
+  const checkAuthentication = useCallback(async () => {
+    // Check local storage demo session
+    const demoSession = typeof window !== 'undefined' ? localStorage.getItem('donna_demo_session') : null
+    
+    // Check supabase session
+    let hasSupabaseSession = false
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      hasSupabaseSession = !!session
+      if (hasSupabaseSession && session?.user?.email) {
+        // Bridge session to local storage
+        localStorage.setItem('donna_demo_session', 'true')
+        localStorage.setItem('donna_demo_user', session.user.email)
+      }
+    } catch (e) {
+      console.error("Failed to check Supabase session in Home:", e)
+    }
+
+    if (demoSession === 'true' || hasSupabaseSession) {
+      setIsAuthenticated(true)
+      setFlowState('authenticated')
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('donna:auth-ready'))
+      }
+    } else {
+      setIsAuthenticated(false)
+      setFlowState('unauthenticated')
+      router.push('/sign-in')
+    }
   }, [router])
 
   useEffect(() => {

@@ -74,6 +74,7 @@ export default function WaitingRoomPage() {
 
           // If the event goes live, automatically redirect to the interactive grid
           if (data.org_status === "live") {
+            localStorage.setItem("donna_demo_session", "true")
             router.push("/")
           }
         }

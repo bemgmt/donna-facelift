@@ -99,6 +99,8 @@ export default function DriveRegisterPage() {
       localStorage.setItem("donna_drive_user_name", form.name)
       localStorage.setItem("donna_drive_industry", form.industry)
       localStorage.setItem("donna_drive_role", "") // Assigned by facilitator later
+      localStorage.setItem("donna_demo_session", "true")
+      localStorage.setItem("donna_demo_user", form.email)
       
       // Cookie helper for server-side route guards if Clerk middleware is disabled
       document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
