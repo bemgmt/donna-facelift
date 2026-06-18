@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, Lock, Mail, Building2, Briefcase, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Sparkles, Lock, Mail, Building2, Briefcase, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react'
 import { NeonButton } from '@/components/ui/neon-button'
 import { FuturisticInput } from '@/components/ui/futuristic-input'
 import { GlassCard } from '@/components/ui/glass-card'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import Link from 'next/link'
 
 type AuthPath = 'none' | 'investor' | 'real_user'
@@ -277,45 +277,73 @@ export default function Page() {
                   <h2 className="text-2xl font-semibold text-white">Log In</h2>
                 </div>
 
-                <form onSubmit={handleRealUserLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm text-white/70 flex items-center gap-2">
-                      <Mail className="w-4 h-4" /> Email
-                    </label>
-                    <FuturisticInput
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter email"
-                      className="w-full"
-                      autoFocus
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm text-white/70 flex items-center gap-2">
-                      <Lock className="w-4 h-4" /> Password
-                    </label>
-                    <FuturisticInput
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter password"
-                      className="w-full"
-                      required
-                    />
-                  </div>
-
-                  {error && (
-                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                      <p className="text-sm text-red-400">{error}</p>
+                {!isSupabaseConfigured ? (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center space-y-3">
+                      <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 mb-1">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-white">Supabase Connection Required</h3>
+                      <p className="text-xs text-white/60 leading-relaxed">
+                        To access live simulation accounts (DONNA Drive), a connected database is required. 
+                        Please set up your Supabase credentials in <code className="font-mono bg-black/40 px-1.5 py-0.5 rounded text-white/80">.env.local</code> and restart the development server.
+                      </p>
                     </div>
-                  )}
 
-                  <NeonButton type="submit" className="w-full" disabled={isLoading || !email || !password}>
-                    {isLoading ? 'Authenticating...' : 'Sign In'}
-                  </NeonButton>
-                </form>
+                    <div className="text-center">
+                      <p className="text-xs text-white/40 mb-3">Want to test the platform immediately?</p>
+                      <button
+                        onClick={() => {
+                          setPath('investor')
+                          setError('')
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium transition-colors"
+                      >
+                        Use Investor Preview Instead
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleRealUserLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm text-white/70 flex items-center gap-2">
+                        <Mail className="w-4 h-4" /> Email
+                      </label>
+                      <FuturisticInput
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter email"
+                        className="w-full"
+                        autoFocus
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-white/70 flex items-center gap-2">
+                        <Lock className="w-4 h-4" /> Password
+                      </label>
+                      <FuturisticInput
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter password"
+                        className="w-full"
+                        required
+                      />
+                    </div>
+
+                    {error && (
+                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                        <p className="text-sm text-red-400">{error}</p>
+                      </div>
+                    )}
+
+                    <NeonButton type="submit" className="w-full" disabled={isLoading || !email || !password}>
+                      {isLoading ? 'Authenticating...' : 'Sign In'}
+                    </NeonButton>
+                  </form>
+                )}
 
                 <div className="pt-6 border-t border-white/10 text-center space-y-4">
                   <p className="text-sm text-white/60">Don't have an account?</p>

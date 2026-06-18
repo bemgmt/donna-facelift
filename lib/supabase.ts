@@ -14,7 +14,10 @@ function createDisabledClient(): SupabaseClient {
   ) as SupabaseClient
 }
 
+export const isSupabaseConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY)
+
 export const supabase: SupabaseClient =
-  SUPABASE_URL && SUPABASE_ANON_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  isSupabaseConfigured
+    ? createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!)
     : createDisabledClient()
+

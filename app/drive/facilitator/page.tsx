@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import type { EventDefinition } from "@/lib/donna-drive/constants"
-import { supabase } from "@/lib/supabase"
+import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 
 const ICONS: Record<string, React.ElementType> = {
   AlertTriangle: AlertTriangle,
@@ -55,26 +55,44 @@ export default function FacilitatorDashboard() {
   const [isFetchingStats, setIsFetchingStats] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+    if (!isSupabaseConfigured) {
       setIsAuthenticating(false)
-      if (session) {
-        fetchEvents()
-        fetchStats(session.access_token)
-      }
-    })
+      return
+    }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      if (session) {
-        fetchEvents()
-        fetchStats(session.access_token)
-      }
-    })
+    let subscription: any = null
 
-    return () => subscription.unsubscribe()
+    try {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session)
+        setIsAuthenticating(false)
+        if (session) {
+          fetchEvents()
+          fetchStats(session.access_token)
+        }
+      }).catch(err => {
+        console.error("Auth session retrieval error:", err)
+        setIsAuthenticating(false)
+      })
+
+      const authChangeRes = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session)
+        if (session) {
+          fetchEvents()
+          fetchStats(session.access_token)
+        }
+      })
+      subscription = authChangeRes.data?.subscription
+    } catch (err) {
+      console.error("Failed to initialize auth listeners:", err)
+      setIsAuthenticating(false)
+    }
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+    }
   }, [])
 
   // Poll stats every 10 seconds
@@ -209,6 +227,46 @@ export default function FacilitatorDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#0C0F16] to-[#10121A]">
         <RefreshCw className="w-8 h-8 text-rose-400 animate-spin" />
+      </div>
+    )
+  }
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#0C0F16] to-[#10121A]">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+          <div className="glass rounded-2xl border border-white/10 p-8 space-y-6 bg-black/40 backdrop-blur-md text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/20 mb-4 text-amber-400 animate-pulse">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-semibold text-white">Database Required</h1>
+            <p className="text-white/70 text-sm leading-relaxed">
+              The Facilitator Dashboard controls the live transaction database and requires an active Supabase connection.
+            </p>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left text-xs text-white/60 space-y-2">
+              <p className="font-semibold text-white">How to enable:</p>
+              <ol className="list-decimal pl-4 space-y-1">
+                <li>Create a <code className="font-mono bg-black/40 px-1 py-0.5 rounded text-white/80">.env.local</code> file in your project root.</li>
+                <li>Add your <code className="font-mono bg-black/40 px-1 py-0.5 rounded text-white/80">NEXT_PUBLIC_SUPABASE_URL</code> and keys.</li>
+                <li>Stop your Next.js server (<kbd className="bg-white/10 px-1 rounded font-sans">Ctrl+C</kbd>) and run <code className="font-mono bg-black/40 px-1 py-0.5 rounded text-white/80">npm run dev</code> again.</li>
+              </ol>
+            </div>
+            <div className="pt-4 flex flex-col gap-2">
+              <a
+                href="/drive"
+                className="w-full bg-white/5 hover:bg-white/10 text-white font-medium py-3 rounded-xl border border-white/10 transition-colors text-center text-sm"
+              >
+                Back to DONNA Drive
+              </a>
+              <a
+                href="/sign-in"
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-3 rounded-xl transition-colors text-center text-sm"
+              >
+                Go to Choice Portal
+              </a>
+            </div>
+          </div>
+        </motion.div>
       </div>
     )
   }
