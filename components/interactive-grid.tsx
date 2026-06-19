@@ -4,10 +4,12 @@ import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useDashboardConfigOptional } from "@/contexts/DashboardConfigContext"
-import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList } from "lucide-react"
+import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList, Lock, Globe } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
 import { InvestorReadonlyShell } from "@/components/investor/investor-readonly-shell"
+import { toast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 const HybridEmailInterface = dynamic(
   () => import("./interfaces/hybrid-email-interface"),
@@ -172,13 +174,40 @@ const gridItems: GridItem[] = [
       </div>
     ),
   },
+  {
+    id: "din",
+    title: "DIN Network",
+    icon: <Globe className="w-8 h-8" />,
+    component: <div className="p-6 text-white/60">Loading DIN Network…</div>,
+    preview: (
+      <div className="w-full h-full bg-gradient-to-br from-violet-900/20 to-cyan-900/10 p-4 rounded flex items-center justify-center">
+        <div className="space-y-2 w-full">
+          <div className="flex justify-center">
+            <div className="w-8 h-8 rounded-full bg-cyan-400/30 flex items-center justify-center">
+              <Globe className="w-4 h-4 text-cyan-400" />
+            </div>
+          </div>
+          <div className="h-1 bg-white/20 rounded w-1/2 mx-auto"></div>
+        </div>
+      </div>
+    ),
+  },
 ]
 
 export default function InteractiveGrid() {
+  const router = useRouter()
   const investor = useInvestorPreviewOptional()
   const dashboardConfig = useDashboardConfigOptional()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<string | null>(null)
+  const [isLiveDemo, setIsLiveDemo] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const live = localStorage.getItem("donna_demo_session") === "true" && !!localStorage.getItem("donna_drive_member_id")
+      setIsLiveDemo(live)
+    }
+  }, [])
 
   const visibleGridItems = useMemo(() => {
     const visible = dashboardConfig?.config?.mainInterface?.visibleModules
@@ -379,7 +408,8 @@ export default function InteractiveGrid() {
           }}
         >
           {visibleGridItems.map((item) => {
-            const isHovered = hoveredItem === item.id
+            const isDisabled = isLiveDemo && item.id !== "secretary" && item.id !== "din"
+            const isHovered = hoveredItem === item.id && !isDisabled
             const itemZoomProgress = isHovered ? easeOutProgress : 0
 
             const contentScale = 0.1 + itemZoomProgress * 0.4
@@ -392,14 +422,31 @@ export default function InteractiveGrid() {
               <motion.div
                 key={item.id}
                 data-tour={`${item.id}-interface`}
-                  className={`
-                  relative border border-white/20 cursor-pointer overflow-hidden
-                  transition-all duration-150 ease-out
-                  ${isHovered ? "glass border-white/40 z-10" : "glass-dark"}
+                className={`
+                  relative border overflow-hidden transition-all duration-150 ease-out
+                  ${isDisabled 
+                    ? "opacity-30 border-white/5 bg-black/40 cursor-not-allowed" 
+                    : (isHovered ? "glass border-white/40 z-10 cursor-pointer" : "glass-dark border-white/20 cursor-pointer")
+                  }
                 `}
-                onMouseEnter={() => setHoveredItem(item.id)}
-                onMouseLeave={() => setHoveredItem(null)}
+                onMouseEnter={() => {
+                  if (!isDisabled) setHoveredItem(item.id)
+                }}
+                onMouseLeave={() => {
+                  if (!isDisabled) setHoveredItem(null)
+                }}
                 onClick={() => {
+                  if (isDisabled) {
+                    toast({
+                      title: "Module Locked",
+                      description: "During the live event, you must delegate all actions through the Secretary module.",
+                    })
+                    return
+                  }
+                  if (item.id === 'din') {
+                    router.push('/din')
+                    return
+                  }
                   if (item.id === 'chatbot') {
                     window.dispatchEvent(new CustomEvent('donna:open'))
                     return
@@ -413,6 +460,13 @@ export default function InteractiveGrid() {
                   zIndex: isHovered ? 10 : 1,
                 }}
               >
+                {/* Lock badge for disabled modules */}
+                {isDisabled && (
+                  <div className="absolute top-3 right-3 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white/40 flex items-center gap-1">
+                    <Lock className="w-2.5 h-2.5" /> Locked
+                  </div>
+                )}
+
                 <div
                   className="absolute inset-0 pointer-events-none p-8"
                   style={{

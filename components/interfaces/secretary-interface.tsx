@@ -36,6 +36,8 @@ import {
   getDemoSecretaryTasks,
 } from "@/lib/investor/demo-seed"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
+
 
 interface Meeting {
   id: string
@@ -77,6 +79,7 @@ interface Deadline {
 }
 
 export default function SecretaryInterface(): JSX.Element {
+  const router = useRouter()
   const investorCtx = useInvestorPreviewOptional()
   const isInvestorPreview = investorCtx?.isInvestorPreview ?? false
 
@@ -293,24 +296,51 @@ export default function SecretaryInterface(): JSX.Element {
       timestamp: new Date().toISOString()
     }
     
-    setChatMessages([...chatMessages, userMessage])
+    setChatMessages((prev) => [...prev, userMessage])
+    const inputLower = chatInput.toLowerCase()
     setChatInput("")
-    simulateSecretaryCommand(
-      "prep_chat_user",
-      `Recorded your note for “${selectedMeeting?.title ?? "meeting"}” (demo transcript only).`,
-      "Meeting prep chat — simulated capture."
-    )
-    
-    // Simulate DONNA response
-    setTimeout(() => {
-      const donnaResponse = {
-        id: (Date.now() + 1).toString(),
-        role: 'donna' as const,
-        content: "I've noted that. Let me help you prepare for this meeting. What specific aspects would you like to focus on?",
-        timestamp: new Date().toISOString()
-      }
-      setChatMessages(prev => [...prev, donnaResponse])
-    }, 1000)
+
+    // Find first incomplete task that matches any keyword in the user's message
+    const matchedTask = tasks.find(t => {
+      if (t.completed) return false
+      const words = t.text.toLowerCase()
+        .replace(/[^a-z0-9 ]/g, '')
+        .split(' ')
+        .filter(w => w.length > 3 && !['with', 'from', 'this', 'that', 'your', 'about', 'complete', 'status', 'review'].includes(w))
+      return words.some(word => inputLower.includes(word))
+    })
+
+    if (matchedTask) {
+      // Complete the task using the existing handler
+      handleToggleTask(matchedTask.id)
+
+      setTimeout(() => {
+        const donnaResponse = {
+          id: (Date.now() + 1).toString(),
+          role: 'donna' as const,
+          content: `I've processed that action for you! I have marked the task "${matchedTask.text}" as completed. Let me know what else I can assist you with.`,
+          timestamp: new Date().toISOString()
+        }
+        setChatMessages(prev => [...prev, donnaResponse])
+      }, 1000)
+    } else {
+      simulateSecretaryCommand(
+        "prep_chat_user",
+        `Recorded your note: "${chatInput}"`,
+        "Meeting prep chat — simulated capture."
+      )
+      
+      // Simulate general DONNA response
+      setTimeout(() => {
+        const donnaResponse = {
+          id: (Date.now() + 1).toString(),
+          role: 'donna' as const,
+          content: "I have recorded your request. If there's a specific checklist task (e.g., environmental review, underwriting, escrow, survey) you would like me to complete, just let me know!",
+          timestamp: new Date().toISOString()
+        }
+        setChatMessages(prev => [...prev, donnaResponse])
+      }, 1000)
+    }
   }
 
   const handleToggleTask = async (taskId: string) => {
