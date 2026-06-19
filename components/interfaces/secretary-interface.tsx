@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   ClipboardList, 
@@ -101,7 +101,8 @@ export default function SecretaryInterface(): JSX.Element {
   const [isLiveDemo, setIsLiveDemo] = useState(false)
   const [roleSlug, setRoleSlug] = useState("")
   const [showScenarioBriefing, setShowScenarioBriefing] = useState(false)
-  const [scenarioBriefing, setScenarioBriefing] = useState({ title: "", body: "" })
+  const [scenarioBriefing, setScenarioBriefing] = useState({ id: "", title: "", body: "" })
+  const dismissedBriefingsRef = useRef<string[]>([])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -109,6 +110,9 @@ export default function SecretaryInterface(): JSX.Element {
       const rSlug = localStorage.getItem("donna_drive_role") || ""
       setIsLiveDemo(live)
       setRoleSlug(rSlug)
+      
+      const dismissed = JSON.parse(localStorage.getItem("donna_dismissed_briefings") || "[]")
+      dismissedBriefingsRef.current = dismissed
     }
   }, [])
 
@@ -178,17 +182,24 @@ export default function SecretaryInterface(): JSX.Element {
             setDeadlines(liveDeadlines)
 
             // Check for urgent briefing popup notification
-            const urgentNotif = data.notifications.find((n: any) => n.type === 'urgent' && !n.read)
+            const urgentNotif = data.notifications.find(
+              (n: any) => n.type === 'urgent' && !n.read && !dismissedBriefingsRef.current.includes(n.id)
+            )
             if (urgentNotif) {
-              setScenarioBriefing({ title: urgentNotif.title, body: urgentNotif.body })
+              setScenarioBriefing({ id: urgentNotif.id, title: urgentNotif.title, body: urgentNotif.body })
               setShowScenarioBriefing(true)
               
-              // Mark the notification as read locally/in db
-              if (isSupabaseConfigured) {
-                await supabase
-                  .from('donna_drive_notifications')
-                  .update({ read: true })
-                  .eq('id', urgentNotif.id)
+              // Mark the notification as read via backend API
+              try {
+                await fetch('/api/demo/notifications/read', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ id: urgentNotif.id }),
+                })
+              } catch (err) {
+                console.error("Failed to mark notification as read:", err)
               }
             }
 
@@ -839,7 +850,15 @@ export default function SecretaryInterface(): JSX.Element {
               </div>
               <div className="mt-6 flex justify-end">
                 <button
-                  onClick={() => setShowScenarioBriefing(false)}
+                  onClick={() => {
+                    setShowScenarioBriefing(false)
+                    if (scenarioBriefing.id) {
+                      dismissedBriefingsRef.current = [...dismissedBriefingsRef.current, scenarioBriefing.id]
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("donna_dismissed_briefings", JSON.stringify(dismissedBriefingsRef.current))
+                      }
+                    }
+                  }}
                   className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-black text-xs font-bold rounded-xl transition-colors shadow-lg"
                 >
                   Understood & Enter Simulation
