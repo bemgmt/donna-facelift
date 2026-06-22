@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { DONNA_DRIVE_ENABLED, DEMO_ROLES } from '@/lib/donna-drive/constants'
+import { isDonnaDriveEnabled, DEMO_ROLES } from '@/lib/donna-drive/constants'
 import { DEMO_SEED_DATA } from '@/lib/donna-drive/seed-data'
 import type { AssignRoleRequest, AssignRoleResponse, DemoRoleSlug } from '@/lib/donna-drive/types'
 
@@ -13,7 +13,7 @@ import type { AssignRoleRequest, AssignRoleResponse, DemoRoleSlug } from '@/lib/
  * GET — return the role catalog (no auth required)
  */
 export async function GET() {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }
@@ -31,7 +31,7 @@ export async function GET() {
  * POST — register a user and assign them to a demo role
  */
 export async function POST(request: NextRequest) {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }

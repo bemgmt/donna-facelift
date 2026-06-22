@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { DONNA_DRIVE_ENABLED, DEMO_ROLES } from '@/lib/donna-drive/constants'
+import { isDonnaDriveEnabled, DEMO_ROLES } from '@/lib/donna-drive/constants'
 import { generateDemoSeedData, ScenarioKey } from '@/lib/donna-drive/seed-generator'
 
 export async function GET(request: NextRequest) {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json({ success: false, message: 'DONNA Drive is not enabled' }, { status: 403 })
   }
 
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json({ success: false, message: 'DONNA Drive is not enabled' }, { status: 403 })
   }
 

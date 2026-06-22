@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { DONNA_DRIVE_ENABLED } from '@/lib/donna-drive/constants'
+import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
 
 const VERTICAL_MAP: Record<string, string> = {
   'Real Estate': 'real_estate',
@@ -12,7 +12,7 @@ const VERTICAL_MAP: Record<string, string> = {
 }
 
 export async function GET(request: NextRequest) {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }

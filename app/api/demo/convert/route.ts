@@ -10,11 +10,11 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { DONNA_DRIVE_ENABLED } from '@/lib/donna-drive/constants'
+import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
 import type { ConvertDemoRequest, ConvertDemoResponse } from '@/lib/donna-drive/types'
 
 export async function POST(request: NextRequest) {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }

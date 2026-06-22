@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
   FACILITATOR_SECRET,
-  DONNA_DRIVE_ENABLED,
+  isDonnaDriveEnabled,
   DEMO_EVENTS,
 } from '@/lib/donna-drive/constants'
 import { getEventPayload } from '@/lib/donna-drive/event-payloads'
@@ -21,7 +21,7 @@ import type { InjectEventRequest, InjectEventResponse, DemoEventType } from '@/l
 const VALID_EVENT_TYPES = DEMO_EVENTS.map((e) => e.type)
 
 export async function POST(request: NextRequest) {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
  * Returns the list of available scenario events (public, no auth needed).
  */
 export async function GET() {
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }

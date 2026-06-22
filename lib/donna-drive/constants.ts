@@ -6,20 +6,45 @@
  */
 
 import type { DemoRoleSlug, DemoEventType } from './types'
+import { logWarning } from './log-utils'
+
 
 // ---------------------------------------------------------------------------
 // Feature flag
 // ---------------------------------------------------------------------------
 
-export const DONNA_DRIVE_ENABLED =
-  process.env.DONNA_DRIVE_ENABLED === 'true' ||
-  process.env.NEXT_PUBLIC_DONNA_DRIVE_ENABLED === 'true'
+/**
+ * Returns true if the DONNA Drive demo is enabled via environment variables.
+ * This abstracts the raw env checks and guarantees a boolean value.
+ */
+export function isDonnaDriveEnabled(): boolean {
+  return (
+    process.env.DONNA_DRIVE_ENABLED === 'true' ||
+    process.env.NEXT_PUBLIC_DONNA_DRIVE_ENABLED === 'true'
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Facilitator secret (server-side only — never exposed to the client)
 // ---------------------------------------------------------------------------
 
-export const FACILITATOR_SECRET = process.env.DONNA_DRIVE_FACILITATOR_SECRET ?? 'donna-drive-dev'
+// Facilitator secret – server‑side only. In production this must be set, otherwise we log a warning.
+function getFacilitatorSecretInternal(): string {
+  const secret = process.env.DONNA_DRIVE_FACILITATOR_SECRET;
+  if (secret) return secret;
+
+  // In non‑production environments we fall back to a dev constant but emit a warning.
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('[DONNA‑Drive] FACILITATOR_SECRET is not set – using development fallback.');
+    // Log warning to Supabase via helper (if configured)
+    logWarning('FACILITATOR_SECRET missing – using dev fallback');
+    return 'donna-drive-dev';
+  }
+
+  // Production without a secret is a hard error.
+  throw new Error('FACILITATOR_SECRET must be defined in production environment');
+}
+export const FACILITATOR_SECRET = getFacilitatorSecretInternal();
 
 // ---------------------------------------------------------------------------
 // Demo organization defaults

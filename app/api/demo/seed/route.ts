@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
   FACILITATOR_SECRET,
-  DONNA_DRIVE_ENABLED,
+  isDonnaDriveEnabled,
   DEMO_ORG_NAME,
   DEMO_PROPERTY_NAME,
   DEMO_PROPERTY_VALUE,
@@ -24,7 +24,7 @@ import type { SeedDemoRequest, SeedDemoResponse } from '@/lib/donna-drive/types'
 
 export async function POST(request: NextRequest) {
   // Feature gate
-  if (!DONNA_DRIVE_ENABLED) {
+  if (!isDonnaDriveEnabled()) {
     return NextResponse.json(
       { success: false, message: 'DONNA Drive is not enabled' },
       { status: 403 }
