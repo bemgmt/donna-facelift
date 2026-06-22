@@ -44,7 +44,7 @@ function getFacilitatorSecretInternal(): string {
   // Production without a secret is a hard error.
   throw new Error('FACILITATOR_SECRET must be defined in production environment');
 }
-export const FACILITATOR_SECRET = getFacilitatorSecretInternal();
+export const FACILITATOR_SECRET = typeof window !== 'undefined' ? '' : getFacilitatorSecretInternal();
 
 // ---------------------------------------------------------------------------
 // Demo organization defaults
