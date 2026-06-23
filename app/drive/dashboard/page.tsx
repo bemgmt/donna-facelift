@@ -4,88 +4,157 @@ import { useEffect, useState, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Mail, ClipboardList, FileText, Calendar, Bell, Users, Building2,
-  ArrowLeft, Clock, AlertTriangle, CheckCircle2, Circle, Star, ChevronRight,
+  Building2, ArrowLeft, Sparkles, MessageSquare, Send, Users,
 } from "lucide-react"
 import Link from "next/link"
-import type {
-  DemoContact, DemoEmail, DemoTask, DemoDocument,
-  DemoCalendarEvent, DemoNotification, DemoRoleSlug,
-} from "@/lib/donna-drive/types"
-import { DEMO_ROLES } from "@/lib/donna-drive/constants"
+import { toast } from "sonner"
 
-type Tab = "inbox" | "tasks" | "documents" | "calendar" | "contacts" | "notifications"
+type Tab = "secretary" | "din"
 
-interface DemoData {
-  contacts: DemoContact[]
-  emails: DemoEmail[]
-  tasks: DemoTask[]
-  documents: DemoDocument[]
-  calendar_events: DemoCalendarEvent[]
-  notifications: DemoNotification[]
+interface OrgInfo {
+  property_name: string
+  property_value: string
 }
 
-const statusColors: Record<string, string> = {
-  pending: "text-amber-400 bg-amber-400/10",
-  in_progress: "text-blue-400 bg-blue-400/10",
-  completed: "text-emerald-400 bg-emerald-400/10",
-  blocked: "text-red-400 bg-red-400/10",
-}
-
-const priorityColors: Record<string, string> = {
-  low: "text-white/40",
-  medium: "text-amber-400",
-  high: "text-orange-400",
-  urgent: "text-red-400",
-}
-
-import FacilitatorSupportChat from "@/components/drive/FacilitatorSupportChat"
-
-function getRoleLabel(slug: DemoRoleSlug): string {
-  return DEMO_ROLES.find((r) => r.slug === slug)?.label ?? slug
+interface DinMember {
+  id: string
+  name: string
+  company: string
+  roleId: string
+  roleLabel: string
 }
 
 function DriveDashboardContent() {
   const searchParams = useSearchParams()
-  const roleSlug = (searchParams.get("role") || localStorage.getItem("donna_drive_role") || "commercial_broker") as DemoRoleSlug
+  const roleSlug = searchParams.get("role") || (typeof window !== "undefined" ? localStorage.getItem("donna_drive_role") : null) || "commercial_broker"
   const userName = typeof window !== "undefined" ? localStorage.getItem("donna_drive_user_name") || "Attendee" : "Attendee"
 
-  const [activeTab, setActiveTab] = useState<Tab>("inbox")
-  const [data, setData] = useState<DemoData | null>(null)
+  const [activeTab, setActiveTab] = useState<Tab>("secretary")
   const [loading, setLoading] = useState(true)
-  const [selectedEmail, setSelectedEmail] = useState<DemoEmail | null>(null)
 
-  const roleDef = DEMO_ROLES.find((r) => r.slug === roleSlug)
+  // Org info for dynamic banner
+  const [orgInfo, setOrgInfo] = useState<OrgInfo>({ property_name: "", property_value: "" })
 
-  const fetchData = useCallback(async () => {
+  // Secretary chat state
+  const [chatHistory, setChatHistory] = useState<{role: 'assistant' | 'user', content: string}[]>([
+    {
+      role: 'assistant',
+      content: "Hi, I'm Donna. I'm here to help you complete your Donna Drive role today. You can ask me what to work on first, check your leads, assign a task, contact another role through DIN, or ask what actions I can help with."
+    }
+  ])
+  const [chatInput, setChatInput] = useState("")
+  const [sendingChat, setSendingChat] = useState(false)
+
+  // DIN state
+  const [dinMembers, setDinMembers] = useState<DinMember[]>([])
+  const [dinLoading, setDinLoading] = useState(false)
+  const [dinMessageInputs, setDinMessageInputs] = useState<Record<string, string>>({})
+  const [dinSending, setDinSending] = useState<string | null>(null)
+
+  // Fetch org info for dynamic banner
+  const fetchOrgInfo = useCallback(async () => {
     try {
-      const res = await fetch(`/api/demo/data?role=${roleSlug}`)
+      const res = await fetch("/api/demo/event-status")
       const json = await res.json()
       if (json.success) {
-        setData(json)
+        setOrgInfo({
+          property_name: json.property_name || "",
+          property_value: json.property_value || "",
+        })
       }
     } catch (err) {
-      console.error("Failed to fetch demo data:", err)
+      console.error("Failed to fetch org info:", err)
     } finally {
       setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchOrgInfo()
+  }, [fetchOrgInfo])
+
+  // Fetch DIN members when tab opens
+  const fetchDinMembers = useCallback(async () => {
+    setDinLoading(true)
+    try {
+      const res = await fetch(`/api/donna-drive/din?my_role_id=${roleSlug}`)
+      const json = await res.json()
+      if (json.success) {
+        setDinMembers(json.members || [])
+      }
+    } catch (err) {
+      console.error("Failed to fetch DIN members:", err)
+    } finally {
+      setDinLoading(false)
     }
   }, [roleSlug])
 
   useEffect(() => {
-    fetchData()
-    // Poll for new data every 10s (to catch facilitator events)
-    const interval = setInterval(fetchData, 10_000)
-    return () => clearInterval(interval)
-  }, [fetchData])
+    if (activeTab === "din") {
+      fetchDinMembers()
+    }
+  }, [activeTab, fetchDinMembers])
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: "inbox", label: "Inbox", icon: <Mail className="w-4 h-4" />, count: data?.emails.filter((e) => !e.read).length },
-    { id: "tasks", label: "Tasks", icon: <ClipboardList className="w-4 h-4" />, count: data?.tasks.filter((t) => t.status !== "completed").length },
-    { id: "documents", label: "Documents", icon: <FileText className="w-4 h-4" />, count: data?.documents.length },
-    { id: "calendar", label: "Calendar", icon: <Calendar className="w-4 h-4" />, count: data?.calendar_events.length },
-    { id: "contacts", label: "Contacts", icon: <Users className="w-4 h-4" />, count: data?.contacts.length },
-    { id: "notifications", label: "Alerts", icon: <Bell className="w-4 h-4" />, count: data?.notifications.filter((n) => !n.read).length },
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "secretary", label: "Secretary", icon: <Sparkles className="w-4 h-4" /> },
+    { id: "din", label: "DIN Network", icon: <MessageSquare className="w-4 h-4" /> }
   ]
+
+  const handleSendChat = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!chatInput.trim() || sendingChat) return
+
+    const userMessage = chatInput
+    setChatHistory(prev => [...prev, { role: 'user', content: userMessage }])
+    setChatInput("")
+    setSendingChat(true)
+
+    try {
+      const res = await fetch('/api/donna-drive/secretary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage, roleId: roleSlug })
+      })
+      const json = await res.json()
+      if (json.success) {
+        setChatHistory(prev => [...prev, { role: 'assistant', content: json.reply }])
+      } else {
+        setChatHistory(prev => [...prev, { role: 'assistant', content: `Sorry, I encountered an issue: ${json.message || 'Unknown error'}` }])
+      }
+    } catch (err) {
+      console.error(err)
+      setChatHistory(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again." }])
+    } finally {
+      setSendingChat(false)
+    }
+  }
+
+  const handleDinPing = async (memberId: string) => {
+    const message = dinMessageInputs[memberId]?.trim()
+    if (!message) {
+      toast.error("Please enter a message to send.")
+      return
+    }
+    setDinSending(memberId)
+    try {
+      const res = await fetch('/api/donna-drive/din', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetMemberId: memberId, message, senderRoleId: roleSlug })
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success("Ping sent successfully!")
+        setDinMessageInputs(prev => ({ ...prev, [memberId]: "" }))
+      } else {
+        toast.error(json.message || "Failed to send ping.")
+      }
+    } catch {
+      toast.error("Error sending DIN ping.")
+    } finally {
+      setDinSending(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -100,14 +169,15 @@ function DriveDashboardContent() {
 
   return (
     <div className="min-h-screen bg-transparent text-white">
-      {/* Demo banner */}
+      {/* Dynamic demo banner */}
       <div className="bg-gradient-to-r from-purple-600/20 via-cyan-600/20 to-purple-600/20 border-b border-white/10 px-4 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs text-white/70">
               <span className="font-semibold text-white/90">DONNA Drive</span>
-              {" · "}Vernon Commerce Center · $8.5M Acquisition
+              {orgInfo.property_name && ` · ${orgInfo.property_name}`}
+              {orgInfo.property_value && ` · ${orgInfo.property_value}`}
             </span>
           </div>
           <Link href="/drive" className="text-xs text-white/40 hover:text-white/70 transition-colors">
@@ -124,15 +194,17 @@ function DriveDashboardContent() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-xl font-semibold text-white">{roleDef?.label}</h1>
+              <h1 className="text-xl font-semibold text-white">{roleSlug.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</h1>
               <p className="text-sm text-white/50">Welcome, {userName}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="glass rounded-lg px-3 py-1.5 text-xs text-white/60 border border-white/10">
-              <Building2 className="w-3 h-3 inline mr-1" />
-              Vernon Commerce Center
-            </div>
+            {orgInfo.property_name && (
+              <div className="glass rounded-lg px-3 py-1.5 text-xs text-white/60 border border-white/10">
+                <Building2 className="w-3 h-3 inline mr-1" />
+                {orgInfo.property_name}
+              </div>
+            )}
           </div>
         </div>
 
@@ -141,7 +213,7 @@ function DriveDashboardContent() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id); setSelectedEmail(null) }}
+              onClick={() => setActiveTab(tab.id)}
               className={`
                 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
                 ${activeTab === tab.id
@@ -152,13 +224,6 @@ function DriveDashboardContent() {
             >
               {tab.icon}
               {tab.label}
-              {tab.count !== undefined && tab.count > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  activeTab === tab.id ? "bg-white/20" : "bg-white/10"
-                }`}>
-                  {tab.count}
-                </span>
-              )}
             </button>
           ))}
         </div>
@@ -172,236 +237,111 @@ function DriveDashboardContent() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {/* INBOX */}
-            {activeTab === "inbox" && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Email list */}
-                <div className="lg:col-span-1 space-y-1 max-h-[70vh] overflow-y-auto">
-                  {data?.emails.map((email) => (
-                    <button
-                      key={email.id}
-                      onClick={() => setSelectedEmail(email)}
-                      className={`
-                        w-full text-left glass rounded-lg p-3 border transition-all
-                        ${selectedEmail?.id === email.id
-                          ? "border-purple-400/40 bg-purple-400/10"
-                          : "border-white/10 hover:border-white/20"
-                        }
-                        ${!email.read ? "border-l-2 border-l-cyan-400" : ""}
-                      `}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs text-white/40 mb-0.5">
-                            From: {getRoleLabel(email.from_role)}
-                          </div>
-                          <div className={`text-sm truncate ${!email.read ? "font-semibold text-white" : "text-white/70"}`}>
-                            {email.subject}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {email.starred && <Star className="w-3 h-3 text-amber-400 fill-amber-400" />}
-                          <ChevronRight className="w-3 h-3 text-white/30" />
-                        </div>
+            {/* SECRETARY TAB */}
+            {activeTab === "secretary" && (
+              <div className="glass rounded-xl border border-white/10 flex flex-col h-[70vh]">
+                <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                  {chatHistory.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-xl p-4 text-sm ${msg.role === 'user' ? 'bg-cyan-500/20 text-white' : 'bg-white/5 border border-white/10 text-white/90 whitespace-pre-wrap'}`}>
+                        {msg.role === 'assistant' && <Sparkles className="w-4 h-4 text-cyan-400 inline-block mr-2 mb-1" />}
+                        {msg.content}
                       </div>
-                    </button>
+                    </div>
                   ))}
-                  {(!data?.emails || data.emails.length === 0) && (
-                    <div className="text-center py-12 text-white/30 text-sm">No emails yet</div>
-                  )}
-                </div>
-
-                {/* Email detail */}
-                <div className="lg:col-span-2">
-                  {selectedEmail ? (
-                    <div className="glass rounded-xl border border-white/10 p-6">
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold text-white">{selectedEmail.subject}</h2>
-                        <div className="mt-2 flex items-center gap-4 text-xs text-white/40">
-                          <span>From: <span className="text-white/60">{getRoleLabel(selectedEmail.from_role)}</span></span>
-                          <span>To: <span className="text-white/60">{getRoleLabel(selectedEmail.to_role)}</span></span>
-                        </div>
+                  {sendingChat && (
+                    <div className="flex justify-start">
+                      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div className="w-5 h-5 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
                       </div>
-                      <div className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">
-                        {selectedEmail.body}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="glass rounded-xl border border-white/10 p-12 text-center text-white/30 text-sm">
-                      Select an email to read
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* TASKS */}
-            {activeTab === "tasks" && (
-              <div className="space-y-2">
-                {data?.tasks.map((task) => (
-                  <div key={task.id} className="glass rounded-xl border border-white/10 p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div className="mt-0.5">
-                          {task.status === "completed" ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                          ) : task.status === "blocked" ? (
-                            <AlertTriangle className="w-5 h-5 text-red-400" />
-                          ) : (
-                            <Circle className="w-5 h-5 text-white/30" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className={`text-sm font-medium ${task.status === "completed" ? "text-white/50 line-through" : "text-white"}`}>
-                            {task.title}
-                          </h3>
-                          <p className="text-xs text-white/40 mt-1">{task.description}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[task.status] || ""}`}>
-                          {task.status.replace("_", " ")}
-                        </span>
-                        <span className={`text-xs ${priorityColors[task.priority] || ""}`}>
-                          {task.priority}
-                        </span>
-                        <div className="flex items-center gap-1 text-xs text-white/30">
-                          <Clock className="w-3 h-3" />
-                          {new Date(task.due_date).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {(!data?.tasks || data.tasks.length === 0) && (
-                  <div className="text-center py-12 text-white/30 text-sm">No tasks assigned</div>
-                )}
-              </div>
-            )}
-
-            {/* DOCUMENTS */}
-            {activeTab === "documents" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {data?.documents.map((doc) => (
-                  <div key={doc.id} className="glass rounded-xl border border-white/10 p-4">
-                    <div className="flex items-start gap-3">
-                      <FileText className="w-5 h-5 text-white/40 shrink-0 mt-0.5" />
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-medium text-white truncate">{doc.name}</h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-white/40">
-                          <span>{doc.type.toUpperCase()}</span>
-                          <span>·</span>
-                          <span>{doc.size_kb} KB</span>
-                        </div>
-                        <div className="mt-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            doc.status === "signed" ? "bg-emerald-400/10 text-emerald-400"
-                            : doc.status === "approved" ? "bg-blue-400/10 text-blue-400"
-                            : doc.status === "pending_review" ? "bg-amber-400/10 text-amber-400"
-                            : "bg-white/10 text-white/50"
-                          }`}>
-                            {doc.status.replace("_", " ")}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* CALENDAR */}
-            {activeTab === "calendar" && (
-              <div className="space-y-3">
-                {data?.calendar_events.map((event) => (
-                  <div key={event.id} className="glass rounded-xl border border-white/10 p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0 w-14 text-center">
-                        <div className="text-2xl font-bold text-white">
-                          {new Date(event.start_time).getDate()}
-                        </div>
-                        <div className="text-xs text-white/40">
-                          {new Date(event.start_time).toLocaleDateString("en-US", { month: "short" })}
-                        </div>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-semibold text-white">{event.title}</h3>
-                        <p className="text-xs text-white/50 mt-1">{event.description}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-white/40">
-                          <span>📍 {event.location}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {event.attendees.map((a) => (
-                            <span key={a} className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-white/50">
-                              {getRoleLabel(a)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* CONTACTS */}
-            {activeTab === "contacts" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {data?.contacts.map((contact) => (
-                  <div key={contact.id} className="glass rounded-xl border border-white/10 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-cyan-500/30 flex items-center justify-center text-sm font-semibold text-white/70 shrink-0">
-                        {contact.name.split(" ").map((n) => n[0]).join("")}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-medium text-white">{contact.name}</h3>
-                        <p className="text-xs text-white/50">{contact.company}</p>
-                        <p className="text-xs text-white/40 mt-1">{getRoleLabel(contact.role_slug)}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-white/30">
-                          <span>{contact.email}</span>
-                          <span>{contact.phone}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* NOTIFICATIONS */}
-            {activeTab === "notifications" && (
-              <div className="space-y-2">
-                {data?.notifications.map((notif) => (
-                  <div
-                    key={notif.id}
-                    className={`glass rounded-xl border p-4 ${
-                      notif.type === "urgent" ? "border-red-400/30 bg-red-400/5"
-                      : notif.type === "warning" ? "border-amber-400/30 bg-amber-400/5"
-                      : notif.type === "action_required" ? "border-purple-400/30 bg-purple-400/5"
-                      : "border-white/10"
-                    }`}
+                <form onSubmit={handleSendChat} className="p-4 border-t border-white/10 bg-black/20 flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    placeholder="Ask Donna what to do next..."
+                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-400/50"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sendingChat || !chatInput.trim()}
+                    className="bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-black p-3 rounded-xl transition-colors"
                   >
-                    <div className="flex items-start gap-3">
-                      {notif.type === "urgent" && <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />}
-                      {notif.type === "warning" && <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />}
-                      {notif.type === "info" && <Bell className="w-5 h-5 text-blue-400 shrink-0" />}
-                      {notif.type === "action_required" && <ClipboardList className="w-5 h-5 text-purple-400 shrink-0" />}
-                      <div>
-                        <h3 className="text-sm font-medium text-white">{notif.title}</h3>
-                        <p className="text-xs text-white/50 mt-1">{notif.body}</p>
-                      </div>
-                    </div>
+                    <Send className="w-5 h-5" />
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* DIN TAB */}
+            {activeTab === "din" && (
+              <div className="glass rounded-xl border border-white/10 p-6 min-h-[70vh]">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-purple-400" /> DIN Matchmaking
+                  </h2>
+                  <button
+                    onClick={fetchDinMembers}
+                    className="text-xs text-white/40 hover:text-white/70 border border-white/10 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                <p className="text-sm text-white/50 mb-6">Connect with other roles in your scenario to complete tasks, send bids, or refer leads.</p>
+
+                {dinLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
                   </div>
-                ))}
-                {(!data?.notifications || data.notifications.length === 0) && (
-                  <div className="text-center py-12 text-white/30 text-sm">No notifications</div>
+                ) : dinMembers.length === 0 ? (
+                  <div className="p-12 text-center text-white/30 text-sm border border-dashed border-white/10 rounded-xl">
+                    No other participants are currently in this event. Waiting for attendees to join...
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {dinMembers.map((member) => (
+                      <div key={member.id} className="glass rounded-xl border border-white/10 p-4 space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-cyan-500/30 flex items-center justify-center text-sm font-semibold text-white/70 shrink-0">
+                            {member.name?.split(" ").map((n: string) => n[0]).join("") || <Users className="w-4 h-4" />}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-medium text-white">{member.name}</h3>
+                            {member.company && <p className="text-xs text-white/50">{member.company}</p>}
+                            <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-purple-400/10 text-purple-400 border border-purple-400/20">
+                              {member.roleLabel || member.roleId || "Unassigned"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={dinMessageInputs[member.id] || ""}
+                            onChange={e => setDinMessageInputs(prev => ({ ...prev, [member.id]: e.target.value }))}
+                            placeholder="Type a message..."
+                            className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-400/50"
+                          />
+                          <button
+                            onClick={() => handleDinPing(member.id)}
+                            disabled={dinSending === member.id}
+                            className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors shrink-0"
+                          >
+                            {dinSending === member.id ? "..." : "Ping"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
           </motion.div>
         </AnimatePresence>
       </div>
-      <FacilitatorSupportChat />
+
     </div>
   )
 }

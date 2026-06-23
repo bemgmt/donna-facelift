@@ -16,17 +16,7 @@ export type OrganizationStatus =
   | 'suspended'
   | 'demo_prebuilt'
 
-export type DemoRoleSlug =
-  | 'commercial_broker'
-  | 'commercial_lender'
-  | 'title_company'
-  | 'escrow_officer'
-  | 'insurance_broker'
-  | 'appraiser'
-  | 'environmental_consultant'
-  | 'surveyor'
-  | 'real_estate_attorney'
-  | 'property_manager'
+export type DemoRoleSlug = string;
 
 export type DemoEventType =
   | 'environmental_issue'
@@ -237,4 +227,131 @@ export interface ConvertDemoResponse {
   success: boolean
   new_org_id: string
   message: string
+}
+
+// ---------------------------------------------------------------------------
+// CA-Adapted Scenario / Simulation Bible Types
+// ---------------------------------------------------------------------------
+
+export type ScenarioId = 
+  | 'vernon-commerce-center-acquisition'
+  | 'monterey-medical-plaza-refinance'
+  | 'downtown-retail-center-sale'
+  | 'riverside-multifamily-acquisition'
+  | 'commerce-distribution-center-development';
+
+export type ScenarioStatus = "not_started" | "in_progress" | "waiting" | "done";
+export type Priority = "low" | "medium" | "high" | "critical";
+
+export interface CompanyProfile {
+  id: string;
+  name: string;
+  roleInDeal: string;
+  description: string;
+}
+
+export interface RolePack {
+  id: string;
+  title: string;
+  companyId?: string;
+  primaryObjective: string;
+  secondaryObjective: string;
+  hiddenConcern: string;
+  typicalAsks: string[];
+  typicalReceives: string[];
+  sampleInbox: string;
+  secretaryOverlay: string;
+}
+
+export interface InboxItem {
+  id: string;
+  toRoleId: string;
+  priority: Priority;
+  subject: string;
+  summary: string;
+}
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  ownerRoleId: string;
+  status: ScenarioStatus;
+  dependencies: string[];
+}
+
+export interface LibraryDoc {
+  id: string;
+  fileName: string;
+  category: string;
+  summary: string;
+}
+
+export interface EventCard {
+  id: string;
+  title: string;
+  impact: string;
+  affectedRoleIds: string[];
+}
+
+export interface DinTrigger {
+  id: string;
+  trigger: string;
+  template: string;
+  requestingRole?: string;
+  targetRole?: string;
+  matchType?: "role" | "task" | "lead" | "bid" | "custom";
+}
+
+export interface ScenarioPack {
+  id: ScenarioId;
+  name: string;
+  jurisdiction: "unspecified_us" | "california";
+  propertyType: string;
+  scenarioBrief: string;
+  companies: CompanyProfile[];
+  roles: RolePack[];
+  inbox: InboxItem[];
+  tasks: TaskItem[];
+  library: LibraryDoc[];
+  communications: string[];
+  dinTriggers: DinTrigger[];
+  eventCards: EventCard[];
+  successCriteria: string[];
+  timeline: string[];
+  endOfDaySummaryFields: string[];
+  // AI Flow Overlays
+  startingPrompt?: string;
+  secretaryInstructions?: string;
+  summaryTemplate?: string;
+}
+
+export interface InteractionLog {
+  id: string;
+  timestamp: string;
+  source: 'participant' | 'secretary';
+  message: string;
+  actionTaken?: string;
+}
+
+export interface DinInteraction {
+  id: string;
+  timestamp: string;
+  initiatorRoleId: string;
+  targetRoleId: string;
+  interactionType: string;
+  message: string;
+}
+
+export interface DonnaDriveSessionLog {
+  sessionId: string;
+  eventId: string;
+  scenarioId: ScenarioId;
+  userId: string;
+  roleId: string;
+  startedAt: string;
+  endedAt?: string;
+  interactions: InteractionLog[];
+  completedTasks: TaskItem[];
+  assignedTasks: TaskItem[];
+  dinMatches: DinInteraction[];
 }

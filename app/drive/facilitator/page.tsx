@@ -10,42 +10,10 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
-import { DEMO_ROLES, DEMO_EVENTS } from "@/lib/donna-drive/constants"
+import { DEMO_EVENTS } from "@/lib/donna-drive/constants"
+import { SCENARIOS } from "@/lib/donna-drive/scenarios"
 
 type FacilitatorTab = "dashboard" | "new_event" | "staged_live" | "view_old"
-
-const SCENARIOS = [
-  { 
-    id: "vernon", 
-    name: "Vernon Commerce Center",
-    value: "$8.5M",
-    description: "An $8.5M commercial industrial building acquisition. Scenario challenges include coordinating due diligence, managing lender underwriting reports, and reviewing Phase I ESA loading dock environmental recognition warnings."
-  },
-  { 
-    id: "monterey", 
-    name: "Monterey Medical Center",
-    value: "$6.2M",
-    description: "A $6.2M medical office facility refinancing. Scenario tasks focus on rent roll valuations, underwriting approval exception analysis, and clearing anchor tenant estoppel certificate details."
-  },
-  { 
-    id: "downtown", 
-    name: "Downtown Retail Center",
-    value: "$5.2M",
-    description: "A $5.2M retail strip mall acquisition. Live events involve an anchor tenant non-renewal crisis, roof inspection structural defects, and resolving escrow holdback timelines."
-  },
-  { 
-    id: "riverside", 
-    name: "Riverside Multifamily",
-    value: "$12.0M",
-    description: "A $12.0M multifamily complex acquisition. Attendees handle occupancy drop exceptions, coordinate appraiser updates, and manage a sudden 22% insurance premium hike."
-  },
-  { 
-    id: "commerce", 
-    name: "Commerce Distribution Center",
-    value: "$15.5M",
-    description: "A $15.5M construction warehouse loan sizing. The workflow triggers soil remediation delays, topographical survey reviews, and budget re-allocations."
-  },
-]
 
 export default function FacilitatorDashboard() {
   const [session, setSession] = useState<any>(null)
@@ -69,7 +37,7 @@ export default function FacilitatorDashboard() {
   const [expandedPastEventId, setExpandedPastEventId] = useState<string | null>(null)
   
   // New Event Form State
-  const [selectedScenario, setSelectedScenario] = useState("vernon")
+  const [selectedScenario, setSelectedScenario] = useState<string>(SCENARIOS[0].id)
   const [userCountInput, setUserCountInput] = useState(5)
   const [isStaging, setIsStaging] = useState(false)
 
@@ -238,7 +206,7 @@ export default function FacilitatorDashboard() {
           action: "stage",
           scenario: selectedScenario,
           name: scenarioDef?.name || "Interactive CRE Simulation",
-          description: scenarioDef?.description || ""
+          description: scenarioDef?.scenarioBrief || ""
         })
       })
 
@@ -503,6 +471,9 @@ export default function FacilitatorDashboard() {
 
   // Active scenario definition details
   const activeScenarioDef = SCENARIOS.find(s => s.id === selectedScenario)
+  // Find live scenario roles based on propertyName matching scenario name
+  const liveScenarioDef = SCENARIOS.find(s => s.name === propertyName)
+  const activeRoles = liveScenarioDef?.roles || []
 
   return (
     <div className="min-h-screen bg-transparent text-white overflow-hidden py-12 px-4 sm:px-6 lg:px-8 relative">
@@ -645,7 +616,7 @@ export default function FacilitatorDashboard() {
                       >
                         {SCENARIOS.map((s) => (
                           <option key={s.id} value={s.id} className="bg-zinc-900">
-                            {s.name} ({s.value})
+                            {s.name} ({s.propertyType})
                           </option>
                         ))}
                       </select>
@@ -710,11 +681,11 @@ export default function FacilitatorDashboard() {
                   <div>
                     <h4 className="text-lg font-semibold">{activeScenarioDef?.name}</h4>
                     <span className="inline-block px-2 py-0.5 bg-cyan-500/10 border border-cyan-400/20 text-cyan-400 text-[10px] font-semibold rounded mt-1">
-                      {activeScenarioDef?.value} Deal
+                      {activeScenarioDef?.propertyType}
                     </span>
                   </div>
                   <p className="text-xs text-white/55 leading-relaxed">
-                    {activeScenarioDef?.description}
+                    {activeScenarioDef?.scenarioBrief}
                   </p>
                 </div>
               </div>
@@ -786,9 +757,9 @@ export default function FacilitatorDashboard() {
                             className="bg-black/50 border border-white/15 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-cyan-400/50 cursor-pointer"
                           >
                             <option value="">-- Choose Role --</option>
-                            {DEMO_ROLES.map((role) => (
-                              <option key={role.slug} value={role.slug}>
-                                {role.label}
+                            {activeRoles.map((role) => (
+                              <option key={role.id} value={role.id}>
+                                {role.title}
                               </option>
                             ))}
                           </select>

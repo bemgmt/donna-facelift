@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { isDonnaDriveEnabled, DEMO_ROLES } from '@/lib/donna-drive/constants'
 import { generateDemoSeedData, ScenarioKey } from '@/lib/donna-drive/seed-generator'
+import { SCENARIOS } from '@/lib/donna-drive/scenarios'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -86,7 +87,20 @@ export async function POST(request: NextRequest) {
 
   try {
     if (action === 'stage') {
-      const { scenario = 'vernon', name = 'Donna Drive Scenario', description = '' } = body
+      const { scenario = 'vernon-commerce-center-acquisition', name = 'Donna Drive Scenario', description = '' } = body
+
+      // Resolve the scenario pack from the SCENARIOS registry
+      const scenarioPack = SCENARIOS.find(s => s.id === scenario)
+
+      // Map full scenario ID to short seed-generator key
+      const SCENARIO_ID_TO_SEED_KEY: Record<string, ScenarioKey> = {
+        'vernon-commerce-center-acquisition': 'vernon',
+        'monterey-medical-plaza-refinance': 'monterey',
+        'downtown-retail-center-sale': 'downtown',
+        'riverside-multifamily-acquisition': 'riverside',
+        'commerce-distribution-center-development': 'commerce',
+      }
+      const seedKey = SCENARIO_ID_TO_SEED_KEY[scenario] || 'vernon'
       
       // Update organization state to staged
       const { error: orgError } = await supabase
@@ -95,14 +109,8 @@ export async function POST(request: NextRequest) {
           id: org_id,
           name: name,
           status: 'staged',
-          property_name: scenario === 'vernon' ? 'Vernon Commerce Center' : 
-                         scenario === 'monterey' ? 'Monterey Medical Center' : 
-                         scenario === 'downtown' ? 'Downtown Retail Center' : 
-                         scenario === 'riverside' ? 'Riverside Multifamily' : 'Commerce Distribution Center',
-          property_value: scenario === 'vernon' ? '$8.5M' : 
-                          scenario === 'monterey' ? '$6.2M' : 
-                          scenario === 'downtown' ? '$5.2M' : 
-                          scenario === 'riverside' ? '$12.0M' : '$15.5M',
+          property_name: scenarioPack?.name || 'Vernon Commerce Center Acquisition',
+          property_value: scenarioPack?.propertyType || 'industrial acquisition',
           description: description,
           updated_at: new Date().toISOString()
         })
@@ -122,7 +130,7 @@ export async function POST(request: NextRequest) {
       ])
 
       // Seed scenario data template
-      const seedData = generateDemoSeedData(scenario as ScenarioKey, org_id)
+      const seedData = generateDemoSeedData(seedKey, org_id)
       
       // Insert seeded data rows
       if (seedData.contacts.length > 0) {

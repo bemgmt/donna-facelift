@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import DriveFacilitatorChatbot from '@/features/drive/components/DriveFacilitatorChatbot'
 
 export const metadata: Metadata = {
   title: 'DONNA Drive — Interactive Demo',
@@ -10,5 +11,10 @@ export default function DriveLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <DriveFacilitatorChatbot />
+    </>
+  )
 }
