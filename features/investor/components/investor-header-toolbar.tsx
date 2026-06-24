@@ -17,6 +17,13 @@ export function InvestorHeaderToolbar() {
   return (
     <div className="flex items-center gap-3 text-xs opacity-70">
       <Link
+        href="/drive"
+        className="flex items-center gap-1.5 text-xs opacity-70 hover:opacity-100 transition-opacity text-purple-400 hover:text-purple-300"
+      >
+        <Globe className="w-3.5 h-3.5" />
+        <span>DONNA Drive Demo</span>
+      </Link>
+      <Link
         href="/din"
         className="flex items-center gap-1.5 text-xs opacity-70 hover:opacity-100 transition-opacity"
       >
