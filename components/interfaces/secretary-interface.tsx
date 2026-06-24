@@ -24,7 +24,7 @@ import {
 } from "lucide-react"
 import { GlassCard } from "@/components/ui/glass-card"
 import { NeonButton } from "@/components/ui/neon-button"
-import FacilitatorPanel from "../drive/FacilitatorPanel"
+import FacilitatorPanel from "@/features/drive/components/FacilitatorPanel"
 import { FuturisticInput } from "@/components/ui/futuristic-input"
 import { ChatBubble } from "@/components/ui/chat-bubble"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"

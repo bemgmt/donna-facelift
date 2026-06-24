@@ -7,7 +7,7 @@ import { useDashboardConfigOptional } from "@/contexts/DashboardConfigContext"
 import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList, Lock, Globe } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
-import { InvestorReadonlyShell } from "@/components/investor/investor-readonly-shell"
+import { InvestorReadonlyShell } from "@/features/investor/components/investor-readonly-shell"
 import { toast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 
@@ -37,7 +37,7 @@ const LeadGeneratorInterface = dynamic(
 )
 
 import ChatbotControlInterface from "./interfaces/chatbot-control-interface"
-import FacilitatorSupportChat from "@/components/drive/FacilitatorSupportChat"
+import DriveFacilitatorChatbot from "@/features/drive/components/DriveFacilitatorChatbot"
 
 type GridItem = {
   id: string
@@ -518,7 +518,7 @@ export default function InteractiveGrid() {
       <div className="absolute bottom-8 right-8">
         <div className="text-xs text-white/40 glass border border-white/20 px-2 py-1 rounded">click to enter</div>
       </div>
-      <FacilitatorSupportChat />
+      <DriveFacilitatorChatbot />
     </div>
   )
 }

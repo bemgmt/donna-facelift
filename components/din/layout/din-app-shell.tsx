@@ -3,7 +3,7 @@
 import { DinSidebar } from "./din-sidebar"
 import { DinTopbar } from "./din-topbar"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
-import { InvestorReadonlyShell } from "@/components/investor/investor-readonly-shell"
+import { InvestorReadonlyShell } from "@/features/investor/components/investor-readonly-shell"
 
 interface DinAppShellProps {
   children: React.ReactNode
