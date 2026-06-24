@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
 
       // Clear any pre-existing scenario data for this organization so we have a clean event run
       await Promise.all([
+        supabase.from('donna_drive_roles').delete().eq('org_id', org_id),
         supabase.from('donna_drive_emails').delete().eq('org_id', org_id),
         supabase.from('donna_drive_tasks').delete().eq('org_id', org_id),
         supabase.from('donna_drive_documents').delete().eq('org_id', org_id),
@@ -133,6 +134,19 @@ export async function POST(request: NextRequest) {
       const seedData = generateDemoSeedData(seedKey, org_id)
       
       // Insert seeded data rows
+      if (scenarioPack && scenarioPack.roles && scenarioPack.roles.length > 0) {
+        const rolesToInsert = scenarioPack.roles.map(r => ({
+          id: r.id,
+          org_id: org_id,
+          slug: r.id,
+          label: r.title,
+          description: r.primaryObjective,
+          icon: 'User',
+          color: 'blue'
+        }))
+        await supabase.from('donna_drive_roles').insert(rolesToInsert)
+      }
+
       if (seedData.contacts.length > 0) {
         await supabase.from('donna_drive_contacts').upsert(seedData.contacts)
       }

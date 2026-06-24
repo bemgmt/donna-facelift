@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Building2,
@@ -19,6 +19,8 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import Link from "next/link"
+import { SCENARIOS } from "@/lib/donna-drive/scenarios"
+import { ScenarioPack } from "@/lib/donna-drive/types"
 
 const ICONS: Record<string, React.ReactNode> = {
   Briefcase: <Briefcase className="w-6 h-6" />,
@@ -33,18 +35,7 @@ const ICONS: Record<string, React.ReactNode> = {
   Building2: <Building2 className="w-6 h-6" />,
 }
 
-const ROLES = [
-  { slug: "commercial_broker", label: "Commercial Broker", icon: "Briefcase", color: "blue" },
-  { slug: "commercial_lender", label: "Commercial Lender", icon: "Landmark", color: "emerald" },
-  { slug: "title_company", label: "Title Company", icon: "FileSearch", color: "amber" },
-  { slug: "escrow_officer", label: "Escrow Officer", icon: "ShieldCheck", color: "violet" },
-  { slug: "insurance_broker", label: "Insurance Broker", icon: "Umbrella", color: "rose" },
-  { slug: "appraiser", label: "Appraiser", icon: "Calculator", color: "cyan" },
-  { slug: "environmental_consultant", label: "Environmental Consultant", icon: "Leaf", color: "green" },
-  { slug: "surveyor", label: "Surveyor", icon: "Map", color: "orange" },
-  { slug: "real_estate_attorney", label: "Real Estate Attorney", icon: "Scale", color: "indigo" },
-  { slug: "property_manager", label: "Property Manager", icon: "Building2", color: "teal" },
-]
+const COLORS = ["blue", "emerald", "amber", "violet", "rose", "cyan", "green", "orange", "indigo", "teal"]
 
 const FEATURES = [
   "Live CRE transaction simulation",
@@ -55,6 +46,28 @@ const FEATURES = [
 
 export default function DriveLandingPage() {
   const [hoveredRole, setHoveredRole] = useState<string | null>(null)
+  const [activeScenario, setActiveScenario] = useState<ScenarioPack>(SCENARIOS[0])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchStatus() {
+      try {
+        const res = await fetch("/api/demo/event-status")
+        const data = await res.json()
+        if (data.success && data.property_name) {
+          const match = SCENARIOS.find(s => s.name === data.property_name)
+          if (match) {
+            setActiveScenario(match)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch event status:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchStatus()
+  }, [])
 
   return (
     <div className="min-h-screen bg-transparent text-white overflow-hidden">
@@ -97,7 +110,7 @@ export default function DriveLandingPage() {
             className="mt-6 text-lg sm:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed"
           >
             Get in the driver seat. Experience a live{" "}
-            <span className="text-white/90 font-medium">$8.5M commercial acquisition</span>{" "}
+            <span className="text-white/90 font-medium capitalize">{activeScenario.propertyType}</span>{" "}
             from the perspective of any transaction participant.
           </motion.p>
 
@@ -113,23 +126,13 @@ export default function DriveLandingPage() {
                 <Building2 className="w-5 h-5 text-white/80" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-white">Vernon Commerce Center</h3>
-                <p className="text-sm text-white/50">2810 Leonis Blvd, Vernon, CA 90058</p>
+                <h3 className="text-base font-semibold text-white">{activeScenario.name}</h3>
+                <p className="text-sm text-white/50 capitalize">{activeScenario.jurisdiction}</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-xl font-bold text-cyan-400">$8.5M</div>
-                <div className="text-xs text-white/40 mt-1">Purchase Price</div>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-purple-400">45K</div>
-                <div className="text-xs text-white/40 mt-1">Sq. Ft.</div>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-amber-400">92%</div>
-                <div className="text-xs text-white/40 mt-1">Occupied</div>
-              </div>
+            
+            <div className="mt-4 text-sm text-white/70 italic border-l-2 border-cyan-400/50 pl-3">
+              "{activeScenario.scenarioBrief}"
             </div>
           </motion.div>
 
@@ -186,31 +189,36 @@ export default function DriveLandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {ROLES.map((role, i) => (
-              <motion.div
-                key={role.slug}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.7 + i * 0.05 }}
-                onMouseEnter={() => setHoveredRole(role.slug)}
-                onMouseLeave={() => setHoveredRole(null)}
-                className={`
-                  relative cursor-pointer rounded-xl border p-4 text-center transition-all duration-200
-                  ${
-                    hoveredRole === role.slug
-                      ? "border-white/30 bg-white/10 scale-105 shadow-lg shadow-purple-500/10"
-                      : "border-white/10 bg-white/[0.03] hover:border-white/20"
-                  }
-                `}
-              >
-                <div className={`mx-auto mb-3 w-10 h-10 rounded-lg bg-${role.color}-500/20 flex items-center justify-center text-${role.color}-400`}>
-                  {ICONS[role.icon] || <Users className="w-6 h-6" />}
-                </div>
-                <div className="text-xs font-medium text-white/80 leading-tight">{role.label}</div>
-              </motion.div>
-            ))}
-          </div>
+          {!isLoading && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {activeScenario.roles.map((role, i) => {
+                const color = COLORS[i % COLORS.length];
+                return (
+                  <motion.div
+                    key={role.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, delay: 0.7 + i * 0.05 }}
+                    onMouseEnter={() => setHoveredRole(role.id)}
+                    onMouseLeave={() => setHoveredRole(null)}
+                    className={`
+                      relative cursor-pointer rounded-xl border p-4 text-center transition-all duration-200
+                      ${
+                        hoveredRole === role.id
+                          ? "border-white/30 bg-white/10 scale-105 shadow-lg shadow-purple-500/10"
+                          : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                      }
+                    `}
+                  >
+                    <div className={`mx-auto mb-3 w-10 h-10 rounded-lg bg-${color}-500/20 flex items-center justify-center text-${color}-400`}>
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div className="text-xs font-medium text-white/80 leading-tight">{role.title}</div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 

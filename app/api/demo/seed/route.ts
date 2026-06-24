@@ -17,9 +17,9 @@ import {
   DEMO_PROPERTY_NAME,
   DEMO_PROPERTY_VALUE,
   DEMO_PROPERTY_DESCRIPTION,
-  DEMO_ROLES,
 } from '@/lib/donna-drive/constants'
 import { generateDemoSeedData, ScenarioKey } from '@/lib/donna-drive/seed-generator'
+import { SCENARIOS } from '@/lib/donna-drive/scenarios'
 import type { SeedDemoRequest, SeedDemoResponse } from '@/lib/donna-drive/types'
 
 export async function POST(request: NextRequest) {
@@ -95,16 +95,32 @@ export async function POST(request: NextRequest) {
   const orgId = 'dd-org-001'
   const seedData = generateDemoSeedData(scenarioKey, orgId)
 
+  const SCENARIO_KEY_TO_ID: Record<string, string> = {
+    'vernon': 'vernon-commerce-center-acquisition',
+    'monterey': 'monterey-medical-plaza-refinance',
+    'downtown': 'downtown-retail-center-sale',
+    'riverside': 'riverside-multifamily-acquisition',
+    'commerce': 'commerce-distribution-center-development'
+  }
+  const scenarioId = SCENARIO_KEY_TO_ID[scenarioKey] || 'vernon-commerce-center-acquisition'
+  const scenarioPack = SCENARIOS.find(s => s.id === scenarioId)
+
+  const roleRows = scenarioPack ? scenarioPack.roles.map(r => ({
+    id: r.id,
+    slug: r.id,
+    label: r.title,
+    description: r.primaryObjective,
+    icon: 'User',
+    color: 'blue',
+    org_id: seedData.org_id,
+  })) : []
+
   if (!supabase) {
     // Fallback: return seed data shape without persisting (useful for preview)
     return NextResponse.json({
       success: true,
       org_id: seedData.org_id,
-      roles: DEMO_ROLES.map((r, i) => ({
-        id: `dd-role-${String(i + 1).padStart(3, '0')}`,
-        ...r,
-        org_id: seedData.org_id,
-      })),
+      roles: roleRows,
       message: 'Seed data returned (Supabase not connected — preview mode)',
     } satisfies SeedDemoResponse)
   }
@@ -128,16 +144,6 @@ export async function POST(request: NextRequest) {
     if (orgError) throw orgError
 
     // 2. Upsert roles
-    const roleRows = DEMO_ROLES.map((r, i) => ({
-      id: `dd-role-${String(i + 1).padStart(3, '0')}`,
-      slug: r.slug,
-      label: r.label,
-      description: r.description,
-      icon: r.icon,
-      color: r.color,
-      org_id: seedData.org_id,
-    }))
-
     const { error: rolesError } = await supabase
       .from('donna_drive_roles')
       .upsert(roleRows, { onConflict: 'id' })
