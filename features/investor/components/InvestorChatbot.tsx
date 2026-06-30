@@ -337,9 +337,10 @@ export default function ChatWidget() {
           ])
           return
         }
+        const reply = data.reply
         setMessages((prev) => [
           ...prev,
-          { id: `kb_${Date.now()}`, role: "assistant", text: data.reply },
+          { id: `kb_${Date.now()}`, role: "assistant", text: reply },
         ])
       } catch {
         setMessages((prev) => [

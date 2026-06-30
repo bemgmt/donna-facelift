@@ -1,13 +1,10 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import NoSSR from "@/components/no-ssr"
 import GridLoading from "@/components/grid-loading"
 import ServiceStatus from "@/components/ServiceStatus"
-import DonnaContextInitializer from "@/components/donna-context-initializer"
-import { supabase } from "@/lib/supabase"
 
 // Dynamically import the InteractiveGrid with no SSR
 const InteractiveGrid = dynamic(
@@ -18,115 +15,28 @@ const InteractiveGrid = dynamic(
   }
 )
 
-type FlowState = 'loading' | 'initializing' | 'checking-auth' | 'authenticated' | 'unauthenticated'
-
 export default function Home() {
-  const router = useRouter()
-  const [flowState, setFlowState] = useState<FlowState>('loading')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  const checkAuthentication = useCallback(async () => {
-    // Check local storage demo session
-    const demoSession = typeof window !== 'undefined' ? localStorage.getItem('donna_demo_session') : null
-    
-    // Check supabase session
-    let hasSupabaseSession = false
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      hasSupabaseSession = !!session
-      if (hasSupabaseSession && session?.user?.email) {
-        // Bridge session to local storage
-        localStorage.setItem('donna_demo_session', 'true')
-        localStorage.setItem('donna_demo_user', session.user.email)
-      }
-    } catch (e) {
-      console.error("Failed to check Supabase session in Home:", e)
-    }
-
-    if (demoSession === 'true' || hasSupabaseSession) {
-      setIsAuthenticated(true)
-      setFlowState('authenticated')
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('donna:auth-ready'))
-      }
-    } else {
-      setIsAuthenticated(false)
-      setFlowState('unauthenticated')
-      router.push('/sign-in')
-    }
-  }, [router])
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    // Check if initialization has already been completed in this session
-    const isInitialized = typeof window !== 'undefined' 
-      ? sessionStorage.getItem('donna_context_initialized')
-      : null
-    const demoSession = typeof window !== 'undefined'
-      ? localStorage.getItem('donna_demo_session')
-      : null
-    
-    // Always check authentication, even in preview mode
-    // Only show grid if both initialized AND authenticated
-    if (isInitialized === 'true' && demoSession === 'true') {
-      // Both initialization and auth are complete, show the grid
-      // This handles the case when user returns from login page
-      setIsAuthenticated(true)
-      setFlowState('authenticated')
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('donna:auth-ready'))
-      }
-    } else if (isInitialized === 'true') {
-      // Initialization done but not authenticated, go to login
-      setFlowState('checking-auth')
-      checkAuthentication()
-    } else {
-      // Start with loading screen, then initialization
-      const timer = setTimeout(() => {
-        setFlowState('initializing')
-      }, 500) // Brief loading screen before initialization
+    localStorage.setItem("donna_demo_session", "true")
+    localStorage.setItem("donna_demo_user", "investor-preview@donna.local")
+    localStorage.setItem("donna_investor_preview", "true")
+    localStorage.removeItem("donna_drive_member_id")
+    localStorage.removeItem("donna_drive_role")
+    localStorage.removeItem("donna_drive_user_name")
+    localStorage.removeItem("donna_drive_industry")
+    sessionStorage.setItem("donna_context_initialized", "true")
+    document.cookie = `donna_demo_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+    document.cookie = `donna_demo_user=investor-preview@donna.local; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+    window.dispatchEvent(new CustomEvent("donna:auth-ready"))
+    setIsReady(true)
+  }, [])
 
-      return () => clearTimeout(timer)
-    }
-  }, [checkAuthentication])
-
-  const handleInitializationComplete = useCallback(() => {
-    // After initialization, check authentication
-    setFlowState('checking-auth')
-    checkAuthentication()
-  }, [checkAuthentication])
-
-  const handleInitializationError = useCallback((error: Error) => {
-    console.error('DONNA Context initialization failed:', error)
-    // Continue with auth check even if initialization fails
-    handleInitializationComplete()
-  }, [handleInitializationComplete])
-
-  // Show loading screen initially
-  if (flowState === 'loading') {
+  if (!isReady) {
     return <GridLoading />
   }
 
-  // Show initialization screen
-  if (flowState === 'initializing') {
-    return (
-      <DonnaContextInitializer
-        onComplete={handleInitializationComplete}
-        onError={handleInitializationError}
-      />
-    )
-  }
-
-  // Show loading while checking authentication
-  if (flowState === 'checking-auth') {
-    return <GridLoading />
-  }
-
-  // If not authenticated, the redirect will happen, but show loading as fallback
-  if (flowState === 'unauthenticated' || !isAuthenticated) {
-    return <GridLoading />
-  }
-
-  // User is authenticated, show the interface
   return (
     <main className="min-h-screen">
       <div className="p-4 flex justify-end">

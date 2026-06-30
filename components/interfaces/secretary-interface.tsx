@@ -825,8 +825,8 @@ export default function SecretaryInterface(): JSX.Element {
         </div>
       </div>
       
-      {/* Facilitator Panel for Demo Events */}
-      <FacilitatorPanel facilitatorSecret="donna-drive-dev" />
+      {/* Drive facilitator controls are available only during a Drive event session. */}
+      {isLiveDemo && <FacilitatorPanel facilitatorSecret="donna-drive-dev" />}
 
       {/* Scenario Live Briefing Alert Popup */}
       <AnimatePresence>

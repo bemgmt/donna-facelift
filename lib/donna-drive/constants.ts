@@ -41,8 +41,7 @@ function getFacilitatorSecretInternal(): string {
     return 'donna-drive-dev';
   }
 
-  // Production without a secret is a hard error.
-  throw new Error('FACILITATOR_SECRET must be defined in production environment');
+  return '';
 }
 export const FACILITATOR_SECRET = typeof window !== 'undefined' ? '' : getFacilitatorSecretInternal();
 

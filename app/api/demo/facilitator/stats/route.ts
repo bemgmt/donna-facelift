@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
+import { authorizeDriveFacilitator } from '@/lib/donna-drive/auth'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -10,60 +11,19 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Verify auth from authorization header or cookies
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) {
-    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
-  }
-
-  const token = authHeader.replace('Bearer ', '')
   const supabase = getSupabaseAdmin()
 
   if (!supabase) {
     return NextResponse.json({ success: false, message: 'Supabase not connected' }, { status: 500 })
   }
 
+  const authorization = await authorizeDriveFacilitator(request, supabase)
+  if (!authorization.authorized) {
+    return NextResponse.json({ success: false, message: authorization.message }, { status: authorization.status })
+  }
+
   try {
-    // 1. Verify user session
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    
-    if (authError || !user) {
-      return NextResponse.json({ success: false, message: 'Invalid session' }, { status: 401 })
-    }
-
-    // 2. Check if user is admin by checking the 'profile' column in public.users table
-    let { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('profile')
-      .eq('email', user.email)
-      .single()
-
-    if (userError || !userData) {
-      // Auto-provision the user in the public.users table as a facilitator
-      const { data: newUser, error: insertError } = await supabase
-        .from('users')
-        .insert({
-          email: user.email,
-          name: user.email?.split('@')[0] || 'Demo User',
-          profile: { role: 'facilitator' }
-        })
-        .select('profile')
-        .single()
-      
-      if (insertError) {
-        console.error('[DONNA Drive] Auto-provisioning failed:', insertError)
-        return NextResponse.json({ success: false, message: 'User record not found and auto-provisioning failed' }, { status: 403 })
-      }
-      userData = newUser
-    }
-
-    // Check role column from profile JSONB
-    const role = userData?.profile?.role
-    if (role !== 'admin' && role !== 'facilitator') {
-      return NextResponse.json({ success: false, message: 'Access denied: User is not an admin' }, { status: 403 })
-    }
-
-    // 3. Fetch stats
+    // Fetch stats
     const orgId = 'dd-org-001' // Default demo org
 
     // Fetch total tasks

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import type React from "react"
-import { Send, Inbox, Star, Archive, Trash2, Mail, RefreshCw, Bot, Zap, Filter, Tag, Users, Template, CheckSquare, Settings } from "lucide-react"
-import type { gmail_v1 } from 'googleapis'
+import { Send, Inbox, Star, Archive, Trash2, Mail, RefreshCw, Bot, Zap } from "lucide-react"
 import DOMPurify from 'isomorphic-dompurify'
 import { motion } from "framer-motion"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -14,6 +13,14 @@ import {
 // Simple type definitions
 type EmailCategory = 'personal' | 'work' | 'marketing' | 'social' | 'updates' | 'forums' | 'promotions'
 type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent'
+type LocalMessagePart = {
+  mimeType?: string
+  body?: { data?: string }
+}
+type LocalMessagePayload = {
+  parts?: LocalMessagePart[]
+  body?: { data?: string }
+}
 
 // Simple hook fallbacks
 const useBulkSelection = (ids: string[], options?: { maxSelection?: number; onSelectionChange?: (ids: Set<string>) => void }) => ({
@@ -66,7 +73,7 @@ interface Email {
   priority?: PriorityLevel
   custom_tags?: string[]
   campaign_id?: string
-  payload?: gmail_v1.Schema$Message['payload']
+  payload?: LocalMessagePayload
   metadata?: {
     category: EmailCategory
     priority_level: PriorityLevel
@@ -181,10 +188,10 @@ export default function HybridEmailInterface() {
     }
   }
 
-  const getEmailBody = (payload: gmail_v1.Schema$Message['payload'] | undefined): string => {
+  const getEmailBody = (payload: LocalMessagePayload | undefined): string => {
     if (!payload) return ""
     let body = ""
-    const parts = payload.parts as gmail_v1.Schema$MessagePart[] | undefined
+    const parts = payload.parts
     if (parts && parts.length) {
       // Prioritize plain text for better quoting, fallback to HTML
       const part = parts.find((p) => p.mimeType === "text/plain") || parts.find((p) => p.mimeType === "text/html")

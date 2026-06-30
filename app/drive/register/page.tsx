@@ -142,7 +142,7 @@ export default function DriveRegisterPage() {
               Register for DONNA Drive
             </h1>
             <p className="mt-2 text-sm text-white/50">
-              Create an account with your credentials to join the live simulation event.
+              Create event credentials to join the live simulation.
             </p>
           </motion.div>
 
@@ -284,10 +284,7 @@ export default function DriveRegisterPage() {
                 After registering, wait in the waiting room for the facilitator to start the live event.
               </p>
               <p className="text-sm text-white/60">
-                Already have an account?{' '}
-                <Link href="/sign-in" className="text-donna-cyan hover:underline transition-all">
-                  Sign In
-                </Link>
+                Already registered for this event? Use the same event email to rejoin the waiting room.
               </p>
             </div>
           </motion.form>

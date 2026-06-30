@@ -41,7 +41,7 @@ const FEATURES = [
   "Live CRE transaction simulation",
   "Role-based inbox, tasks & documents",
   "Facilitator-injected scenario events",
-  "Real DONNA account — keep it after the demo",
+  "Event-only attendee access",
 ]
 
 export default function DriveLandingPage() {
@@ -132,7 +132,7 @@ export default function DriveLandingPage() {
             </div>
             
             <div className="mt-4 text-sm text-white/70 italic border-l-2 border-cyan-400/50 pl-3">
-              "{activeScenario.scenarioBrief}"
+              &quot;{activeScenario.scenarioBrief}&quot;
             </div>
           </motion.div>
 
@@ -226,11 +226,10 @@ export default function DriveLandingPage() {
       <section className="px-4 py-16 sm:px-6 lg:px-8 border-t border-white/5">
         <div className="max-w-2xl mx-auto text-center">
           <h3 className="text-xl font-semibold text-white mb-3">
-            Your DONNA account is real
+            Built for the event
           </h3>
           <p className="text-sm text-white/50 mb-8 leading-relaxed">
-            After the demo, keep the account you already used.
-            Activate a subscription and start using DONNA for your own business — no migration needed.
+            DONNA Drive focuses on the live transaction simulation. Event access, roles, tasks, chat, and summaries stay inside Drive.
           </p>
           <Link
             href="/drive/register"

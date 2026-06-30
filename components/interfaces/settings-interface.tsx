@@ -1,278 +1,162 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useForm, FormProvider } from "react-hook-form"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import {
-  User,
-  Brain,
-  Database,
-  MessageSquare,
-  Zap,
-  Shield,
-  Bell,
-  CreditCard,
-  Settings as SettingsIcon,
-} from "lucide-react"
-import { DONNASettings, defaultSettings } from "@/types/settings"
-import ProfileIdentitySection from "@/components/settings/ProfileIdentitySection"
-import BehaviorPersonalitySection from "@/components/settings/BehaviorPersonalitySection"
-import KnowledgeMemorySection from "@/components/settings/KnowledgeMemorySection"
-import ToolsIntegrationsSection from "@/components/settings/ToolsIntegrationsSection"
-import CommunicationChannelsSection from "@/components/settings/CommunicationChannelsSection"
-import AutomationsWorkflowsSection from "@/components/settings/AutomationsWorkflowsSection"
-import PrivacySecuritySection from "@/components/settings/PrivacySecuritySection"
-import NotificationsSection from "@/components/settings/NotificationsSection"
-import BillingPlanSection from "@/components/settings/BillingPlanSection"
-import AdvancedDeveloperSection from "@/components/settings/AdvancedDeveloperSection"
-import { Button } from "@/components/ui/button"
+import { Bell, Building2, Save, Shield, User } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Save } from "lucide-react"
 
-const settingsSections = [
-  { id: "profile", label: "Profile & Identity", icon: User },
-  { id: "behavior", label: "Behavior & Personality", icon: Brain },
-  { id: "knowledge", label: "Knowledge & Memory", icon: Database },
-  { id: "integrations", label: "Tools & Integrations", icon: SettingsIcon },
-  { id: "channels", label: "Communication Channels", icon: MessageSquare },
-  { id: "automations", label: "Automations & Workflows", icon: Zap },
-  { id: "privacy", label: "Privacy & Security", icon: Shield },
-  { id: "notifications", label: "Notifications & Alerts", icon: Bell },
-  { id: "billing", label: "Billing & Plan", icon: CreditCard },
-]
+const INVESTOR_SETTINGS_KEY = "donna_sandbox_settings"
+
+type SandboxSettings = {
+  name: string
+  company: string
+  role: string
+  notifications: boolean
+  dataRoomUpdates: boolean
+  dinDigest: boolean
+}
+
+const defaults: SandboxSettings = {
+  name: "Investor Preview User",
+  company: "DONNA Capital Review",
+  role: "Investor",
+  notifications: true,
+  dataRoomUpdates: true,
+  dinDigest: false,
+}
 
 export default function SettingsInterface() {
-  const [activeSection, setActiveSection] = useState("profile")
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const toastHook = useToast()
+  const [settings, setSettings] = useState<SandboxSettings>(defaults)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+  const { toast } = useToast()
 
-  const form = useForm<DONNASettings>({
-    defaultValues: defaultSettings,
-    mode: "onChange",
-  })
-
-  const { watch, formState: { isDirty } } = form
-
-  // Load settings from API
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        setIsLoading(true)
-        const response = await fetch("/api/chatbot_settings.php", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success && data.data) {
-            // Merge loaded settings with defaults
-            const mergedSettings = {
-              ...defaultSettings,
-              ...data.data,
-            }
-            // Convert empty string or null vertical to "none" to match our Select fix
-            if (mergedSettings.profile?.vertical === "" || mergedSettings.profile?.vertical === null || mergedSettings.profile?.vertical === undefined) {
-              mergedSettings.profile.vertical = "none"
-            }
-            form.reset(mergedSettings)
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load settings:", error)
-        toastHook.toast({
-          title: "Error",
-          description: "Failed to load settings. Using defaults.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadSettings()
-  }, [form])
-
-  // Track unsaved changes
-  useEffect(() => {
-    setHasUnsavedChanges(isDirty)
-  }, [isDirty])
-
-  // Auto-save with debouncing
-  useEffect(() => {
-    if (!isDirty || isLoading) return
-
-    const timeoutId = setTimeout(async () => {
-      await handleSave(false) // Silent save
-    }, 2000) // 2 second debounce
-
-    return () => clearTimeout(timeoutId)
-  }, [watch(), isLoading])
-
-  const handleSave = async (showToast = true) => {
+    const stored = localStorage.getItem(INVESTOR_SETTINGS_KEY)
+    if (!stored) return
     try {
-      setIsSaving(true)
-      const formData = form.getValues()
-
-      const response = await fetch("/api/chatbot_settings.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          form.reset(formData) // Mark as not dirty
-          setHasUnsavedChanges(false)
-          if (showToast) {
-            toastHook.toast({
-              title: "Success",
-              description: "Settings saved successfully",
-            })
-          }
-        } else {
-          throw new Error(data.error || "Failed to save settings")
-        }
-      } else {
-        throw new Error("Failed to save settings")
-      }
-    } catch (error) {
-      console.error("Failed to save settings:", error)
-      if (showToast) {
-        toastHook.toast({
-          title: "Error",
-          description: "Failed to save settings. Please try again.",
-          variant: "destructive",
-        })
-      }
-    } finally {
-      setIsSaving(false)
+      setSettings({ ...defaults, ...JSON.parse(stored) })
+    } catch {
+      setSettings(defaults)
     }
+  }, [])
+
+  const update = <K extends keyof SandboxSettings>(key: K, value: SandboxSettings[K]) => {
+    setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
-  const renderSection = () => {
-    switch (activeSection) {
-      case "profile":
-        return <ProfileIdentitySection />
-      case "behavior":
-        return <BehaviorPersonalitySection />
-      case "knowledge":
-        return <KnowledgeMemorySection />
-      case "integrations":
-        return <ToolsIntegrationsSection />
-      case "channels":
-        return <CommunicationChannelsSection />
-      case "automations":
-        return <AutomationsWorkflowsSection />
-      case "privacy":
-        return <PrivacySecuritySection />
-      case "notifications":
-        return <NotificationsSection />
-      case "billing":
-        return <BillingPlanSection />
-      default:
-        return <ProfileIdentitySection />
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center pt-20">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white/60" />
-          <p className="text-white/60">Loading settings...</p>
-        </div>
-      </div>
-    )
+  const save = () => {
+    localStorage.setItem(INVESTOR_SETTINGS_KEY, JSON.stringify(settings))
+    const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    setSavedAt(timestamp)
+    toast({
+      title: "Saved locally",
+      description: "Investor sandbox settings were saved in this browser.",
+    })
   }
 
   return (
-    <FormProvider {...form}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="h-screen flex pt-20"
-        data-tour="settings-content"
-      >
-        {/* Settings Sidebar */}
-        <div className="w-64 border-r border-white/20 p-6 glass-dark backdrop-blur">
-          <h2 className="text-xl font-light mb-6">Settings</h2>
-          <nav className="space-y-1">
-            {settingsSections.map((section) => {
-              const Icon = section.icon
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
-                    activeSection === section.id
-                      ? "bg-white/10 text-white"
-                      : "text-white/70 hover:bg-white/5"
-                  }`}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen p-6 text-white glass-dark backdrop-blur"
+      data-tour="settings-content"
+    >
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-6 border-b border-white/10 pb-5">
+          <h1 className="text-2xl font-light">Settings</h1>
+          <p className="mt-1 text-sm text-white/55">Local investor preview preferences. No account, billing, auth, or backend sync.</p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-12">
+          <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5 lg:col-span-7">
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-medium text-white/80">
+              <User className="h-4 w-4 text-cyan-300" />
+              Preview Profile
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-1.5 text-sm text-white/65">
+                Name
+                <input
+                  value={settings.name}
+                  onChange={(event) => update("name", event.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-white outline-none focus:border-cyan-300/40"
+                />
+              </label>
+              <label className="space-y-1.5 text-sm text-white/65">
+                Company
+                <input
+                  value={settings.company}
+                  onChange={(event) => update("company", event.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-white outline-none focus:border-cyan-300/40"
+                />
+              </label>
+              <label className="space-y-1.5 text-sm text-white/65 sm:col-span-2">
+                Role
+                <select
+                  value={settings.role}
+                  onChange={(event) => update("role", event.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-white outline-none focus:border-cyan-300/40"
                 >
-                  <Icon
-                    className={`w-4 h-4 donna-icon ${
-                      activeSection === section.id ? "donna-icon-active" : ""
-                    }`}
-                  />
-                  <span className="text-sm">{section.label}</span>
-                </button>
-              )
-            })}
-          </nav>
-
-          {/* Advanced Section - Collapsed by default */}
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <AdvancedDeveloperSection />
-          </div>
-        </div>
-
-        {/* Settings Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-4xl mx-auto">
-            {renderSection()}
-
-            {/* Save Button */}
-            <div className="mt-8 pt-6 border-t border-white/20 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {hasUnsavedChanges && (
-                  <span className="text-sm text-yellow-400">You have unsaved changes</span>
-                )}
-                {isSaving && (
-                  <span className="text-sm text-white/60 flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </span>
-                )}
-              </div>
-              <Button
-                onClick={() => handleSave(true)}
-                disabled={!hasUnsavedChanges || isSaving}
-                className="bg-white text-black hover:bg-white/90"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
+                  <option>Investor</option>
+                  <option>Advisor</option>
+                  <option>Founder</option>
+                  <option>Operator</option>
+                </select>
+              </label>
             </div>
-          </div>
+          </section>
+
+          <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5 lg:col-span-5">
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-medium text-white/80">
+              <Bell className="h-4 w-4 text-emerald-300" />
+              Local Preferences
+            </h2>
+            <div className="space-y-3">
+              {[
+                ["notifications", "In-preview notifications"],
+                ["dataRoomUpdates", "Data room update badges"],
+                ["dinDigest", "DIN digest reminders"],
+              ].map(([key, label]) => (
+                <label key={key} className="flex items-center justify-between rounded-lg bg-white/[0.04] p-3 text-sm text-white/70">
+                  <span>{label}</span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(settings[key as keyof SandboxSettings])}
+                    onChange={(event) => update(key as keyof SandboxSettings, event.target.checked as never)}
+                    className="h-4 w-4"
+                  />
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5 lg:col-span-12">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3 text-sm text-white/60">
+                <Shield className="mt-0.5 h-4 w-4 text-white/45" />
+                <div>
+                  <p className="text-white/75">Sandbox persistence</p>
+                  <p className="mt-1">These values stay in localStorage and reset with the Investor sandbox reset control.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={save}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/35 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100 hover:bg-cyan-300/15"
+              >
+                <Save className="h-4 w-4" />
+                Save Locally
+              </button>
+            </div>
+            {savedAt && (
+              <p className="mt-3 flex items-center gap-2 text-xs text-white/45">
+                <Building2 className="h-3.5 w-3.5" />
+                Last saved at {savedAt}
+              </p>
+            )}
+          </section>
         </div>
-      </motion.div>
-    </FormProvider>
+      </div>
+    </motion.div>
   )
 }

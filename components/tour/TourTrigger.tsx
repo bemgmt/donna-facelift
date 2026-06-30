@@ -229,14 +229,14 @@ export function TourTrigger() {
 
     // Only add listeners if window is available (client-side)
     if (typeof window !== 'undefined') {
-      window.addEventListener('donna:tour-requested', handleTourRequest as EventListener)
-      window.addEventListener('donna:tour-control', handleTourControl as EventListener)
+      window.addEventListener('donna:tour-requested', handleTourRequest as unknown as EventListener)
+      window.addEventListener('donna:tour-control', handleTourControl as unknown as EventListener)
     }
 
     return () => {
       if (typeof window !== 'undefined') {
-        window.removeEventListener('donna:tour-requested', handleTourRequest as EventListener)
-        window.removeEventListener('donna:tour-control', handleTourControl as EventListener)
+        window.removeEventListener('donna:tour-requested', handleTourRequest as unknown as EventListener)
+        window.removeEventListener('donna:tour-control', handleTourControl as unknown as EventListener)
       }
     }
   }, [startTour])

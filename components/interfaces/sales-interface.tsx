@@ -117,26 +117,7 @@ const SalesInterface: React.FC = () => {
   // }
 
   const sendEmail = async (emailData: { to: string; subject?: string; body?: string }) => {
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE || '/donna'
-      const response = await fetch(`${apiBase}/api/sales/overview.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'send_email',
-          email: emailData
-        })
-      })
-      const result = await response.json()
-      if (result.success) {
-        // Show success message
-        console.log('Email sent successfully')
-      }
-    } catch (error) {
-      console.error('Failed to send email:', error)
-    }
+    window.alert(`Sandbox only - drafted follow-up to ${emailData.to}. No email was sent.`)
   }
 
   // Campaign handlers

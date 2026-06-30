@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { isDonnaDriveEnabled, DEMO_ROLES } from '@/lib/donna-drive/constants'
 import { generateDemoSeedData, ScenarioKey } from '@/lib/donna-drive/seed-generator'
 import { SCENARIOS } from '@/lib/donna-drive/scenarios'
+import { authorizeDriveFacilitator } from '@/lib/donna-drive/auth'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -83,6 +84,11 @@ export async function POST(request: NextRequest) {
 
   if (!supabase) {
     return NextResponse.json({ success: false, message: 'Database not connected' }, { status: 500 })
+  }
+
+  const authorization = await authorizeDriveFacilitator(request, supabase, body)
+  if (!authorization.authorized) {
+    return NextResponse.json({ success: false, message: authorization.message }, { status: authorization.status })
   }
 
   try {

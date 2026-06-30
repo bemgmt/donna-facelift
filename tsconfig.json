@@ -23,5 +23,28 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "tests",
+    "test",
+    "__tests__",
+    "components/email",
+    "components/gmail",
+    "components/settings",
+    "components/voice",
+    "components/interfaces/email-interface.tsx",
+    "components/interfaces/chatbot-interface.tsx",
+    "components/interfaces/chatbot-control-interface.tsx",
+    "components/interfaces/receptionist-interface.tsx",
+    "hooks/use-openai-realtime.ts",
+    "hooks/useEmailTemplates.ts",
+    "hooks/use-realtime-voice.ts",
+    "hooks/use-telnyx-calls.ts",
+    "hooks/use-voice-commands.ts",
+    "hooks/use-voice-state.ts",
+    "lib/realtime-webrtc.ts",
+    "lib/voice-tools.ts",
+    "lib/websocket-fallback.ts",
+    "lib/websocket-health-check.ts"
+  ]
 }

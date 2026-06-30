@@ -5,6 +5,15 @@ import { X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import SettingsInterface from "./interfaces/settings-interface"
 
+type ModalPosition = {
+  top: string
+  right: string
+  left?: string
+  bottom?: string
+  minWidth: string
+  maxWidth: string
+}
+
 export default function SettingsModal() {
   const [isOpen, setIsOpen] = useState(false)
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null)
@@ -32,7 +41,7 @@ export default function SettingsModal() {
     }
   }, [])
 
-  const [position, setPosition] = useState({ top: '80px', right: '24px', minWidth: '400px', maxWidth: '600px' })
+  const [position, setPosition] = useState<ModalPosition>({ top: '80px', right: '24px', minWidth: '400px', maxWidth: '600px' })
 
   // Calculate position relative to settings button (should be at top of page)
   useEffect(() => {

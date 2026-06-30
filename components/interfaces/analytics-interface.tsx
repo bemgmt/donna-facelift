@@ -31,7 +31,7 @@ export default function AnalyticsInterface() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20 glass-dark backdrop-blur">
         <div className="p-6 border-b border-white/20">
           <h2 className="text-xl font-light">Analytics Dashboard</h2>
-          <p className="text-sm text-white/60 mt-1">Loading real-time business insights...</p>
+          <p className="text-sm text-white/60 mt-1">Loading local preview insights...</p>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -104,7 +104,7 @@ export default function AnalyticsInterface() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-screen pt-20 glass-dark backdrop-blur" data-tour="analytics-content">
       <div className="p-6 border-b border-white/20">
         <h2 className="text-xl font-light">Analytics Dashboard</h2>
-        <p className="text-sm text-white/60 mt-1">Real-time business insights</p>
+        <p className="text-sm text-white/60 mt-1">Local preview business insights</p>
       </div>
 
       <div className="p-6">
@@ -112,7 +112,7 @@ export default function AnalyticsInterface() {
         {analyticsData && (
           <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-3 mb-6">
             <p className="text-green-400 text-sm">
-              ✅ Connected to live backend - Real-time data
+              Sandbox fixture loaded - no backend connection
             </p>
           </div>
         )}

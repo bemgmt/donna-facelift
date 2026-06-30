@@ -11,11 +11,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
-  FACILITATOR_SECRET,
   isDonnaDriveEnabled,
   DEMO_EVENTS,
 } from '@/lib/donna-drive/constants'
 import { getEventPayload } from '@/lib/donna-drive/event-payloads'
+import { authorizeDriveFacilitator } from '@/lib/donna-drive/auth'
 import type { InjectEventRequest, InjectEventResponse, DemoEventType } from '@/lib/donna-drive/types'
 
 const VALID_EVENT_TYPES = DEMO_EVENTS.map((e) => e.type)
@@ -38,52 +38,13 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const supabase = getSupabaseAdmin()
+  const supabase = getSupabaseAdmin() ?? null
 
-  // Verify auth: check facilitator_secret OR an admin Supabase session
-  let isAuthorized = false
-  if (body.facilitator_secret === FACILITATOR_SECRET) {
-    isAuthorized = true
-  } else if (supabase) {
-    const authHeader = request.headers.get('authorization')
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '')
-      const { data: { user } } = await supabase.auth.getUser(token)
-      if (user) {
-        let { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('profile')
-          .eq('email', user.email)
-          .single()
-
-        if (userError || !userData) {
-          const { data: newUser, error: insertError } = await supabase
-            .from('users')
-            .insert({
-              email: user.email,
-              name: user.email?.split('@')[0] || 'Demo User',
-              profile: { role: 'facilitator' }
-            })
-            .select('profile')
-            .single()
-
-          if (!insertError && newUser) {
-            userData = newUser
-          }
-        }
-        
-        const role = userData?.profile?.role
-        if (role === 'admin' || role === 'facilitator') {
-          isAuthorized = true
-        }
-      }
-    }
-  }
-
-  if (!isAuthorized) {
+  const authorization = await authorizeDriveFacilitator(request, supabase, body)
+  if (!authorization.authorized) {
     return NextResponse.json(
-      { success: false, message: 'Invalid facilitator secret or admin session' },
-      { status: 401 }
+      { success: false, message: authorization.message },
+      { status: authorization.status }
     )
   }
 

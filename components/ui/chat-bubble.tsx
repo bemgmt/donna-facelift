@@ -1,8 +1,8 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { motion } from "framer-motion"
+import { motion, type HTMLMotionProps } from "framer-motion"
 
-interface ChatBubbleProps extends React.HTMLAttributes<HTMLDivElement> {
+interface ChatBubbleProps extends HTMLMotionProps<"div"> {
   variant?: "donna" | "user"
   children: React.ReactNode
 }

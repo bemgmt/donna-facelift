@@ -21,7 +21,7 @@ export default function DataRoomPage() {
     >
       <div className="border-b border-white/20 px-6 py-6 max-w-5xl mx-auto w-full">
         <Link
-          href="/"
+          href="/investor"
           data-tour="data-room-back-dashboard"
           className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors mb-4"
         >

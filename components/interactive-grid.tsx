@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useDashboardConfigOptional } from "@/contexts/DashboardConfigContext"
-import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList, Lock, Globe } from "lucide-react"
+import { ArrowLeft, Mail, BarChart3, Users, ClipboardList, Lock, Globe, Phone, FolderArchive, Settings, Car } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
 import { InvestorReadonlyShell } from "@/features/investor/components/investor-readonly-shell"
@@ -36,8 +36,15 @@ const LeadGeneratorInterface = dynamic(
   { ssr: false, loading: () => <div className="p-6 text-white/60">Loading Lead Generator…</div> }
 )
 
-import ChatbotControlInterface from "./interfaces/chatbot-control-interface"
-import DriveFacilitatorChatbot from "@/features/drive/components/DriveFacilitatorChatbot"
+const ReceptionistSandboxInterface = dynamic(
+  () => import("./interfaces/receptionist-sandbox-interface"),
+  { ssr: false, loading: () => <div className="p-6 text-white/60">Loading Receptionist...</div> }
+)
+
+const SettingsInterface = dynamic(
+  () => import("./interfaces/settings-interface"),
+  { ssr: false, loading: () => <div className="p-6 text-white/60">Loading Settings...</div> }
+)
 
 type GridItem = {
   id: string
@@ -70,7 +77,7 @@ const gridItems: GridItem[] = [
   },
   {
     id: "email",
-    title: "marketing",
+    title: "marketing & campaigns",
     icon: <Mail className="w-8 h-8" />,
     component: <HybridEmailInterface />,
     preview: (
@@ -89,21 +96,21 @@ const gridItems: GridItem[] = [
     ),
   },
   {
-    id: "chatbot",
-    title: "chatbot control",
-    icon: <MessageCircle className="w-8 h-8" />,
-    component: <ChatbotControlInterface />,
+    id: "receptionist",
+    title: "receptionist",
+    icon: <Phone className="w-8 h-8" />,
+    component: <ReceptionistSandboxInterface />,
     preview: (
-      <div className="w-full h-full bg-gradient-to-br from-green-900/20 to-green-800/10 p-4 rounded">
+      <div className="w-full h-full bg-gradient-to-br from-rose-900/20 to-cyan-800/10 p-4 rounded">
         <div className="space-y-3">
           <div className="flex justify-end">
-            <div className="h-2 bg-green-400/40 rounded-full w-1/2"></div>
+            <div className="h-2 bg-rose-400/40 rounded-full w-1/2"></div>
           </div>
           <div className="flex justify-start">
             <div className="h-2 bg-white/30 rounded-full w-2/3"></div>
           </div>
           <div className="flex justify-end">
-            <div className="h-2 bg-green-400/40 rounded-full w-1/3"></div>
+            <div className="h-2 bg-cyan-400/40 rounded-full w-1/3"></div>
           </div>
           <div className="flex justify-start">
             <div className="h-2 bg-white/30 rounded-full w-3/4"></div>
@@ -156,7 +163,7 @@ const gridItems: GridItem[] = [
   },
   {
     id: "analytics",
-    title: "analytics",
+    title: "dashboard",
     icon: <BarChart3 className="w-8 h-8" />,
     component: <AnalyticsInterface />,
     preview: (
@@ -188,6 +195,59 @@ const gridItems: GridItem[] = [
             </div>
           </div>
           <div className="h-1 bg-white/20 rounded w-1/2 mx-auto"></div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "settings",
+    title: "settings",
+    icon: <Settings className="w-8 h-8" />,
+    component: <SettingsInterface />,
+    preview: (
+      <div className="w-full h-full bg-gradient-to-br from-slate-800/20 to-emerald-900/10 p-4 rounded">
+        <div className="space-y-2">
+          <div className="h-2 bg-emerald-400/30 rounded w-3/4"></div>
+          <div className="h-2 bg-white/15 rounded w-1/2"></div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="h-5 bg-white/10 rounded"></div>
+            <div className="h-5 bg-white/10 rounded"></div>
+            <div className="h-5 bg-white/10 rounded"></div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "data-room",
+    title: "data room",
+    icon: <FolderArchive className="w-8 h-8" />,
+    component: <div className="p-6 text-white/60">Opening Data Room...</div>,
+    preview: (
+      <div className="w-full h-full bg-gradient-to-br from-emerald-900/20 to-zinc-800/10 p-4 rounded">
+        <div className="space-y-2">
+          <div className="h-3 bg-emerald-400/30 rounded w-1/2"></div>
+          <div className="h-2 bg-white/20 rounded w-full"></div>
+          <div className="h-2 bg-white/15 rounded w-5/6"></div>
+          <div className="h-8 bg-white/10 rounded mt-3"></div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "drive",
+    title: "DONNA Drive",
+    icon: <Car className="w-8 h-8" />,
+    component: <div className="p-6 text-white/60">Opening DONNA Drive...</div>,
+    preview: (
+      <div className="w-full h-full bg-gradient-to-br from-purple-900/20 to-cyan-900/10 p-4 rounded">
+        <div className="space-y-3">
+          <div className="h-2 bg-cyan-400/35 rounded w-2/3"></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="h-5 bg-white/10 rounded"></div>
+            <div className="h-5 bg-white/10 rounded"></div>
+          </div>
+          <div className="h-1 bg-white/20 rounded w-full"></div>
         </div>
       </div>
     ),
@@ -399,7 +459,7 @@ export default function InteractiveGrid() {
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div
           ref={gridRef}
-          className="grid grid-cols-3 grid-rows-2 gap-1 w-full max-w-6xl aspect-[3/2]"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 lg:grid-rows-2 gap-1 w-full max-w-7xl lg:aspect-[5/2]"
           style={{
             transformStyle: "preserve-3d",
             transformOrigin: getGridTransformOrigin(),
@@ -444,11 +504,15 @@ export default function InteractiveGrid() {
                     return
                   }
                   if (item.id === 'din') {
-                    router.push('/din')
+                    router.push('/investor/din')
                     return
                   }
-                  if (item.id === 'chatbot') {
-                    window.dispatchEvent(new CustomEvent('donna:open'))
+                  if (item.id === 'data-room') {
+                    router.push('/investor/data-room')
+                    return
+                  }
+                  if (item.id === 'drive') {
+                    router.push('/drive')
                     return
                   }
                   handleItemClick(item.id)
@@ -518,7 +582,6 @@ export default function InteractiveGrid() {
       <div className="absolute bottom-8 right-8">
         <div className="text-xs text-white/40 glass border border-white/20 px-2 py-1 rounded">click to enter</div>
       </div>
-      <DriveFacilitatorChatbot />
     </div>
   )
 }

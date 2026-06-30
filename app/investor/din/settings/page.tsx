@@ -11,13 +11,13 @@ import { generalSettings } from "@/lib/din/mock-data/settings"
 
 const settingsLinks = [
   {
-    href: "/din/settings/payment-profile",
+    href: "/investor/din/settings/payment-profile",
     icon: <CreditCard className="w-6 h-6" />,
     title: "Payment Profile",
     description: "Manage billing, payout methods, and tax information",
   },
   {
-    href: "/din/settings/automatic-bids",
+    href: "/investor/din/settings/automatic-bids",
     icon: <Bot className="w-6 h-6" />,
     title: "Automatic Bids",
     description: "Configure auto-bid rules, thresholds, and preferences",
@@ -64,12 +64,12 @@ export default function SettingsPage() {
           ))}
         </SettingsCard>
 
-        <SettingsCard title="Account Sync" description="Your DONNA account connection status">
+        <SettingsCard title="Preview Profile" description="Local investor preview profile status">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/[0.04] border border-emerald-500/10">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <div>
-              <p className="text-sm text-white/70">Profile synced from DONNA</p>
-              <p className="text-xs text-white/30">Last synced: 4 minutes ago</p>
+              <p className="text-sm text-white/70">Profile loaded from local DIN fixtures</p>
+              <p className="text-xs text-white/30">No account sync or backend connection</p>
             </div>
           </div>
         </SettingsCard>

@@ -21,7 +21,7 @@ export async function verifyAuthentication(): Promise<{
   error?: string
 }> {
   try {
-    const { userId, sessionId, orgId } = await auth()
+    const { userId, sessionId } = await auth()
 
     if (!userId || !sessionId) {
       return {
@@ -34,8 +34,7 @@ export async function verifyAuthentication(): Promise<{
       success: true,
       user: {
         userId,
-        sessionId,
-        orgId: orgId || undefined
+        sessionId
       }
     }
   } catch (error) {

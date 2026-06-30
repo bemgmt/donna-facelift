@@ -7,7 +7,6 @@ import { DinPageHeader } from "@/components/din/layout/din-page-header"
 import { GlowCard } from "@/components/din/ui/glow-card"
 import { TagPill } from "@/components/din/ui/tag-pill"
 import type { MatchProfile } from "@/lib/din/types"
-import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
 
 const suggestedMatches: MatchProfile[] = [
@@ -109,17 +108,15 @@ const liveDemoMatches = [
 ]
 
 export default function SuggestedMatchesPage() {
-  const [isLiveDemo, setIsLiveDemo] = useState(false)
-  const [roleSlug, setRoleSlug] = useState("")
   const [hiredIds, setHiredIds] = useState<Set<string>>(new Set())
   const [hiringId, setHiringId] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const live = localStorage.getItem("donna_demo_session") === "true" && !!localStorage.getItem("donna_drive_member_id")
-      const rSlug = localStorage.getItem("donna_drive_role") || ""
-      setIsLiveDemo(live)
-      setRoleSlug(rSlug)
+      const stored = localStorage.getItem("donna_sandbox_din_hired_matches")
+      if (stored) {
+        setHiredIds(new Set(JSON.parse(stored)))
+      }
     }
   }, [])
 
@@ -127,54 +124,15 @@ export default function SuggestedMatchesPage() {
     setHiringId(match.id)
     
     try {
-      if (isLiveDemo) {
-        const res = await fetch(`/api/demo/data?role=${roleSlug}`)
-        const data = await res.json()
-        
-        if (data.success && data.tasks) {
-          const taskToComplete = data.tasks.find((t: any) => {
-            if (t.status === 'completed') return false
-            const titleLower = t.title.toLowerCase()
-            const descLower = t.description.toLowerCase()
-            return match.taskKeywords.some((keyword: string) => 
-              titleLower.includes(keyword) || descLower.includes(keyword)
-            )
-          })
-
-          if (taskToComplete) {
-            if (isSupabaseConfigured) {
-              await supabase
-                .from('donna_drive_tasks')
-                .update({ status: 'completed' })
-                .eq('id', taskToComplete.id)
-            }
-            toast({
-              title: "Affiliate Hired",
-              description: `Hired ${match.companyName} successfully! The task "${taskToComplete.title}" has been completed.`,
-            })
-          } else {
-            toast({
-              title: "Affiliate Hired",
-              description: `Hired ${match.companyName} successfully! No pending tasks matched this affiliate.`,
-            })
-          }
-        } else {
-          toast({
-            title: "Affiliate Hired",
-            description: `Hired ${match.companyName} successfully!`,
-          })
-        }
-      } else {
-        toast({
-          title: "Affiliate Hired (Preview)",
-          description: `Successfully simulated hiring ${match.companyName}.`,
-        })
-      }
-
       setHiredIds(prev => {
         const next = new Set(prev)
         next.add(match.id)
+        localStorage.setItem("donna_sandbox_din_hired_matches", JSON.stringify([...next]))
         return next
+      })
+      toast({
+        title: "Provider hired",
+        description: `Simulated hiring ${match.companyName}. No Drive or Supabase state was changed.`,
       })
     } catch (err) {
       console.error("Hiring error:", err)
@@ -188,7 +146,7 @@ export default function SuggestedMatchesPage() {
     }
   }
 
-  const matchesToRender = isLiveDemo ? liveDemoMatches : suggestedMatches
+  const matchesToRender = suggestedMatches
 
   return (
     <motion.div

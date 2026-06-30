@@ -3,13 +3,10 @@
 import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Plus, Play, Pause, BarChart3, Users, Mail, Calendar, Eye, Edit } from "lucide-react"
+import type { Campaign } from "./campaigns/CampaignBuilder"
 
-interface Campaign {
+interface CampaignSummary extends Campaign {
   id: string
-  name: string
-  eventName: string
-  contactLabel: string
-  status: 'draft' | 'active' | 'paused' | 'completed'
   stats: {
     totalContacts: number
     emailsSent: number
@@ -31,9 +28,9 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   onCreateCampaign, 
   onEditCampaign 
 }) => {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
   const [loading, setLoading] = useState(true)
-  const [, setSelectedCampaign] = useState<Campaign | null>(null)
+  const [, setSelectedCampaign] = useState<CampaignSummary | null>(null)
 
   useEffect(() => {
     fetchCampaigns()
@@ -43,12 +40,15 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     try {
       setLoading(true)
       // Mock data for now - replace with actual API call
-      const mockCampaigns: Campaign[] = [
+      const mockCampaigns: CampaignSummary[] = [
         {
           id: '1',
           name: 'West SGV Business Mixer Follow-up',
           eventName: 'West SGV Business Mixer',
           contactLabel: 'Networking Contact',
+          meetingType: 'Intro Meeting (15 min)',
+          preferredSlots: ['M/W/F 1-4 PM'],
+          emailTemplates: [],
           status: 'active',
           stats: {
             totalContacts: 12,
@@ -66,6 +66,9 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
           name: 'Chamber Event Follow-up',
           eventName: 'Monterey Park Chamber Networking',
           contactLabel: 'Chamber Member',
+          meetingType: 'Coffee Chat (30 min)',
+          preferredSlots: ['T/Th 10-12 AM'],
+          emailTemplates: [],
           status: 'paused',
           stats: {
             totalContacts: 8,
@@ -83,6 +86,9 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
           name: 'Trade Show Leads',
           eventName: 'LA Business Expo',
           contactLabel: 'Trade Show Lead',
+          meetingType: 'Business Discussion (45 min)',
+          preferredSlots: ['M/W/F 1-4 PM'],
+          emailTemplates: [],
           status: 'draft',
           stats: {
             totalContacts: 15,
