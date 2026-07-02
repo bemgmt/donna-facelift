@@ -43,7 +43,8 @@ export async function authorizeDriveFacilitator(
   const supabase = supabaseClient as SupabaseLike | null
 
   const expectedSecret = process.env.DONNA_DRIVE_FACILITATOR_SECRET
-  const providedSecret = body?.facilitator_secret
+  const headerSecret = request.headers.get('x-facilitator-secret')
+  const providedSecret = headerSecret || body?.facilitator_secret
 
   if (
     expectedSecret &&

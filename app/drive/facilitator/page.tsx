@@ -19,6 +19,9 @@ export default function FacilitatorDashboard() {
   const [session, setSession] = useState<any>(null)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [secretKey, setSecretKey] = useState("")
+  const [activeSecret, setActiveSecret] = useState("")
+  const [loginMethod, setLoginMethod] = useState<"email" | "secret">("email")
   const [isAuthenticating, setIsAuthenticating] = useState(true)
 
   // Tab State
@@ -95,7 +98,7 @@ export default function FacilitatorDashboard() {
 
   // Poll status, statistics, and chats
   useEffect(() => {
-    if (!session) return
+    if (!session && !activeSecret) return
 
     fetchStatusAndMembers()
     fetchStats()
@@ -118,7 +121,12 @@ export default function FacilitatorDashboard() {
   // Fetch Event Status, Attendees Staged and History
   const fetchStatusAndMembers = async () => {
     try {
-      const res = await fetch("/api/demo/event-status")
+      const res = await fetch("/api/demo/event-status", {
+        headers: {
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
+        }
+      })
       const data = await res.json()
       if (data.success) {
         setOrgStatus(data.org_status)
@@ -136,11 +144,14 @@ export default function FacilitatorDashboard() {
 
   // Fetch Live Task Progress statistics
   const fetchStats = async () => {
-    if (!session) return
+    if (!session && !activeSecret) return
     setIsFetchingStats(true)
     try {
       const res = await fetch("/api/demo/facilitator/stats", {
-        headers: { Authorization: `Bearer ${session.access_token}` }
+        headers: { 
+          ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
+        }
       })
       const data = await res.json()
       if (data.success && data.stats) {
@@ -159,7 +170,12 @@ export default function FacilitatorDashboard() {
       const url = selectedChatMemberId 
         ? `/api/demo/chat?member_id=${selectedChatMemberId}`
         : '/api/demo/chat'
-      const res = await fetch(url)
+      const res = await fetch(url, {
+        headers: {
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
+        }
+      })
       const data = await res.json()
       if (data.success) {
         setChats(data.chats || [])
@@ -173,6 +189,14 @@ export default function FacilitatorDashboard() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsAuthenticating(true)
+    
+    if (loginMethod === "secret") {
+      setActiveSecret(secretKey)
+      toast.success("Signed in with Secret Key!")
+      setIsAuthenticating(false)
+      return
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       toast.error(error.message)
@@ -184,13 +208,18 @@ export default function FacilitatorDashboard() {
 
   // Log out
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setSession(null)
+    if (activeSecret) {
+      setActiveSecret("")
+      setSecretKey("")
+    } else {
+      await supabase.auth.signOut()
+      setSession(null)
+    }
   }
 
   // Stage a new event (Move to Staging)
   const handleStageEvent = async () => {
-    if (!session) return
+    if (!session && !activeSecret) return
     setIsStaging(true)
     
     const scenarioDef = SCENARIOS.find(s => s.id === selectedScenario)
@@ -200,7 +229,8 @@ export default function FacilitatorDashboard() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
         },
         body: JSON.stringify({
           action: "stage",
@@ -227,13 +257,14 @@ export default function FacilitatorDashboard() {
 
   // Auto-Sort Users inside Staging Room
   const handleAutoSort = async () => {
-    if (!session) return
+    if (!session && !activeSecret) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
         },
         body: JSON.stringify({ action: "auto_sort" })
       })
@@ -251,13 +282,14 @@ export default function FacilitatorDashboard() {
 
   // Update Individual Attendee Role slug
   const handleAssignRole = async (memberId: string, roleSlug: string) => {
-    if (!session) return
+    if (!session && !activeSecret) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
         },
         body: JSON.stringify({
           action: "assign_role",
@@ -279,13 +311,14 @@ export default function FacilitatorDashboard() {
 
   // Start Live Event
   const handleStartLiveEvent = async () => {
-    if (!session) return
+    if (!session && !activeSecret) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
         },
         body: JSON.stringify({ action: "start" })
       })
@@ -303,7 +336,7 @@ export default function FacilitatorDashboard() {
 
   // End Live Event
   const handleEndEvent = async () => {
-    if (!session) return
+    if (!session && !activeSecret) return
     if (!confirm("Are you sure you want to end this event? This will archive the progress and reset the room.")) return
 
     try {
@@ -311,7 +344,8 @@ export default function FacilitatorDashboard() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
         },
         body: JSON.stringify({ action: "end" })
       })
@@ -330,13 +364,14 @@ export default function FacilitatorDashboard() {
 
   // Inject Scenario Incident
   const handleInjectEvent = async (eventType: string) => {
-    if (!session) return
+    if (!session && !activeSecret) return
     try {
       const res = await fetch("/api/demo/event", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
         },
         body: JSON.stringify({
           event_type: eventType,
@@ -364,7 +399,11 @@ export default function FacilitatorDashboard() {
     try {
       const res = await fetch("/api/demo/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
+        },
         body: JSON.stringify({
           org_id: "dd-org-001",
           member_id: selectedChatMemberId,
@@ -418,7 +457,7 @@ export default function FacilitatorDashboard() {
   }
 
   // Authentication Login Screen
-  if (!session) {
+  if (!session && !activeSecret) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#0C0F16] to-[#10121A]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
@@ -431,31 +470,64 @@ export default function FacilitatorDashboard() {
               <p className="text-white/50 text-sm">Access the live simulation control panel</p>
             </div>
 
+            <div className="flex bg-black/40 rounded-lg p-1 border border-white/10">
+              <button 
+                onClick={() => setLoginMethod("email")}
+                className={`flex-1 text-sm py-2 rounded-md font-medium transition-colors ${loginMethod === "email" ? "bg-cyan-500/20 text-cyan-400" : "text-white/50 hover:text-white"}`}
+              >
+                Email
+              </button>
+              <button 
+                onClick={() => setLoginMethod("secret")}
+                className={`flex-1 text-sm py-2 rounded-md font-medium transition-colors ${loginMethod === "secret" ? "bg-cyan-500/20 text-cyan-400" : "text-white/50 hover:text-white"}`}
+              >
+                Secret Key
+              </button>
+            </div>
+
             <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm text-white/70 flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-white/70 flex items-center gap-2">
-                  <Lock className="w-4 h-4" /> Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
-                  required
-                />
-              </div>
+              {loginMethod === "email" ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm text-white/70 flex items-center gap-2">
+                      <Mail className="w-4 h-4" /> Email
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-white/70 flex items-center gap-2">
+                      <Lock className="w-4 h-4" /> Password
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm text-white/70 flex items-center gap-2">
+                    <Zap className="w-4 h-4" /> Facilitator Secret
+                  </label>
+                  <input
+                    type="password"
+                    value={secretKey}
+                    onChange={(e) => setSecretKey(e.target.value)}
+                    placeholder="Enter secret key..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
+                    required
+                  />
+                </div>
+              )}
               <button
                 type="submit"
                 className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 rounded-xl transition-colors mt-6"
