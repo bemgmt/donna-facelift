@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { SCENARIOS } from '@/lib/donna-drive/scenarios'
+import {
+  buildDonnaToolArguments,
+  callDonnaMcpTool,
+  extractDonnaMcpText,
+  isDonnaMcpConfigured,
+  listDonnaMcpTools,
+  selectDonnaMcpTool,
+} from '@/lib/donna-mcp/client'
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +46,7 @@ export async function POST(req: NextRequest) {
       .map((role) => `- ${role.title}: ${role.primaryObjective}`)
       .join('\n')
 
-    const reply = [
+    const fallbackReply = [
       `Scenario: ${scenario.name}`,
       `Role: ${roleDef ? roleDef.title : roleId}`,
       roleDef?.secretaryOverlay ? `Guidance: ${roleDef.secretaryOverlay}` : null,
@@ -50,15 +58,60 @@ export async function POST(req: NextRequest) {
       .filter(Boolean)
       .join('\n\n')
 
+    let reply = fallbackReply
+    let mcpTool: string | null = null
+
+    if (isDonnaMcpConfigured()) {
+      try {
+        const tools = await listDonnaMcpTools()
+        const tool = selectDonnaMcpTool(tools, process.env.DONNA_MCP_DRIVE_TOOL, [
+          'donna_drive_secretary',
+          'drive_secretary',
+          'ask_donna',
+          'donna_reasoning',
+          'search_base_knowledge',
+        ])
+
+        if (tool) {
+          const result = await callDonnaMcpTool(
+            tool.name,
+            buildDonnaToolArguments(tool.name, {
+              message,
+              surface: 'drive',
+              roleId,
+              scenario: {
+                name: scenario.name,
+                role: roleDef,
+                nextTask: firstTask,
+                priorityInboxItem: firstInbox,
+                otherRoles,
+              },
+              org: {
+                id: orgData.id,
+                propertyName: orgData.property_name,
+              },
+            })
+          )
+          const mcpReply = extractDonnaMcpText(result)
+          if (mcpReply) {
+            reply = mcpReply
+            mcpTool = tool.name
+          }
+        }
+      } catch (mcpError) {
+        console.warn('[DONNA Drive] MCP secretary fallback:', mcpError)
+      }
+    }
+
     await supabase.from('donna_drive_facilitator_chats').insert({
       id: `sec-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       org_id: orgData.id,
       member_id: roleId,
       sender: 'secretary',
-      message: `[Participant: ${message}] -> [Donna: ${reply}]`,
+      message: `[Participant: ${message}] -> [Donna${mcpTool ? ` via ${mcpTool}` : ''}: ${reply}]`,
     })
 
-    return NextResponse.json({ success: true, reply })
+    return NextResponse.json({ success: true, reply, mcpTool })
   } catch (error) {
     console.error('Secretary API error:', error)
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 })

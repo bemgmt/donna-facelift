@@ -607,7 +607,7 @@ export default function FacilitatorDashboard() {
                 <div className="space-y-4">
                   {/* Scenario selection */}
                   <div className="space-y-2">
-                    <label className="text-xs text-white/60">Choose Scenario Scenario</label>
+                    <label className="text-xs text-white/60">Choose Scenario</label>
                     <div className="grid grid-cols-1 gap-2">
                       <select
                         value={selectedScenario}

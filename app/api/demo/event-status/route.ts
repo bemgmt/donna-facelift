@@ -275,7 +275,8 @@ export async function POST(request: NextRequest) {
                 title: '🚨 TRANSACTION IS LIVE! Urgent Action Required',
                 body: 'The commercial acquisition transaction has officially started. Open your Secretary module immediately to view the deal scenario instructions and get in the driver seat. First broker to complete all checklist tasks wins!',
                 type: 'urgent',
-                read: false
+                read: false,
+                created_at: new Date().toISOString()
               })
           })
         await Promise.all(scenarioAlerts)

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import DriveFacilitatorChatbot from '@/features/drive/components/DriveFacilitatorChatbot'
+import { Toaster } from '@/components/ui/sonner'
 
 export const metadata: Metadata = {
   title: 'DONNA Drive — Interactive Demo',
@@ -15,6 +16,7 @@ export default function DriveLayout({
     <>
       {children}
       <DriveFacilitatorChatbot />
+      <Toaster />
     </>
   )
 }

@@ -402,7 +402,103 @@ export const BIBLE_DATA = {
         { "id": "drc-broker", "name": "Northline Retail Advisors", "roleInDeal": "listing_broker", "description": "Listing broker managing market and buyer expectations." },
         { "id": "drc-title", "name": "Crescent Settlement Group", "roleInDeal": "title_escrow", "description": "Closing coordinator." }
       ],
-      "roles": [],
+      "roles": [
+        {
+          "id": "drc-seller-principal",
+          "title": "Seller Principal",
+          "companyId": "drc-seller",
+          "primaryObjective": "Maximize net proceeds and close on schedule.",
+          "secondaryObjective": "Manage buyer requests without price concession.",
+          "hiddenConcern": "Roof condition may trigger a credit demand.",
+          "typicalAsks": ["net proceeds estimate", "amendment strategy", "estoppel status"],
+          "typicalReceives": ["buyer requests", "broker market read"],
+          "sampleInbox": "Buyer requesting roof credit — need response strategy.",
+          "secretaryOverlay": "Protect economics; concede process before price."
+        },
+        {
+          "id": "drc-asset-manager",
+          "title": "Seller Asset Manager",
+          "companyId": "drc-seller",
+          "primaryObjective": "Quarterback diligence responses and data room.",
+          "secondaryObjective": "Keep buyer comfortable without over-disclosing.",
+          "hiddenConcern": "CAM reconciliation has an unresolved tenant dispute.",
+          "typicalAsks": ["CAM recons", "sales reports", "tenant contact info"],
+          "typicalReceives": ["buyer DD lists", "PM data"],
+          "sampleInbox": "Buyer Round 1 DD list attached — 14 items.",
+          "secretaryOverlay": "Respond quickly and completely; flag anything that could retrade."
+        },
+        {
+          "id": "drc-listing-broker",
+          "title": "Listing Broker",
+          "companyId": "drc-broker",
+          "primaryObjective": "Keep transaction temperature down and close the deal.",
+          "secondaryObjective": "Provide market context to frame buyer requests.",
+          "hiddenConcern": "Buyer broker is pushing hard on roof credit.",
+          "typicalAsks": ["market comps", "buyer temperature", "timing intel"],
+          "typicalReceives": ["buyer objections", "seller strategy questions"],
+          "sampleInbox": "Buyer broker called — they want a roof inspection credit.",
+          "secretaryOverlay": "Use market data to reframe; separate real issues from negotiation tactics."
+        },
+        {
+          "id": "drc-buyer-broker",
+          "title": "Buyer Broker",
+          "companyId": "drc-buyer",
+          "primaryObjective": "Represent buyer interests and surface legitimate concerns.",
+          "secondaryObjective": "Avoid antagonizing seller on non-material issues.",
+          "hiddenConcern": "Buyer may be using inspection findings to renegotiate price.",
+          "typicalAsks": ["inspection reports", "CAM backup", "tenant sales"],
+          "typicalReceives": ["seller responses", "market context"],
+          "sampleInbox": "Inspector found active roof leak stain in unit C.",
+          "secretaryOverlay": "Present facts clearly; separate real risk from negotiation leverage."
+        },
+        {
+          "id": "drc-pm",
+          "title": "Property Manager",
+          "companyId": "drc-seller",
+          "primaryObjective": "Provide accurate operational data for diligence.",
+          "secondaryObjective": "Support estoppel collection from tenants.",
+          "hiddenConcern": "One tenant disputes CAM charges and may not sign estoppel.",
+          "typicalAsks": ["CAM reconciliations", "service contracts", "tenant contacts"],
+          "typicalReceives": ["DD requests", "estoppel drafts"],
+          "sampleInbox": "Need 3-year CAM reconciliations by end of day.",
+          "secretaryOverlay": "Answer as operator with verified data; flag disputes early."
+        },
+        {
+          "id": "drc-title-officer",
+          "title": "Title Officer",
+          "companyId": "drc-title",
+          "primaryObjective": "Deliver insurable title with cleared exceptions.",
+          "secondaryObjective": "Resolve missing reciprocal access exhibit.",
+          "hiddenConcern": "Parking agreement exhibit was never recorded.",
+          "typicalAsks": ["recorded documents", "legal descriptions", "exhibit copies"],
+          "typicalReceives": ["objections", "cure proposals"],
+          "sampleInbox": "Reciprocal access agreement missing Exhibit B — parking map.",
+          "secretaryOverlay": "Think in exceptions, requirements, and deletion paths."
+        },
+        {
+          "id": "drc-escrow",
+          "title": "Escrow Officer",
+          "companyId": "drc-title",
+          "primaryObjective": "Balance and fund the closing statement accurately.",
+          "secondaryObjective": "Coordinate proration inputs and signatures.",
+          "hiddenConcern": "CAM proration may be contested by buyer at closing.",
+          "typicalAsks": ["proration inputs", "wire instructions", "signer info"],
+          "typicalReceives": ["statement comments", "amendment language"],
+          "sampleInbox": "Need seller wire instructions and authorized signers.",
+          "secretaryOverlay": "Think in balance, timing, and signatures."
+        },
+        {
+          "id": "drc-counsel",
+          "title": "Counsel",
+          "primaryObjective": "Advise seller on amendment requests and closing risk.",
+          "secondaryObjective": "Separate economic retrade from legitimate legal issues.",
+          "hiddenConcern": "Buyer amendment language is broader than their stated concern.",
+          "typicalAsks": ["PSA language", "amendment drafts", "estoppel forms"],
+          "typicalReceives": ["buyer requests", "title issues"],
+          "sampleInbox": "Review buyer's proposed amendment — roof credit and estoppel extension.",
+          "secretaryOverlay": "Separate legal risk from business negotiation."
+        }
+      ],
       "inbox": [
         { "id": "drc-in-1", "toRoleId": "drc-asset-manager", "priority": "high", "subject": "Buyer DD Round 1", "summary": "Requests CAM reconciliations, sales reports, and parking agreement." }
       ],
@@ -457,7 +553,124 @@ export const BIBLE_DATA = {
         { "id": "rma-lender", "name": "Coastal Housing Finance, FSB", "roleInDeal": "lender", "description": "Multifamily lender." },
         { "id": "rma-title", "name": "Atlas Closing & Title", "roleInDeal": "title_escrow", "description": "Closing coordinator." }
       ],
-      "roles": [],
+      "roles": [
+        {
+          "id": "rma-buyer-principal",
+          "title": "Buyer Principal",
+          "companyId": "rma-buyer",
+          "primaryObjective": "Confirm underwriting thesis and close within timeline.",
+          "secondaryObjective": "Prepare investment committee risk memo.",
+          "hiddenConcern": "Collections data may undermine the value-add thesis.",
+          "typicalAsks": ["risk memo", "go/no-go recommendation", "budget revision"],
+          "typicalReceives": ["diligence findings", "insurance quotes"],
+          "sampleInbox": "Need IC-ready risk summary by tomorrow.",
+          "secretaryOverlay": "Focus on economics, risk narrative, and decision timing."
+        },
+        {
+          "id": "rma-acq-associate",
+          "title": "Acquisitions Associate",
+          "companyId": "rma-buyer",
+          "primaryObjective": "Reconcile all diligence data and flag inconsistencies.",
+          "secondaryObjective": "Translate findings into underwriting adjustments.",
+          "hiddenConcern": "Delinquency roll tenant IDs don't match rent roll.",
+          "typicalAsks": ["rent roll", "delinquency report", "lease files"],
+          "typicalReceives": ["seller data packages", "lender conditions"],
+          "sampleInbox": "Delinquency roll has 6 tenant IDs not in the rent roll.",
+          "secretaryOverlay": "Reconcile every number; flag mismatches immediately."
+        },
+        {
+          "id": "rma-seller",
+          "title": "Seller Representative",
+          "companyId": "rma-seller",
+          "primaryObjective": "Close without retrade on price.",
+          "secondaryObjective": "Provide clean data to minimize buyer objections.",
+          "hiddenConcern": "Some delinquency data was restated after original submission.",
+          "typicalAsks": ["buyer questions", "diligence timelines"],
+          "typicalReceives": ["data requests", "inspection scheduling"],
+          "sampleInbox": "Buyer questioning restated delinquency figures.",
+          "secretaryOverlay": "Respond transparently; prepare explanation for data changes."
+        },
+        {
+          "id": "rma-lender",
+          "title": "Lender Underwriter",
+          "companyId": "rma-lender",
+          "primaryObjective": "Validate collateral quality and cash flow stability.",
+          "secondaryObjective": "Confirm insurance adequacy and collections trend.",
+          "hiddenConcern": "Bad debt trend may be structural, not temporary.",
+          "typicalAsks": ["T-12", "rent roll", "collections narrative", "insurance binder"],
+          "typicalReceives": ["borrower data", "appraisal status"],
+          "sampleInbox": "Need updated collections narrative and insurance confirmation.",
+          "secretaryOverlay": "Ask for explanations, not just data uploads."
+        },
+        {
+          "id": "rma-title-officer",
+          "title": "Title Officer",
+          "companyId": "rma-title",
+          "primaryObjective": "Deliver clean title commitment for acquisition.",
+          "secondaryObjective": "Clear any judgment or lien exceptions.",
+          "hiddenConcern": "Old mechanic's lien may need payoff confirmation.",
+          "typicalAsks": ["payoff letters", "legal descriptions"],
+          "typicalReceives": ["objections", "cure requests"],
+          "sampleInbox": "Mechanic's lien from 2024 still showing — need release.",
+          "secretaryOverlay": "Think in exceptions, requirements, and deletion paths."
+        },
+        {
+          "id": "rma-escrow",
+          "title": "Escrow Officer",
+          "companyId": "rma-title",
+          "primaryObjective": "Balance and fund multifamily acquisition cleanly.",
+          "secondaryObjective": "Manage rent proration and security deposit transfer.",
+          "hiddenConcern": "Security deposit accounting may not match lease files.",
+          "typicalAsks": ["proration schedule", "deposit ledger", "wire timing"],
+          "typicalReceives": ["statement comments", "deposit questions"],
+          "sampleInbox": "Need security deposit ledger to balance closing statement.",
+          "secretaryOverlay": "Track balance, deposits, and proration carefully."
+        },
+        {
+          "id": "rma-insurance",
+          "title": "Insurance Broker",
+          "primaryObjective": "Bind coverage that satisfies lender requirements.",
+          "secondaryObjective": "Explain premium increase relative to underwriting budget.",
+          "hiddenConcern": "Quote exceeds buyer's insurance budget assumption.",
+          "typicalAsks": ["COPE data", "loss runs", "roof age"],
+          "typicalReceives": ["lender requirements", "carrier feedback"],
+          "sampleInbox": "Preliminary quote is 18% above underwriting assumption.",
+          "secretaryOverlay": "Explain cause of premium delta and provide alternatives."
+        },
+        {
+          "id": "rma-appraiser",
+          "title": "Appraiser",
+          "primaryObjective": "Complete as-is valuation for 96-unit apartment complex.",
+          "secondaryObjective": "Validate rental income and expense assumptions.",
+          "hiddenConcern": "High vacancy in certain unit types may affect value.",
+          "typicalAsks": ["unit mix", "in-place rents", "concession schedule"],
+          "typicalReceives": ["inspection access", "market data"],
+          "sampleInbox": "Need confirmed unit mix and concession history.",
+          "secretaryOverlay": "Request verified facts; flag any data inconsistencies."
+        },
+        {
+          "id": "rma-transition",
+          "title": "Transition PM",
+          "primaryObjective": "Prepare operational handoff and vendor transition.",
+          "secondaryObjective": "Confirm onsite manager retention status.",
+          "hiddenConcern": "Onsite manager may resign at closing.",
+          "typicalAsks": ["vendor contracts", "staff roster", "key inventory"],
+          "typicalReceives": ["transition timeline", "buyer priorities"],
+          "sampleInbox": "Onsite manager indicated she may not stay post-close.",
+          "secretaryOverlay": "Focus on takeover readiness and retention risk."
+        },
+        {
+          "id": "rma-counsel",
+          "title": "Counsel",
+          "primaryObjective": "Review PSA, title, and closing documents.",
+          "secondaryObjective": "Advise on lease-file exceptions and representations.",
+          "hiddenConcern": "Several lease files are missing required addenda.",
+          "typicalAsks": ["lease abstracts", "title backup", "PSA amendments"],
+          "typicalReceives": ["buyer objections", "seller representations"],
+          "sampleInbox": "12 of 96 lease files missing pet or storage addenda.",
+          "secretaryOverlay": "Categorize lease-file issues as isolated vs. systemic."
+        }
+      ],
       "inbox": [
         { "id": "rma-in-1", "toRoleId": "rma-acq-associate", "priority": "high", "subject": "Delinquency Roll", "summary": "Tenant IDs do not match current rent roll version." },
         { "id": "rma-in-2", "toRoleId": "rma-insurance", "priority": "high", "subject": "Preliminary Quote", "summary": "Premium exceeds underwriting assumption." }
@@ -515,7 +728,125 @@ export const BIBLE_DATA = {
         { "id": "cdc-gc", "name": "Redline Builders, Inc.", "roleInDeal": "gc", "description": "Preconstruction GC." },
         { "id": "cdc-title", "name": "Pioneer National Title & Escrow", "roleInDeal": "title_escrow", "description": "Land and finance closing coordinator." }
       ],
-      "roles": [],
+      "roles": [
+        {
+          "id": "cdc-developer-principal",
+          "title": "Developer Principal",
+          "companyId": "cdc-developer",
+          "primaryObjective": "Achieve site control and close dual-transaction (land + loan) on schedule.",
+          "secondaryObjective": "Manage preconstruction costs and builder's risk.",
+          "hiddenConcern": "The GMP contract is not finalized, risking loan sizing.",
+          "typicalAsks": ["GMP status", "permit timing", "lender conditions"],
+          "typicalReceives": ["city comments", "GC updates", "equity requests"],
+          "sampleInbox": "Need to finalize GMP contract before lender will close.",
+          "secretaryOverlay": "Keep the deal moving; isolate construction risk from land closing."
+        },
+        {
+          "id": "cdc-dev-manager",
+          "title": "Development Manager",
+          "companyId": "cdc-developer",
+          "primaryObjective": "Clear city comments and coordinate engineering deliverables.",
+          "secondaryObjective": "Keep GC preconstruction on schedule.",
+          "hiddenConcern": "City is requiring offsite frontage work not in the original budget.",
+          "typicalAsks": ["civil plans", "permit status", "GC pricing"],
+          "typicalReceives": ["city comments", "RFI responses"],
+          "sampleInbox": "City Round 2 comments include offsite frontage improvements.",
+          "secretaryOverlay": "Solve technical blockers quickly; escalate budget impacts."
+        },
+        {
+          "id": "cdc-finance",
+          "title": "Finance Associate",
+          "companyId": "cdc-developer",
+          "primaryObjective": "Manage construction draw schedule and closing statement.",
+          "secondaryObjective": "Ensure loan conditions precedent are met.",
+          "hiddenConcern": "Appraisal came in slightly low, squeezing equity.",
+          "typicalAsks": ["budget updates", "draw schedule", "appraisal"],
+          "typicalReceives": ["lender checklists", "GC pay apps"],
+          "sampleInbox": "Lender needs updated sources and uses matching the new GMP.",
+          "secretaryOverlay": "Reconcile all numbers; ensure sources equal uses."
+        },
+        {
+          "id": "cdc-land-seller",
+          "title": "Land Seller Representative",
+          "companyId": "cdc-seller",
+          "primaryObjective": "Close land sale without further extensions.",
+          "secondaryObjective": "Ensure buyer takes site \"as-is\" regarding environmental.",
+          "hiddenConcern": "Buyer's lender is asking for an environmental indemnity.",
+          "typicalAsks": ["closing timing", "title clearance"],
+          "typicalReceives": ["extension requests", "title objections"],
+          "sampleInbox": "Buyer requesting 15-day extension for permit clearance.",
+          "secretaryOverlay": "Hold firm on timeline; resist taking on buyer's development risk."
+        },
+        {
+          "id": "cdc-gc",
+          "title": "General Contractor",
+          "companyId": "cdc-gc",
+          "primaryObjective": "Finalize GMP and secure subcontractor bids.",
+          "secondaryObjective": "Resolve constructability issues in civil plans.",
+          "hiddenConcern": "Steel pricing is volatile and holding the GMP open.",
+          "typicalAsks": ["civil plans", "permit status", "sub bids"],
+          "typicalReceives": ["RFI responses", "value engineering requests"],
+          "sampleInbox": "Still waiting on final steel numbers to lock GMP.",
+          "secretaryOverlay": "Manage schedule and pricing expectations; flag long-lead items."
+        },
+        {
+          "id": "cdc-lender",
+          "title": "Construction Lender",
+          "companyId": "cdc-lender",
+          "primaryObjective": "Underwrite development risk and secure collateral.",
+          "secondaryObjective": "Ensure GMP and permits are in place before funding.",
+          "hiddenConcern": "Developer equity may be thin if offsite costs increase.",
+          "typicalAsks": ["GMP contract", "permits", "environmental reports"],
+          "typicalReceives": ["budget updates", "appraisal", "borrower financials"],
+          "sampleInbox": "Need final GMP and builder's risk policy before we can fund.",
+          "secretaryOverlay": "Focus on downside protection and completion guarantees."
+        },
+        {
+          "id": "cdc-title-officer",
+          "title": "Title Officer",
+          "companyId": "cdc-title",
+          "primaryObjective": "Issue clean title for land acquisition and loan policy.",
+          "secondaryObjective": "Resolve utility easement conflict on site plan.",
+          "hiddenConcern": "Proposed building footprint encroaches on an old utility easement.",
+          "typicalAsks": ["ALTA survey", "easement releases"],
+          "typicalReceives": ["title objections", "survey updates"],
+          "sampleInbox": "Survey shows building pad encroaching on 1960 utility easement.",
+          "secretaryOverlay": "Identify title defects and provide clear paths to resolution."
+        },
+        {
+          "id": "cdc-env-consultant",
+          "title": "Environmental Consultant",
+          "primaryObjective": "Provide Phase I/II clearance for the site.",
+          "secondaryObjective": "Address lender questions on historical use.",
+          "hiddenConcern": "Soil export may require special handling.",
+          "typicalAsks": ["site access", "historical records"],
+          "typicalReceives": ["lender questions", "developer timelines"],
+          "sampleInbox": "Lender requesting reliance letter for the Phase I ESA.",
+          "secretaryOverlay": "Provide definitive scientific guidance; avoid business decisions."
+        },
+        {
+          "id": "cdc-civil-engineer",
+          "title": "Civil Engineer",
+          "primaryObjective": "Design site plan, grading, and utilities to city spec.",
+          "secondaryObjective": "Address city comments quickly to keep permit on track.",
+          "hiddenConcern": "City's new stormwater requirement alters the grading plan.",
+          "typicalAsks": ["survey", "geotech report", "city guidelines"],
+          "typicalReceives": ["city comments", "GC RFIs"],
+          "sampleInbox": "Working through City Round 2 comments on stormwater management.",
+          "secretaryOverlay": "Solve technical problems; communicate schedule impacts clearly."
+        },
+        {
+          "id": "cdc-counsel",
+          "title": "Counsel",
+          "primaryObjective": "Draft and negotiate loan documents and GMP contract.",
+          "secondaryObjective": "Manage dual closing mechanics (land + loan).",
+          "hiddenConcern": "Lender's completion guaranty is unusually broad.",
+          "typicalAsks": ["term sheet", "PSA", "title commitment"],
+          "typicalReceives": ["loan docs", "contract drafts"],
+          "sampleInbox": "Reviewing lender's draft completion guaranty — it's very broad.",
+          "secretaryOverlay": "Protect client from undue liability while facilitating closing."
+        }
+      ],
       "inbox": [
         { "id": "cdc-in-1", "toRoleId": "cdc-dev-manager", "priority": "high", "subject": "City Round 2 Comments", "summary": "Offsite frontage work and turning template revisions requested." },
         { "id": "cdc-in-2", "toRoleId": "cdc-gc-precon", "priority": "high", "subject": "Budget Update", "summary": "Steel and electrical pricing increased." },
