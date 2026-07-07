@@ -75,9 +75,9 @@ export async function authorizeDriveFacilitator(
   }
 
   const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('role, drive_role, donna_drive_role')
-    .eq('id', userId)
+    .from('member_profiles')
+    .select('role')
+    .eq('user_id', userId)
     .maybeSingle()
 
   if (profileError) {
