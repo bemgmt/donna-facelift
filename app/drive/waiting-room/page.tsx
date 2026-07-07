@@ -139,10 +139,28 @@ export default function WaitingRoomPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0C0F16] to-[#10121A] flex items-center justify-center text-white">
-        <div className="text-center space-y-4">
-          <RefreshCw className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
-          <p className="text-sm text-white/50">Loading waiting room...</p>
+      <div className="min-h-screen bg-transparent py-12 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex justify-between items-center animate-pulse">
+            <div className="w-48 h-6 bg-white/10 rounded"></div>
+            <div className="w-24 h-8 bg-white/10 rounded-lg"></div>
+          </div>
+          <div className="glass rounded-2xl border border-white/10 overflow-hidden bg-black/30 backdrop-blur-md p-8 animate-pulse space-y-8">
+             <div className="h-24 bg-white/5 rounded-xl w-3/4 mx-auto mb-8"></div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="space-y-4">
+                 <div className="h-6 w-1/2 bg-white/10 rounded"></div>
+                 <div className="h-16 w-full bg-white/5 rounded-xl"></div>
+                 <div className="h-16 w-full bg-white/5 rounded-xl"></div>
+                 <div className="h-16 w-full bg-white/5 rounded-xl"></div>
+               </div>
+               <div className="space-y-4">
+                 <div className="h-6 w-1/2 bg-white/10 rounded"></div>
+                 <div className="h-32 w-full bg-white/5 rounded-xl"></div>
+                 <div className="h-24 w-full bg-white/5 rounded-xl"></div>
+               </div>
+             </div>
+          </div>
         </div>
       </div>
     )

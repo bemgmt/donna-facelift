@@ -111,7 +111,7 @@ export default function FacilitatorDashboard() {
     }, 4000)
 
     return () => clearInterval(interval)
-  }, [session, selectedChatMemberId])
+  }, [session, activeSecret, selectedChatMemberId])
 
   // Scroll chat to bottom on updates
   useEffect(() => {
@@ -203,6 +203,7 @@ export default function FacilitatorDashboard() {
       setIsAuthenticating(false)
     } else {
       toast.success("Signed in successfully!")
+      setIsAuthenticating(false)
     }
   }
 
@@ -578,7 +579,19 @@ export default function FacilitatorDashboard() {
 
         {/* ----------------- TAB VIEW 1: MAIN DASHBOARD ----------------- */}
         {activeTab === "dashboard" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            {/* Facilitator Onboarding Guidance */}
+            <div className="p-4 bg-cyan-500/10 border border-cyan-400/20 rounded-xl flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-semibold text-cyan-400">Welcome to the Facilitator Center</h3>
+                <p className="text-xs text-white/70 mt-1 leading-relaxed">
+                  To run a live simulation, click <strong className="text-white">Create New Event</strong>, choose a scenario, and move it to Staging. Then instruct attendees to register and wait in the Waiting Room. Once everyone is in, you can Auto-Sort them into roles and start the event.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Box 1: Create New Event */}
             <div
@@ -656,6 +669,7 @@ export default function FacilitatorDashboard() {
               </div>
             </div>
 
+          </div>
           </div>
         )}
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { MessageSquare, X, Send, RefreshCw } from "lucide-react"
+import { toast } from "sonner"
 
 export default function FacilitatorSupportChat() {
   const [isOpen, setIsOpen] = useState(false)
@@ -37,7 +38,13 @@ export default function FacilitatorSupportChat() {
           if (!isOpen && newMessages.length > messages.length) {
             const added = newMessages.slice(messages.length)
             const facilitatorMsgs = added.filter((m: any) => m.sender === 'facilitator')
-            setUnreadCount(prev => prev + facilitatorMsgs.length)
+            if (facilitatorMsgs.length > 0) {
+              setUnreadCount(prev => prev + facilitatorMsgs.length)
+              toast.info("New message from Facilitator", {
+                description: facilitatorMsgs[facilitatorMsgs.length - 1].message.slice(0, 50) + (facilitatorMsgs[facilitatorMsgs.length - 1].message.length > 50 ? "..." : ""),
+                duration: 5000,
+              })
+            }
           }
 
           setMessages(newMessages)
