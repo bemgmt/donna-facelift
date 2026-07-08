@@ -6,7 +6,7 @@ import {
   Settings, Database, Play, Lock, RefreshCw, AlertTriangle, FileWarning,
   Clock, TrendingDown, FileX, Zap, Users, CheckCircle, Mail, LogOut,
   ArrowLeft, ArrowRight, Gavel, Sparkles, MessageSquare, ShieldCheck,
-  ChevronDown, CheckCircle2, Circle
+  ChevronDown, CheckCircle2, Circle, UserMinus
 } from "lucide-react"
 import { toast } from "sonner"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
@@ -278,6 +278,32 @@ export default function FacilitatorDashboard() {
       }
     } catch (err) {
       toast.error("Error auto-sorting users.")
+    }
+  }
+
+  // Remove user from waiting room
+  const handleRemoveMember = async (memberId: string) => {
+    if (!session && !activeSecret) return
+    if (!confirm("Are you sure you want to remove this user from the waiting room?")) return
+    try {
+      const res = await fetch("/api/demo/event-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          ...(activeSecret ? { "x-facilitator-secret": activeSecret } : {})
+        },
+        body: JSON.stringify({ action: "remove_member", member_id: memberId })
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success("User removed from waiting room.")
+        fetchStatusAndMembers()
+      } else {
+        toast.error(data.message || "Failed to remove user.")
+      }
+    } catch (err) {
+      toast.error("Error removing user.")
     }
   }
 
@@ -832,6 +858,13 @@ export default function FacilitatorDashboard() {
                             </div>
                             <div className="text-[10px] text-white/40 mt-0.5">Vertical: {member.industry}</div>
                           </div>
+                          <button
+                            onClick={() => handleRemoveMember(member.id)}
+                            className="p-1 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded transition-colors"
+                            title="Remove User"
+                          >
+                            <UserMinus className="w-3.5 h-3.5" />
+                          </button>
                         </div>
 
                         {/* Role Selector dropdown */}

@@ -247,6 +247,21 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ success: true, message: 'User role updated successfully' })
 
+    } else if (action === 'remove_member') {
+      const { member_id } = body
+      if (!member_id) {
+        return NextResponse.json({ success: false, message: 'member_id is required' }, { status: 400 })
+      }
+
+      const { error: deleteError } = await supabase
+        .from('donna_drive_members')
+        .delete()
+        .eq('id', member_id)
+
+      if (deleteError) throw deleteError
+
+      return NextResponse.json({ success: true, message: 'User removed from waiting room' })
+
     } else if (action === 'start') {
       // Transition organization status to live
       const { error: orgError } = await supabase

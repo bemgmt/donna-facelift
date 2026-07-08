@@ -46,12 +46,11 @@ export async function authorizeDriveFacilitator(
   const headerSecret = request.headers.get('x-facilitator-secret')
   const providedSecret = headerSecret || body?.facilitator_secret
 
-  if (
-    expectedSecret &&
-    typeof providedSecret === 'string' &&
-    providedSecret === expectedSecret
-  ) {
-    return success()
+  if (providedSecret) {
+    if (expectedSecret && providedSecret === expectedSecret) {
+      return success()
+    }
+    return failure(401, 'Invalid Drive facilitator secret')
   }
 
   const authorization = request.headers.get('authorization')
