@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
+import { isFacilitatorRequestAuthorized } from '@/lib/donna-drive/facilitator-auth'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -61,6 +62,10 @@ export async function POST(request: NextRequest) {
 
   if (sender !== 'attendee' && sender !== 'facilitator') {
     return NextResponse.json({ success: false, message: 'sender must be either attendee or facilitator' }, { status: 400 })
+  }
+
+  if (sender === 'facilitator' && !(await isFacilitatorRequestAuthorized(request))) {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
   }
 
   const supabase = getSupabaseAdmin()

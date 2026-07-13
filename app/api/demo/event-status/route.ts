@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { isDonnaDriveEnabled, DEMO_ROLES } from '@/lib/donna-drive/constants'
+import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
 import { generateDemoSeedData, ScenarioKey } from '@/lib/donna-drive/seed-generator'
 import { SCENARIOS } from '@/lib/donna-drive/scenarios'
+import { isFacilitatorRequestAuthorized } from '@/lib/donna-drive/facilitator-auth'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -69,6 +70,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
     return NextResponse.json({ success: false, message: 'DONNA Drive is not enabled' }, { status: 403 })
+  }
+
+  if (!(await isFacilitatorRequestAuthorized(request))) {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
   }
 
   let body

@@ -19,6 +19,8 @@ export default function FacilitatorDashboard() {
   const [session, setSession] = useState<any>(null)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [driveSecret, setDriveSecret] = useState("")
+  const [secretAuthenticated, setSecretAuthenticated] = useState(false)
   const [isAuthenticating, setIsAuthenticating] = useState(true)
 
   // Tab State
@@ -52,50 +54,58 @@ export default function FacilitatorDashboard() {
   const [sendingChat, setSendingChat] = useState(false)
 
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const hasFacilitatorAccess = Boolean(session || secretAuthenticated)
+  const facilitatorHeaders = {
+    "Content-Type": "application/json",
+    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+  }
 
-  // Check auth & fetch initial data
+  // Check Supabase and Drive-secret sessions before choosing a login screen.
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setIsAuthenticating(false)
-      return
+    let active = true
+    let subscription: { unsubscribe: () => void } | null = null
+
+    const loadSessions = async () => {
+      try {
+        const secretRequest = fetch("/api/demo/facilitator/auth")
+          .then((response) => response.json())
+          .then((data) => Boolean(data.authenticated))
+          .catch(() => false)
+
+        if (isSupabaseConfigured) {
+          const { data: { session: currentSession } } = await supabase.auth.getSession()
+          if (active) setSession(currentSession)
+          if (currentSession) fetchStatusAndMembers()
+        }
+
+        const hasSecretSession = await secretRequest
+        if (active) setSecretAuthenticated(hasSecretSession)
+      } catch (error) {
+        console.error("Facilitator session retrieval error:", error)
+      } finally {
+        if (active) setIsAuthenticating(false)
+      }
     }
 
-    let subscription: any = null
+    loadSessions()
 
-    try {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session)
+    if (isSupabaseConfigured) {
+      const authChange = supabase.auth.onAuthStateChange((_event, currentSession) => {
+        setSession(currentSession)
         setIsAuthenticating(false)
-        if (session) {
-          fetchStatusAndMembers()
-        }
-      }).catch(err => {
-        console.error("Auth session retrieval error:", err)
-        setIsAuthenticating(false)
+        if (currentSession) fetchStatusAndMembers()
       })
-
-      const authChangeRes = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session)
-        if (session) {
-          fetchStatusAndMembers()
-        }
-      })
-      subscription = authChangeRes.data?.subscription
-    } catch (err) {
-      console.error("Failed to initialize auth listeners:", err)
-      setIsAuthenticating(false)
+      subscription = authChange.data?.subscription || null
     }
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe()
-      }
+      active = false
+      subscription?.unsubscribe()
     }
   }, [])
-
   // Poll status, statistics, and chats
   useEffect(() => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
 
     fetchStatusAndMembers()
     fetchStats()
@@ -108,7 +118,7 @@ export default function FacilitatorDashboard() {
     }, 4000)
 
     return () => clearInterval(interval)
-  }, [session, selectedChatMemberId])
+  }, [hasFacilitatorAccess, selectedChatMemberId])
 
   // Scroll chat to bottom on updates
   useEffect(() => {
@@ -136,11 +146,11 @@ export default function FacilitatorDashboard() {
 
   // Fetch Live Task Progress statistics
   const fetchStats = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     setIsFetchingStats(true)
     try {
       const res = await fetch("/api/demo/facilitator/stats", {
-        headers: { Authorization: `Bearer ${session.access_token}` }
+        headers: facilitatorHeaders
       })
       const data = await res.json()
       if (data.success && data.stats) {
@@ -178,19 +188,47 @@ export default function FacilitatorDashboard() {
       toast.error(error.message)
       setIsAuthenticating(false)
     } else {
+      setIsAuthenticating(false)
       toast.success("Signed in successfully!")
     }
   }
 
-  // Log out
+  const handleSecretLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsAuthenticating(true)
+    try {
+      const response = await fetch("/api/demo/facilitator/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: driveSecret }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        toast.error(data.message || "Invalid Drive secret")
+        return
+      }
+      setSecretAuthenticated(true)
+      setDriveSecret("")
+      toast.success("Facilitator controls unlocked")
+      fetchStatusAndMembers()
+    } catch {
+      toast.error("Unable to verify the Drive secret")
+    } finally {
+      setIsAuthenticating(false)
+    }
+  }
+
+  // Log out of both supported facilitator session types.
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await fetch("/api/demo/facilitator/auth", { method: "DELETE" })
+    if (isSupabaseConfigured) await supabase.auth.signOut()
+    setSecretAuthenticated(false)
     setSession(null)
   }
 
   // Stage a new event (Move to Staging)
   const handleStageEvent = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     setIsStaging(true)
     
     const scenarioDef = SCENARIOS.find(s => s.id === selectedScenario)
@@ -198,10 +236,7 @@ export default function FacilitatorDashboard() {
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           action: "stage",
           scenario: selectedScenario,
@@ -227,14 +262,11 @@ export default function FacilitatorDashboard() {
 
   // Auto-Sort Users inside Staging Room
   const handleAutoSort = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({ action: "auto_sort" })
       })
       const data = await res.json()
@@ -251,14 +283,11 @@ export default function FacilitatorDashboard() {
 
   // Update Individual Attendee Role slug
   const handleAssignRole = async (memberId: string, roleSlug: string) => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           action: "assign_role",
           member_id: memberId,
@@ -279,14 +308,11 @@ export default function FacilitatorDashboard() {
 
   // Start Live Event
   const handleStartLiveEvent = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({ action: "start" })
       })
       const data = await res.json()
@@ -303,16 +329,13 @@ export default function FacilitatorDashboard() {
 
   // End Live Event
   const handleEndEvent = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     if (!confirm("Are you sure you want to end this event? This will archive the progress and reset the room.")) return
 
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({ action: "end" })
       })
       const data = await res.json()
@@ -330,14 +353,11 @@ export default function FacilitatorDashboard() {
 
   // Inject Scenario Incident
   const handleInjectEvent = async (eventType: string) => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     try {
       const res = await fetch("/api/demo/event", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           event_type: eventType,
           org_id: "dd-org-001"
@@ -364,7 +384,7 @@ export default function FacilitatorDashboard() {
     try {
       const res = await fetch("/api/demo/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           org_id: "dd-org-001",
           member_id: selectedChatMemberId,
@@ -418,7 +438,7 @@ export default function FacilitatorDashboard() {
   }
 
   // Authentication Login Screen
-  if (!session) {
+  if (!hasFacilitatorAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#0C0F16] to-[#10121A]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
@@ -461,6 +481,34 @@ export default function FacilitatorDashboard() {
                 className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 rounded-xl transition-colors mt-6"
               >
                 Sign In
+              </button>
+            </form>
+
+            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-white/30">
+              <span className="h-px flex-1 bg-white/10" />
+              Or use the Drive secret
+              <span className="h-px flex-1 bg-white/10" />
+            </div>
+
+            <form onSubmit={handleSecretLogin} className="space-y-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm text-white/70">
+                  <ShieldCheck className="w-4 h-4" /> Drive Secret
+                </label>
+                <input
+                  type="password"
+                  value={driveSecret}
+                  onChange={(e) => setDriveSecret(e.target.value)}
+                  placeholder="Enter facilitator Drive secret"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-400/50 outline-none"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full border border-purple-400/30 bg-purple-500/15 hover:bg-purple-500/25 text-purple-100 font-semibold py-3 rounded-xl transition-colors"
+              >
+                Unlock with Drive Secret
               </button>
             </form>
           </div>
