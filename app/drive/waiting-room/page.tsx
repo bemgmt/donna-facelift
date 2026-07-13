@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Building2, RefreshCw, AlertTriangle, CheckCircle2, User, Globe, ShieldAlert, ArrowRight, LogOut } from "lucide-react"
-import Link from "next/link"
+import { Building2, RefreshCw, AlertTriangle, CheckCircle2, Globe, ShieldAlert, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 
 const INDUSTRIES = [
   { slug: "Real Estate", label: "Real Estate" },
@@ -64,12 +63,12 @@ export default function WaitingRoomPage() {
           setAssignedRoleLabel(data.role_label)
           setCurrentIndustry(data.industry)
           
-          // Check if role has been switched
+          // Keep assigned and unassigned role state synchronized.
           const cachedRole = localStorage.getItem("donna_drive_role") || ""
-          if (data.role_slug && data.role_slug !== cachedRole) {
-            localStorage.setItem("donna_drive_role", data.role_slug)
-            setAssignedRoleSlug(data.role_slug)
-            setRoleSwitched(true)
+          if (data.role_slug !== cachedRole) {
+            localStorage.setItem("donna_drive_role", data.role_slug || "")
+            setAssignedRoleSlug(data.role_slug || "")
+            setRoleSwitched(Boolean(data.role_slug))
           }
 
           // If the event goes live, automatically redirect to the interactive grid
@@ -80,6 +79,11 @@ export default function WaitingRoomPage() {
               : ""
             router.push(`/drive/dashboard${roleQuery}`)
           }
+        } else if (res.status === 404) {
+          localStorage.removeItem("donna_drive_member_id")
+          localStorage.removeItem("donna_drive_role")
+          setError("You were removed from this waiting room. Redirecting to registration...")
+          setTimeout(() => router.replace("/drive/register"), 1500)
         }
       } catch (err) {
         console.error("Waiting room check error:", err)
@@ -91,9 +95,21 @@ export default function WaitingRoomPage() {
     // Initial check
     checkStatus()
 
-    // Poll every 3 seconds
+    // Subscribe for immediate cross-browser updates. Polling remains as a
+    // fallback if the Realtime socket is interrupted.
+    const channel = isSupabaseConfigured
+      ? supabase
+          .channel("donna-drive-waiting-" + memberId)
+          .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_members", filter: "id=eq." + memberId }, checkStatus)
+          .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_organizations", filter: "id=eq.dd-org-001" }, checkStatus)
+          .subscribe()
+      : null
+
     const interval = setInterval(checkStatus, 3000)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      if (channel) void supabase.removeChannel(channel)
+    }
   }, [memberId, router])
 
   // Switch industry handler
@@ -203,6 +219,12 @@ export default function WaitingRoomPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {error && (
+          <div role="alert" className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
+          </div>
+        )}
 
         {/* Main Card */}
         <div className="glass rounded-2xl border border-white/10 overflow-hidden bg-black/30 backdrop-blur-md">

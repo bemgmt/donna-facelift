@@ -17,6 +17,7 @@ export default function DriveRegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [authMode, setAuthMode] = useState<"register" | "signin">("register")
 
   const [form, setForm] = useState({
     name: "",
@@ -35,8 +36,8 @@ export default function DriveRegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!form.name || !form.email || !form.password || !form.industry) {
-      setError("Please fill in your name, email, password, and select an industry.")
+    if ((authMode === "register" && !form.name) || !form.email || !form.password || !form.industry) {
+      setError(authMode === "register" ? "Please fill in your name, email, password, and select an industry." : "Please enter your email and password.")
       return
     }
 
@@ -45,32 +46,44 @@ export default function DriveRegisterPage() {
 
     try {
       let userId = "preview-user-id"
+      let attendeeName = form.name.trim()
 
-      // 1. Supabase Auth Signup (if database is configured)
+      // Use the same Supabase identity for new and established attendees. This
+      // does not change the separate Cognito bridge or facilitator secret flow.
       if (isSupabaseConfigured) {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: form.email,
-          password: form.password,
-          options: {
-            data: {
-              name: form.name,
-              vertical: form.industry
-            }
-          }
-        })
+        const authResult = authMode === "signin"
+          ? await supabase.auth.signInWithPassword({
+              email: form.email,
+              password: form.password,
+            })
+          : await supabase.auth.signUp({
+              email: form.email,
+              password: form.password,
+              options: {
+                data: {
+                  name: attendeeName,
+                  vertical: form.industry
+                }
+              }
+            })
 
-        if (authError) {
-          setError(authError.message || "Authentication signup failed.")
+        if (authResult.error) {
+          setError(authResult.error.message || (authMode === "signin" ? "Account sign in failed." : "Account registration failed."))
           setLoading(false)
           return
         }
 
-        if (authData?.user) {
-          userId = authData.user.id
+        if (authResult.data?.user) {
+          userId = authResult.data.user.id
+          attendeeName =
+            attendeeName ||
+            authResult.data.user.user_metadata?.name ||
+            authResult.data.user.email?.split("@")[0] ||
+            "Attendee"
         }
       }
 
-      // 2. Call backend register API to save user and member records
+      // 2. Call backend register API to save or restore the event membership
       const friendlyIndustry = INDUSTRIES.find(ind => ind.slug === form.industry)?.label || form.industry
       const res = await fetch("/api/demo/register", {
         method: "POST",
@@ -78,7 +91,7 @@ export default function DriveRegisterPage() {
         body: JSON.stringify({
           user_id: userId,
           org_id: "dd-org-001",
-          name: form.name,
+          name: attendeeName,
           company: form.company,
           email: form.email,
           phone: form.phone,
@@ -96,7 +109,7 @@ export default function DriveRegisterPage() {
 
       // Store in localStorage for application context/navigation
       localStorage.setItem("donna_drive_member_id", data.member_id)
-      localStorage.setItem("donna_drive_user_name", form.name)
+      localStorage.setItem("donna_drive_user_name", attendeeName)
       localStorage.setItem("donna_drive_industry", form.industry)
       localStorage.setItem("donna_drive_role", "") // Assigned by facilitator later
       localStorage.setItem("donna_demo_session", "true")
@@ -139,10 +152,10 @@ export default function DriveRegisterPage() {
               <Building2 className="w-7 h-7 text-white/80" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              Register for DONNA Drive
+              {authMode === "signin" ? "Sign In to DONNA Drive" : "Register for DONNA Drive"}
             </h1>
             <p className="mt-2 text-sm text-white/50">
-              Create an account with your credentials to join the live simulation event.
+              {authMode === "signin" ? "Use your established account to rejoin the live simulation event." : "Create an account with your credentials to join the live simulation event."}
             </p>
           </motion.div>
 
@@ -157,7 +170,7 @@ export default function DriveRegisterPage() {
             {/* Name */}
             <div>
               <label className="flex items-center gap-2 text-sm text-white/60 mb-1.5">
-                <User className="w-3.5 h-3.5" /> Full Name *
+                <User className="w-3.5 h-3.5" /> {authMode === "signin" ? "Display Name (Optional)" : "Full Name *"}
               </label>
               <input
                 type="text"
@@ -165,7 +178,7 @@ export default function DriveRegisterPage() {
                 onChange={(e) => update("name", e.target.value)}
                 placeholder="John Smith"
                 className="donna-input text-sm"
-                required
+                required={authMode === "register"}
               />
             </div>
 
@@ -273,7 +286,7 @@ export default function DriveRegisterPage() {
                 </span>
               ) : (
                 <span className="flex items-center gap-2 justify-center">
-                  Register & Enter Waiting Room
+                  {authMode === "signin" ? "Sign In & Enter Waiting Room" : "Register & Enter Waiting Room"}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
@@ -283,12 +296,16 @@ export default function DriveRegisterPage() {
               <p className="text-xs text-white/50">
                 After registering, wait in the waiting room for the facilitator to start the live event.
               </p>
-              <p className="text-sm text-white/60">
-                Already have an account?{' '}
-                <Link href="/sign-in" className="text-donna-cyan hover:underline transition-all">
-                  Sign In
-                </Link>
-              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode(authMode === "register" ? "signin" : "register")
+                  setError("")
+                }}
+                className="text-sm text-donna-cyan hover:underline transition-all"
+              >
+                {authMode === "register" ? "Already have an account? Sign in here" : "Need an account? Register here"}
+              </button>
             </div>
           </motion.form>
         </div>

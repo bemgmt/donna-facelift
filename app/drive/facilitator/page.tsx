@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Settings, Database, Play, Lock, RefreshCw, AlertTriangle, FileWarning,
-  Clock, TrendingDown, FileX, Zap, Users, CheckCircle, Mail, LogOut,
+  Clock, TrendingDown, FileX, Zap, Users, CheckCircle, LogOut,
   ArrowLeft, ArrowRight, Gavel, Sparkles, MessageSquare, ShieldCheck,
-  ChevronDown, CheckCircle2, Circle
+  ChevronDown, CheckCircle2, Circle, Trash2
 } from "lucide-react"
 import { toast } from "sonner"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
@@ -16,12 +16,9 @@ import { SCENARIOS } from "@/lib/donna-drive/scenarios"
 type FacilitatorTab = "dashboard" | "new_event" | "staged_live" | "view_old"
 
 export default function FacilitatorDashboard() {
-  const [session, setSession] = useState<any>(null)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [driveSecret, setDriveSecret] = useState("")
   const [secretAuthenticated, setSecretAuthenticated] = useState(false)
-  const [isAuthenticating, setIsAuthenticating] = useState(true)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
 
   // Tab State
   const [activeTab, setActiveTab] = useState<FacilitatorTab>("dashboard")
@@ -35,6 +32,7 @@ export default function FacilitatorDashboard() {
   
   // Attendees & History
   const [members, setMembers] = useState<any[]>([])
+  const [availableRoles, setAvailableRoles] = useState<any[]>([])
   const [pastEvents, setPastEvents] = useState<any[]>([])
   const [expandedPastEventId, setExpandedPastEventId] = useState<string | null>(null)
   
@@ -54,55 +52,11 @@ export default function FacilitatorDashboard() {
   const [sendingChat, setSendingChat] = useState(false)
 
   const chatEndRef = useRef<HTMLDivElement>(null)
-  const hasFacilitatorAccess = Boolean(session || secretAuthenticated)
-  const facilitatorHeaders = {
-    "Content-Type": "application/json",
-    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-  }
+  const hasFacilitatorAccess = secretAuthenticated
+  const facilitatorHeaders = { "Content-Type": "application/json" }
 
-  // Check Supabase and Drive-secret sessions before choosing a login screen.
-  useEffect(() => {
-    let active = true
-    let subscription: { unsubscribe: () => void } | null = null
-
-    const loadSessions = async () => {
-      try {
-        const secretRequest = fetch("/api/demo/facilitator/auth")
-          .then((response) => response.json())
-          .then((data) => Boolean(data.authenticated))
-          .catch(() => false)
-
-        if (isSupabaseConfigured) {
-          const { data: { session: currentSession } } = await supabase.auth.getSession()
-          if (active) setSession(currentSession)
-          if (currentSession) fetchStatusAndMembers()
-        }
-
-        const hasSecretSession = await secretRequest
-        if (active) setSecretAuthenticated(hasSecretSession)
-      } catch (error) {
-        console.error("Facilitator session retrieval error:", error)
-      } finally {
-        if (active) setIsAuthenticating(false)
-      }
-    }
-
-    loadSessions()
-
-    if (isSupabaseConfigured) {
-      const authChange = supabase.auth.onAuthStateChange((_event, currentSession) => {
-        setSession(currentSession)
-        setIsAuthenticating(false)
-        if (currentSession) fetchStatusAndMembers()
-      })
-      subscription = authChange.data?.subscription || null
-    }
-
-    return () => {
-      active = false
-      subscription?.unsubscribe()
-    }
-  }, [])
+  // Facilitator controls are intentionally secret-only. Existing attendee or
+  // Supabase account sessions never unlock this screen automatically.
   // Poll status, statistics, and chats
   useEffect(() => {
     if (!hasFacilitatorAccess) return
@@ -119,6 +73,27 @@ export default function FacilitatorDashboard() {
 
     return () => clearInterval(interval)
   }, [hasFacilitatorAccess, selectedChatMemberId])
+
+  // Supabase Realtime refreshes the facilitator queue immediately. The polling
+  // interval above remains as a recovery fallback for temporary socket failures.
+  useEffect(() => {
+    if (!hasFacilitatorAccess || !isSupabaseConfigured) return
+
+    const refresh = () => {
+      fetchStatusAndMembers()
+    }
+
+    const channel = supabase
+      .channel("donna-drive-facilitator")
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_members", filter: "org_id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_roles", filter: "org_id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_organizations", filter: "id=eq.dd-org-001" }, refresh)
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [hasFacilitatorAccess])
 
   // Scroll chat to bottom on updates
   useEffect(() => {
@@ -137,6 +112,7 @@ export default function FacilitatorDashboard() {
         setPropertyValue(data.property_value)
         setOrgDescription(data.org_description)
         setMembers(data.members || [])
+        setAvailableRoles(data.roles || [])
         setPastEvents(data.past_events || [])
       }
     } catch (err) {
@@ -179,20 +155,6 @@ export default function FacilitatorDashboard() {
     }
   }
 
-  // Form Submission — Login
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsAuthenticating(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      toast.error(error.message)
-      setIsAuthenticating(false)
-    } else {
-      setIsAuthenticating(false)
-      toast.success("Signed in successfully!")
-    }
-  }
-
   const handleSecretLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsAuthenticating(true)
@@ -218,12 +180,10 @@ export default function FacilitatorDashboard() {
     }
   }
 
-  // Log out of both supported facilitator session types.
+  // Lock facilitator controls without changing the attendee account session.
   const handleLogout = async () => {
     await fetch("/api/demo/facilitator/auth", { method: "DELETE" })
-    if (isSupabaseConfigured) await supabase.auth.signOut()
     setSecretAuthenticated(false)
-    setSession(null)
   }
 
   // Stage a new event (Move to Staging)
@@ -303,6 +263,28 @@ export default function FacilitatorDashboard() {
       }
     } catch (err) {
       toast.error("Error updating user role.")
+    }
+  }
+
+  const handleRemoveMember = async (memberId: string, displayName: string) => {
+    if (!hasFacilitatorAccess) return
+    if (!window.confirm("Remove " + displayName + " from the waiting room?")) return
+
+    try {
+      const res = await fetch("/api/demo/event-status", {
+        method: "POST",
+        headers: facilitatorHeaders,
+        body: JSON.stringify({ action: "remove_member", member_id: memberId })
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(displayName + " was removed from the waiting room.")
+        fetchStatusAndMembers()
+      } else {
+        toast.error(data.message || "Failed to remove attendee.")
+      }
+    } catch {
+      toast.error("Error removing attendee.")
     }
   }
 
@@ -448,46 +430,7 @@ export default function FacilitatorDashboard() {
                 <Lock className="w-8 h-8 text-cyan-400" />
               </div>
               <h1 className="text-2xl font-semibold text-white">Facilitator Login</h1>
-              <p className="text-white/50 text-sm">Access the live simulation control panel</p>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm text-white/70 flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-white/70 flex items-center gap-2">
-                  <Lock className="w-4 h-4" /> Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 rounded-xl transition-colors mt-6"
-              >
-                Sign In
-              </button>
-            </form>
-
-            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-white/30">
-              <span className="h-px flex-1 bg-white/10" />
-              Or use the Drive secret
-              <span className="h-px flex-1 bg-white/10" />
+              <p className="text-white/50 text-sm">Enter the Drive secret to access the live simulation control panel</p>
             </div>
 
             <form onSubmit={handleSecretLogin} className="space-y-4">
@@ -519,9 +462,8 @@ export default function FacilitatorDashboard() {
 
   // Active scenario definition details
   const activeScenarioDef = SCENARIOS.find(s => s.id === selectedScenario)
-  // Find live scenario roles based on propertyName matching scenario name
-  const liveScenarioDef = SCENARIOS.find(s => s.name === propertyName)
-  const activeRoles = liveScenarioDef?.roles || []
+  // Use the roles returned by the staged event instead of inferring them from UI state.
+  const activeRoles = availableRoles
 
   return (
     <div className="min-h-screen bg-transparent text-white overflow-hidden py-12 px-4 sm:px-6 lg:px-8 relative">
@@ -806,11 +748,20 @@ export default function FacilitatorDashboard() {
                           >
                             <option value="">-- Choose Role --</option>
                             {activeRoles.map((role) => (
-                              <option key={role.id} value={role.id}>
-                                {role.title}
+                              <option key={role.id} value={role.slug}>
+                                {role.label}
                               </option>
                             ))}
                           </select>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMember(member.id, member.display_name)}
+                            className="rounded-lg border border-red-400/20 bg-red-500/10 p-1.5 text-red-300 transition-colors hover:bg-red-500/20"
+                            aria-label={"Remove " + member.display_name + " from waiting room"}
+                            title="Remove attendee"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
                     ))
