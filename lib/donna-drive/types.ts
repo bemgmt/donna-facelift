@@ -25,7 +25,7 @@ export type DemoEventType =
   | 'financing_issue'
   | 'missing_escrow_document'
 
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'blocked'
+export type TaskStatus = 'pending' | 'waiting' | 'in_progress' | 'completed' | 'blocked'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 
 // ---------------------------------------------------------------------------
@@ -105,6 +105,13 @@ export interface DemoTask {
   priority: TaskPriority
   due_date: string
   dependency_task_ids?: string[]
+  scenario_task_id?: string
+  instructions?: string[]
+  required_inputs?: string[]
+  completion_criteria?: string[]
+  evidence_requirements?: string[]
+  action_config?: { module?: string; label?: string }
+  updated_at?: string
   created_at: string
 }
 
