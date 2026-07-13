@@ -4,11 +4,10 @@ import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useDashboardConfigOptional } from "@/contexts/DashboardConfigContext"
-import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList, Lock, Globe } from "lucide-react"
+import { ArrowLeft, Mail, MessageCircle, BarChart3, Users, ClipboardList, Globe } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
 import { InvestorReadonlyShell } from "@/features/investor/components/investor-readonly-shell"
-import { toast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 
 const HybridEmailInterface = dynamic(
@@ -38,6 +37,7 @@ const LeadGeneratorInterface = dynamic(
 
 import ChatbotControlInterface from "./interfaces/chatbot-control-interface"
 import DriveFacilitatorChatbot from "@/features/drive/components/DriveFacilitatorChatbot"
+import DriveGridModule from "@/features/drive/components/DriveGridModule"
 
 type GridItem = {
   id: string
@@ -194,7 +194,13 @@ const gridItems: GridItem[] = [
   },
 ]
 
-export default function InteractiveGrid() {
+type InteractiveGridProps = {
+  showDriveChatbot?: boolean
+}
+
+export default function InteractiveGrid({
+  showDriveChatbot = true,
+}: InteractiveGridProps) {
   const router = useRouter()
   const investor = useInvestorPreviewOptional()
   const dashboardConfig = useDashboardConfigOptional()
@@ -342,7 +348,7 @@ export default function InteractiveGrid() {
           <InvestorReadonlyShell
             active={Boolean(investor?.isInvestorPreview && selectedItem !== "secretary")}
           >
-            {item?.component}
+            {isLiveDemo && item && item.id !== "secretary" ? <DriveGridModule moduleId={item.id} /> : item?.component}
           </InvestorReadonlyShell>
         </motion.div>
       </AnimatePresence>
@@ -408,8 +414,7 @@ export default function InteractiveGrid() {
           }}
         >
           {visibleGridItems.map((item) => {
-            const isDisabled = isLiveDemo && item.id !== "secretary" && item.id !== "din"
-            const isHovered = hoveredItem === item.id && !isDisabled
+            const isHovered = hoveredItem === item.id
             const itemZoomProgress = isHovered ? easeOutProgress : 0
 
             const contentScale = 0.1 + itemZoomProgress * 0.4
@@ -424,30 +429,20 @@ export default function InteractiveGrid() {
                 data-tour={`${item.id}-interface`}
                 className={`
                   relative border overflow-hidden transition-all duration-150 ease-out
-                  ${isDisabled 
-                    ? "opacity-30 border-white/5 bg-black/40 cursor-not-allowed" 
-                    : (isHovered ? "glass border-white/40 z-10 cursor-pointer" : "glass-dark border-white/20 cursor-pointer")
-                  }
+                  ${isHovered ? "glass border-white/40 z-10 cursor-pointer" : "glass-dark border-white/20 cursor-pointer"}
                 `}
                 onMouseEnter={() => {
-                  if (!isDisabled) setHoveredItem(item.id)
+                  setHoveredItem(item.id)
                 }}
                 onMouseLeave={() => {
-                  if (!isDisabled) setHoveredItem(null)
+                  setHoveredItem(null)
                 }}
                 onClick={() => {
-                  if (isDisabled) {
-                    toast({
-                      title: "Module Locked",
-                      description: "During the live event, you must delegate all actions through the Secretary module.",
-                    })
-                    return
-                  }
-                  if (item.id === 'din') {
+                  if (!isLiveDemo && item.id === 'din') {
                     router.push('/din')
                     return
                   }
-                  if (item.id === 'chatbot') {
+                  if (!isLiveDemo && item.id === 'chatbot') {
                     window.dispatchEvent(new CustomEvent('donna:open'))
                     return
                   }
@@ -460,13 +455,6 @@ export default function InteractiveGrid() {
                   zIndex: isHovered ? 10 : 1,
                 }}
               >
-                {/* Lock badge for disabled modules */}
-                {isDisabled && (
-                  <div className="absolute top-3 right-3 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white/40 flex items-center gap-1">
-                    <Lock className="w-2.5 h-2.5" /> Locked
-                  </div>
-                )}
-
                 <div
                   className="absolute inset-0 pointer-events-none p-8"
                   style={{
@@ -518,7 +506,7 @@ export default function InteractiveGrid() {
       <div className="absolute bottom-8 right-8">
         <div className="text-xs text-white/40 glass border border-white/20 px-2 py-1 rounded">click to enter</div>
       </div>
-      <DriveFacilitatorChatbot />
+      {showDriveChatbot && <DriveFacilitatorChatbot />}
     </div>
   )
 }

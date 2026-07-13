@@ -75,7 +75,10 @@ export default function WaitingRoomPage() {
           // If the event goes live, automatically redirect to the interactive grid
           if (data.org_status === "live") {
             localStorage.setItem("donna_demo_session", "true")
-            router.push("/")
+            const roleQuery = data.role_slug
+              ? `?role=${encodeURIComponent(data.role_slug)}`
+              : ""
+            router.push(`/drive/dashboard${roleQuery}`)
           }
         }
       } catch (err) {

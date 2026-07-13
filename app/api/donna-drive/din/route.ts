@@ -65,17 +65,39 @@ export async function POST(req: NextRequest) {
 
     if (!orgData) return NextResponse.json({ success: false, message: 'No active event' }, { status: 400 });
 
-    // Send a notification/email to the target member
-    // For simplicity, we create a notification record for them
-    await supabase.from('donna_drive_notifications').insert({
+    const { data: targetMember, error: targetMemberError } = await supabase
+      .from('donna_drive_members')
+      .select('donna_drive_roles(slug)')
+      .eq('id', targetMemberId)
+      .eq('org_id', orgData.id)
+      .maybeSingle();
+
+    if (targetMemberError) throw targetMemberError;
+
+    const targetRoleRelation = targetMember?.donna_drive_roles as
+      | { slug?: string }
+      | { slug?: string }[]
+      | null
+      | undefined;
+    const targetRole = Array.isArray(targetRoleRelation)
+      ? targetRoleRelation[0]?.slug
+      : targetRoleRelation?.slug;
+    if (!targetRole) {
+      return NextResponse.json({ success: false, message: 'Recipient does not have an assigned role' }, { status: 400 });
+    }
+
+    // Notifications are consumed by role slug, so resolve the member to their assigned role.
+    const { error: notificationError } = await supabase.from('donna_drive_notifications').insert({
       id: `din-ping-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       org_id: orgData.id,
-      target_role: targetMemberId, // using roleId or memberId depending on schema
+      target_role: targetRole,
       title: 'DIN Match: New Message',
       body: `Message from ${senderRoleId}: ${message}`,
       type: 'info',
       read: false
     });
+
+    if (notificationError) throw notificationError;
 
     // Log the interaction
     await supabase.from('donna_drive_facilitator_chats').insert({

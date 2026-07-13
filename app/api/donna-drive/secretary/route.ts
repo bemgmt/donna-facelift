@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { getSupabaseAdminOrThrow } from '@/lib/supabase-admin';
 import { SCENARIOS } from '@/lib/donna-drive/scenarios';
 import OpenAI from 'openai';
 

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   const scenarioKey = (searchParams.get('scenario') as ScenarioKey) || 'vernon'
   const roleSlug = searchParams.get('role') as DemoRoleSlug | null
 
-  if (!roleSlug || !DEMO_ROLES.find((r) => r.slug === roleSlug)) {
+  if (!roleSlug) {
     return NextResponse.json(
       { success: false, message: 'Valid role query parameter required' },
       { status: 400 }
@@ -42,11 +42,16 @@ export async function GET(request: NextRequest) {
   if (!supabase) {
     const seedData = generateDemoSeedData(scenarioKey, orgId)
     const { contacts, emails, tasks, documents, calendar_events, notifications, din_bid_requests, din_bid_responses } = seedData
+    const scenarioRole = contacts.find((contact) => contact.role_slug === roleSlug)
 
     return NextResponse.json({
       success: true,
       _preview: true,
-      role: DEMO_ROLES.find((r) => r.slug === roleSlug),
+      role: DEMO_ROLES.find((r) => r.slug === roleSlug) || (scenarioRole ? {
+        slug: scenarioRole.role_slug,
+        label: scenarioRole.title || scenarioRole.name,
+        description: scenarioRole.notes,
+      } : { slug: roleSlug, label: roleSlug.replace(/-/g, ' ') }),
       contacts: contacts.filter((c) => c.role_slug === roleSlug || c.org_id === orgId),
       emails: emails.filter(
         (e) => e.from_role === roleSlug || e.to_role === roleSlug
@@ -70,8 +75,14 @@ export async function GET(request: NextRequest) {
   // Live Supabase queries
   // ------------------------------------------------------------------
   try {
-    const [contactsRes, emailsRes, tasksRes, docsRes, calRes, notifRes, dinReqRes, dinResRes] =
+    const [roleRes, contactsRes, emailsRes, tasksRes, docsRes, calRes, notifRes, dinReqRes, dinResRes] =
       await Promise.all([
+        supabase
+          .from('donna_drive_roles')
+          .select('*')
+          .eq('org_id', orgId)
+          .eq('slug', roleSlug)
+          .maybeSingle(),
         supabase
           .from('donna_drive_contacts')
           .select('*')
@@ -119,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      role: DEMO_ROLES.find((r) => r.slug === roleSlug),
+      role: roleRes.data || { slug: roleSlug, label: roleSlug.replace(/-/g, ' ') },
       contacts: contactsRes.data || [],
       emails: emailsRes.data || [],
       tasks: tasksRes.data || [],
