@@ -9,6 +9,7 @@ import { FuturisticInput } from '@/components/ui/futuristic-input'
 import { GlassCard } from '@/components/ui/glass-card'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import Link from 'next/link'
+import { normalizeDriveIndustry } from '@/lib/donna-drive/industries'
 
 type AuthPath = 'none' | 'investor' | 'real_user'
 
@@ -75,7 +76,7 @@ export default function Page() {
         return
       }
 
-      if (data.user) {
+      if (data.user && data.session?.access_token) {
         // Set local session parameters
         localStorage.setItem('donna_demo_session', 'true')
         localStorage.setItem('donna_demo_user', data.user.email || '')
@@ -123,7 +124,7 @@ export default function Page() {
             if (memberData) {
               localStorage.setItem("donna_drive_member_id", memberData.id)
               localStorage.setItem("donna_drive_user_name", memberData.display_name)
-              localStorage.setItem("donna_drive_industry", memberData.industry)
+              localStorage.setItem("donna_drive_industry", normalizeDriveIndustry(memberData.industry) || 'real_estate')
               
               // We need to fetch the actual role slug from the role_id if assigned
               if (memberData.role_id) {
@@ -139,8 +140,7 @@ export default function Page() {
             } else {
               // User has a Supabase account but not registered as a member for this event, auto-join them
               const memberId = `dd-member-${Date.now()}`
-              const friendlyIndustry = userData?.vertical === 'hospitality' ? 'Hospitality' : 
-                                       userData?.vertical === 'professional_services' ? 'Professional Services' : 'Real Estate'
+              const industry = normalizeDriveIndustry(userData?.vertical) || 'real_estate'
               
               await supabase.from('donna_drive_members').insert({
                 id: memberId,
@@ -149,7 +149,7 @@ export default function Page() {
                 display_name: userData?.name || data.user.email?.split('@')[0] || 'Attendee',
                 company: '',
                 phone: '',
-                industry: friendlyIndustry,
+                industry,
                 email: data.user.email,
                 role_id: null,
                 is_facilitator: false
@@ -157,7 +157,7 @@ export default function Page() {
 
               localStorage.setItem("donna_drive_member_id", memberId)
               localStorage.setItem("donna_drive_user_name", userData?.name || 'Attendee')
-              localStorage.setItem("donna_drive_industry", userData?.vertical || 'real_estate')
+              localStorage.setItem("donna_drive_industry", industry)
               localStorage.setItem("donna_drive_role", "")
             }
 

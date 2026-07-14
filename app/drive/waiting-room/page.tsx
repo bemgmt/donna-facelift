@@ -5,12 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Building2, RefreshCw, AlertTriangle, CheckCircle2, Globe, ShieldAlert, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
-
-const INDUSTRIES = [
-  { slug: "Real Estate", label: "Real Estate" },
-  { slug: "Hospitality", label: "Hospitality" },
-  { slug: "Professional Services", label: "Professional Services" },
-]
+import { DRIVE_INDUSTRIES, normalizeDriveIndustry, type DriveIndustrySlug } from "@/lib/donna-drive/industries"
 
 export default function WaitingRoomPage() {
   const router = useRouter()
@@ -18,7 +13,7 @@ export default function WaitingRoomPage() {
   // Attendee state from local storage
   const [userName, setUserName] = useState("")
   const [memberId, setMemberId] = useState("")
-  const [currentIndustry, setCurrentIndustry] = useState("Real Estate")
+  const [currentIndustry, setCurrentIndustry] = useState<DriveIndustrySlug>("real_estate")
   const [assignedRoleLabel, setAssignedRoleLabel] = useState("Not Assigned Yet")
   const [assignedRoleSlug, setAssignedRoleSlug] = useState("")
   
@@ -34,7 +29,7 @@ export default function WaitingRoomPage() {
     if (typeof window !== "undefined") {
       const name = localStorage.getItem("donna_drive_user_name") || "Attendee"
       const mId = localStorage.getItem("donna_drive_member_id") || ""
-      const ind = localStorage.getItem("donna_drive_industry") || "Real Estate"
+      const ind = normalizeDriveIndustry(localStorage.getItem("donna_drive_industry")) || "real_estate"
       const cachedRole = localStorage.getItem("donna_drive_role") || ""
       
       setUserName(name)
@@ -61,7 +56,11 @@ export default function WaitingRoomPage() {
         if (data.success) {
           setOrgStatus(data.org_status)
           setAssignedRoleLabel(data.role_label)
-          setCurrentIndustry(data.industry)
+          const industry = normalizeDriveIndustry(data.industry)
+          if (industry) {
+            setCurrentIndustry(industry)
+            localStorage.setItem("donna_drive_industry", industry)
+          }
           
           // Keep assigned and unassigned role state synchronized.
           const cachedRole = localStorage.getItem("donna_drive_role") || ""
@@ -116,7 +115,7 @@ export default function WaitingRoomPage() {
   }, [memberId, router])
 
   // Switch industry handler
-  const handleSwitchIndustry = async (industryName: string) => {
+  const handleSwitchIndustry = async (industry: DriveIndustrySlug) => {
     if (orgStatus === "live" || orgStatus === "completed") {
       return
     }
@@ -128,14 +127,14 @@ export default function WaitingRoomPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           member_id: memberId,
-          industry: industryName
+          industry
         }),
       })
 
       const data = await res.json()
       if (data.success) {
-        setCurrentIndustry(industryName)
-        localStorage.setItem("donna_drive_industry", industryName)
+        setCurrentIndustry(industry)
+        localStorage.setItem("donna_drive_industry", industry)
       } else {
         setError(data.message || "Failed to update industry.")
       }
@@ -262,8 +261,8 @@ export default function WaitingRoomPage() {
               </p>
 
               <div className="space-y-2">
-                {INDUSTRIES.map((ind) => {
-                  const isActive = currentIndustry.toLowerCase().replace(/ /g, '_') === ind.slug.toLowerCase().replace(/ /g, '_')
+                {DRIVE_INDUSTRIES.map((ind) => {
+                  const isActive = currentIndustry === ind.slug
                   return (
                     <button
                       key={ind.slug}

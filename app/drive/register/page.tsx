@@ -6,12 +6,7 @@ import { ArrowLeft, ArrowRight, Building2, User, Briefcase, Mail, Phone, Globe, 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
-
-const INDUSTRIES = [
-  { slug: "real_estate", label: "Real Estate" },
-  { slug: "hospitality", label: "Hospitality" },
-  { slug: "professional_services", label: "Professional Services" },
-]
+import { DRIVE_INDUSTRIES, normalizeDriveIndustry } from "@/lib/donna-drive/industries"
 
 export default function DriveRegisterPage() {
   const router = useRouter()
@@ -46,12 +41,13 @@ export default function DriveRegisterPage() {
 
     try {
       let userId = "preview-user-id"
+      let accessToken = ""
       let attendeeName = form.name.trim()
 
       // Use the same Supabase identity for new and established attendees. This
       // does not change the separate Cognito bridge or facilitator secret flow.
       if (isSupabaseConfigured) {
-        const authResult = authMode === "signin"
+        let authResult = authMode === "signin"
           ? await supabase.auth.signInWithPassword({
               email: form.email,
               password: form.password,
@@ -67,13 +63,33 @@ export default function DriveRegisterPage() {
               }
             })
 
+        // With email confirmation enabled, signUp can return a user without a
+        // session. It can do the same for an existing account, so try the
+        // supplied credentials once before asking the attendee to confirm.
+        if (authMode === "register" && !authResult.error && !authResult.data.session) {
+          const signInResult = await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
+          })
+          if (!signInResult.error && signInResult.data.session) {
+            authResult = signInResult
+          }
+        }
+
         if (authResult.error) {
           setError(authResult.error.message || (authMode === "signin" ? "Account sign in failed." : "Account registration failed."))
           setLoading(false)
           return
         }
 
-        if (authResult.data?.user) {
+        if (!authResult.data.session?.access_token) {
+          setError("Check your email to confirm your account, then choose Sign In. If you already confirmed, switch to Sign In and use your existing password.")
+          setLoading(false)
+          return
+        }
+
+        accessToken = authResult.data.session.access_token
+        if (authResult.data.user) {
           userId = authResult.data.user.id
           attendeeName =
             attendeeName ||
@@ -84,10 +100,18 @@ export default function DriveRegisterPage() {
       }
 
       // 2. Call backend register API to save or restore the event membership
-      const friendlyIndustry = INDUSTRIES.find(ind => ind.slug === form.industry)?.label || form.industry
+      const industry = normalizeDriveIndustry(form.industry)
+      if (!industry) {
+        setError("Please select a recognized industry.")
+        setLoading(false)
+        return
+      }
       const res = await fetch("/api/demo/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({
           user_id: userId,
           org_id: "dd-org-001",
@@ -95,7 +119,7 @@ export default function DriveRegisterPage() {
           company: form.company,
           email: form.email,
           phone: form.phone,
-          industry: friendlyIndustry,
+          industry,
         }),
       })
 
@@ -110,7 +134,7 @@ export default function DriveRegisterPage() {
       // Store in localStorage for application context/navigation
       localStorage.setItem("donna_drive_member_id", data.member_id)
       localStorage.setItem("donna_drive_user_name", attendeeName)
-      localStorage.setItem("donna_drive_industry", form.industry)
+      localStorage.setItem("donna_drive_industry", industry)
       localStorage.setItem("donna_drive_role", "") // Assigned by facilitator later
       localStorage.setItem("donna_demo_session", "true")
       localStorage.setItem("donna_demo_user", form.email)
@@ -246,7 +270,7 @@ export default function DriveRegisterPage() {
                 <Globe className="w-3.5 h-3.5" /> Choose Your Industry *
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {INDUSTRIES.map((ind) => (
+                {DRIVE_INDUSTRIES.map((ind) => (
                   <button
                     key={ind.slug}
                     type="button"
