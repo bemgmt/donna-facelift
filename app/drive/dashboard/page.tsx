@@ -5,13 +5,10 @@ import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import GridLoading from "@/components/grid-loading"
 
-const InteractiveGrid = dynamic(
-  () => import("@/components/interactive-grid"),
-  {
-    ssr: false,
-    loading: () => <GridLoading />,
-  }
-)
+const InteractiveGrid = dynamic(() => import("@/components/interactive-grid"), {
+  ssr: false,
+  loading: () => <GridLoading />,
+})
 
 export default function DriveDashboardPage() {
   const router = useRouter()
@@ -34,6 +31,28 @@ export default function DriveDashboardPage() {
 
     setSessionReady(true)
   }, [router])
+
+  useEffect(() => {
+    if (!sessionReady) return
+    let active = true
+    const checkEventStatus = async () => {
+      try {
+        const response = await fetch("/api/demo/event-status", { cache: "no-store" })
+        const data = await response.json()
+        if (active && data.success && data.org_status === "completed") {
+          router.replace("/drive/summary")
+        }
+      } catch {
+        // Task updates continue if this lightweight status poll is interrupted.
+      }
+    }
+    void checkEventStatus()
+    const interval = window.setInterval(checkEventStatus, 3000)
+    return () => {
+      active = false
+      window.clearInterval(interval)
+    }
+  }, [router, sessionReady])
 
   if (!sessionReady) {
     return <GridLoading />

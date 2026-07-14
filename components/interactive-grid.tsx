@@ -194,6 +194,16 @@ const gridItems: GridItem[] = [
   },
 ]
 
+const driveGridTitles: Record<string, string> = {
+  sales: "tasks & documents",
+  email: "deal communications",
+  chatbot: "DONNA assistant",
+  "lead-generator": "deal team",
+  secretary: "DONNA Secretary",
+  analytics: "event progress",
+  din: "DIN network",
+}
+
 type InteractiveGridProps = {
   showDriveChatbot?: boolean
 }
@@ -348,7 +358,7 @@ export default function InteractiveGrid({
           <InvestorReadonlyShell
             active={Boolean(investor?.isInvestorPreview && selectedItem !== "secretary")}
           >
-            {isLiveDemo && item && item.id !== "secretary" ? <DriveGridModule moduleId={item.id} /> : item?.component}
+            {isLiveDemo && item ? <DriveGridModule moduleId={item.id} onOpenModule={setSelectedItem} /> : item?.component}
           </InvestorReadonlyShell>
         </motion.div>
       </AnimatePresence>
@@ -393,11 +403,11 @@ export default function InteractiveGrid({
       <header className="p-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-light tracking-wide">dashboard</h1>
-            <p className="text-sm text-white/60 mt-1">AI-powered business tools</p>
+            <h1 className="text-2xl font-light tracking-wide">{isLiveDemo ? "DONNA Drive" : "dashboard"}</h1>
+            <p className="text-sm text-white/60 mt-1">{isLiveDemo ? "Live role-based transaction simulation" : "AI-powered business tools"}</p>
           </div>
           <div className="text-right">
-            <div className="text-xs text-white/40 border border-white/20 px-2 py-1 rounded">interactive grid</div>
+            <div className="text-xs text-white/40 border border-white/20 px-2 py-1 rounded">{isLiveDemo ? "interactive event grid" : "interactive grid"}</div>
           </div>
         </div>
       </header>
@@ -482,7 +492,7 @@ export default function InteractiveGrid({
                       isHovered ? "text-white" : "text-white/80"
                     }`}
                   >
-                    {item.title}
+                    {isLiveDemo ? driveGridTitles[item.id] || item.title : item.title}
                   </h2>
                 </div>
 

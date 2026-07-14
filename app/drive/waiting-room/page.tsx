@@ -71,7 +71,10 @@ export default function WaitingRoomPage() {
             setRoleSwitched(Boolean(data.role_slug))
           }
 
-          // If the event goes live, automatically redirect to the interactive grid
+          // Route attendees as the event moves into or out of the live workspace.
+          if (data.org_status === "completed") {
+            router.replace("/drive/summary")
+          }
           if (data.org_status === "live") {
             localStorage.setItem("donna_demo_session", "true")
             const roleQuery = data.role_slug

@@ -379,17 +379,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Reset the main event organization back to inactive
-      await supabase
-        .from('donna_drive_organizations')
-        .update({ status: 'inactive' })
-        .eq('id', org_id)
-
-      // Reset roles assigned to current active members
-      await supabase
-        .from('donna_drive_members')
-        .update({ role_id: null })
-        .eq('org_id', org_id)
+      // Keep this completed state visible so attendee clients can show the closing screen.
+      // The next stage action performs the clean event reset.
 
       return NextResponse.json({ success: true, message: 'Event successfully completed and archived' })
 

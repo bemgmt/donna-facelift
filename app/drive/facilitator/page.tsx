@@ -332,7 +332,7 @@ export default function FacilitatorDashboard() {
   // End Live Event
   const handleEndEvent = async () => {
     if (!hasFacilitatorAccess) return
-    if (!confirm("Are you sure you want to end this event? This will archive the progress and reset the room.")) return
+    if (!confirm("Are you sure you want to end this event? This will archive the progress and close attendee workspaces.")) return
 
     try {
       const res = await fetch("/api/demo/event-status", {

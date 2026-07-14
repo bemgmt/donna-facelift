@@ -1,11 +1,9 @@
 "use client"
 
-import { FormEvent, useCallback, useEffect, useState } from "react"
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react"
 import {
   Activity,
   Building2,
-  CheckCircle2,
-  Circle,
   Clock3,
   FileText,
   Mail,
@@ -25,6 +23,11 @@ import type {
   DemoNotification,
   DemoTask,
 } from "@/lib/donna-drive/types"
+import { supabase } from "@/lib/supabase"
+import { SCENARIOS } from "@/lib/donna-drive/scenarios"
+import { useDriveTasks } from "@/features/drive/hooks/use-drive-tasks"
+import { DriveTaskEngine } from "@/features/drive/components/DriveTaskEngine"
+
 
 type DriveData = {
   role?: { slug: string; label: string; description?: string }
@@ -38,7 +41,7 @@ type DriveData = {
   din_bid_responses: DemoDINBidResponse[]
 }
 
-type Props = { moduleId: string }
+type Props = { moduleId: string; onOpenModule?: (moduleId: string) => void }
 
 const emptyData: DriveData = {
   contacts: [], emails: [], tasks: [], documents: [], calendar_events: [],
@@ -63,36 +66,47 @@ function Panel({ title, children, className = "" }: { title: string; children: R
   )
 }
 
-export default function DriveGridModule({ moduleId }: Props) {
+export default function DriveGridModule({ moduleId, onOpenModule }: Props) {
   const [data, setData] = useState<DriveData>(emptyData)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState("")
   const [chatInput, setChatInput] = useState("")
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "donna"; text: string }>>([])
   const [chatting, setChatting] = useState(false)
 
+  const [roleId] = useState(() => localStorage.getItem("donna_drive_role") || "")
+  const [propertyName, setPropertyName] = useState("")
+  const scenario = useMemo(() => SCENARIOS.find((item) => item.name === propertyName) || SCENARIOS[0], [propertyName])
+  const scenarioRole = scenario.roles.find((item) => item.id === roleId)
+  const taskEngine = useDriveTasks(scenario, roleId)
+
   const loadData = useCallback(async () => {
-    const role = localStorage.getItem("donna_drive_role") || ""
-    if (!role) {
+    if (!roleId) {
       setError("Your event role has not been assigned yet.")
       setLoading(false)
       return
     }
     try {
-      const response = await fetch(`/api/demo/data?role=${encodeURIComponent(role)}`, { cache: "no-store" })
+      const [response, statusResponse] = await Promise.all([
+        fetch(`/api/demo/data?role=${encodeURIComponent(roleId)}`, { cache: "no-store" }),
+        fetch("/api/demo/event-status", { cache: "no-store" }),
+      ])
       const payload = await response.json()
+      const status = await statusResponse.json()
       if (!response.ok || !payload.success) throw new Error(payload.message || "Unable to load CRE workspace")
       setData({ ...emptyData, ...payload })
       setError("")
+      if (status.success) {
+        setPropertyName(status.property_name || "")
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load CRE workspace")
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [roleId])
 
   useEffect(() => {
     loadData()
@@ -101,25 +115,31 @@ export default function DriveGridModule({ moduleId }: Props) {
   }, [loadData])
 
   const selected = data.emails.find((email) => email.id === selectedEmail) || data.emails[0]
-  const activeTasks = data.tasks.filter((task) => task.status !== "completed" && !completedTasks.has(task.id))
+  const roleTasks = taskEngine.tasks.filter((task) => task.assigned_to === roleId)
+  const activeTasks = roleTasks.filter((task) => task.status !== "completed")
   const filteredContacts = data.contacts.filter((contact) =>
     `${contact.name} ${contact.title || ""} ${contact.company} ${contact.notes}`.toLowerCase().includes(search.toLowerCase())
   )
-  const completedCount = data.tasks.filter((task) => task.status === "completed").length + completedTasks.size
-  const completionRate = data.tasks.length ? Math.min(100, Math.round((completedCount / data.tasks.length) * 100)) : 0
+  const completedCount = roleTasks.filter((task) => task.status === "completed").length
+  const completionRate = roleTasks.length ? Math.min(100, Math.round((completedCount / roleTasks.length) * 100)) : 0
+  const generatedDocumentIds = new Set(taskEngine.ecosystem.documents.map((document) => document.id))
+  const allDocuments = [...taskEngine.ecosystem.documents, ...data.documents.filter((document) => !generatedDocumentIds.has(document.id))]
 
+  const generatedCalendarIds = new Set(taskEngine.ecosystem.calendar.map((event) => event.id))
+  const allCalendarEvents = [...taskEngine.ecosystem.calendar, ...data.calendar_events.filter((event) => !generatedCalendarIds.has(event.id))]
   const sendChat = async (event: FormEvent) => {
     event.preventDefault()
     const message = chatInput.trim()
-    const roleId = localStorage.getItem("donna_drive_role") || ""
     if (!message || !roleId || chatting) return
     setChatMessages((current) => [...current, { sender: "user", text: message }])
     setChatInput("")
     setChatting(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error("Sign in to use DONNA Secretary.")
       const response = await fetch("/api/donna-drive/secretary", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ message, roleId }),
       })
       const payload = await response.json()
@@ -149,7 +169,7 @@ export default function DriveGridModule({ moduleId }: Props) {
     <div className="mb-7 flex flex-wrap items-end justify-between gap-4 pt-20">
       <div>
         <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-cyan-300"><Activity className="h-3.5 w-3.5" /> Live CRE workspace</div>
-        <h1 className="text-3xl font-light">{data.role?.label || titleCase(localStorage.getItem("donna_drive_role") || "CRE professional")}</h1>
+        <h1 className="text-3xl font-light">{data.role?.label || titleCase(roleId || "CRE professional")}</h1>
         {data.role?.description && <p className="mt-2 max-w-3xl text-sm text-white/50">{data.role.description}</p>}
       </div>
       <button onClick={loadData} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60 hover:bg-white/10"><RefreshCw className="h-3.5 w-3.5" /> Refresh live data</button>
@@ -159,26 +179,13 @@ export default function DriveGridModule({ moduleId }: Props) {
   let content: React.ReactNode
 
   if (moduleId === "sales") {
-    content = (
-      <div className="grid gap-5 lg:grid-cols-[1.35fr_.65fr]">
-        <Panel title={`Active deal workflow · ${activeTasks.length} open`}>
-          <div className="space-y-3">
-            {data.tasks.map((task) => {
-              const done = task.status === "completed" || completedTasks.has(task.id)
-              return <button key={task.id} onClick={() => setCompletedTasks((current) => { const next = new Set(current); if (done) next.delete(task.id); else next.add(task.id); return next })} className="flex w-full items-start gap-3 rounded-xl border border-white/8 bg-black/15 p-4 text-left hover:bg-white/5">
-                {done ? <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" /> : <Circle className="mt-0.5 h-5 w-5 text-white/25" />}
-                <div><p className={done ? "text-sm text-white/35 line-through" : "text-sm text-white/85"}>{task.title}</p><p className="mt-2 text-[11px] uppercase tracking-wider text-white/35">{titleCase(task.status)} · {titleCase(task.priority)} · Due {formatDate(task.due_date)}</p></div>
-              </button>
-            })}
-            {!data.tasks.length && <p className="text-sm text-white/40">No tasks are assigned to this role yet.</p>}
-          </div>
-        </Panel>
-        <div className="space-y-5">
-          <Panel title="Transaction documents"><div className="space-y-3">{data.documents.slice(0, 6).map((doc) => <div key={doc.id} className="flex items-center gap-3"><FileText className="h-4 w-4 text-cyan-300" /><div><p className="text-sm text-white/75">{doc.name}</p><p className="text-[11px] text-white/35">{titleCase(doc.status)} · {doc.type.toUpperCase()}</p></div></div>)}</div></Panel>
-          <Panel title="Upcoming"><div className="space-y-3">{data.calendar_events.map((event) => <div key={event.id}><p className="text-sm text-white/75">{event.title}</p><p className="text-xs text-white/35">{formatDate(event.start_time)} · {event.location}</p></div>)}{!data.calendar_events.length && <p className="text-sm text-white/40">Deadlines are shown on the assigned tasks.</p>}</div></Panel>
-        </div>
+    content = <>
+      <DriveTaskEngine tasks={roleTasks} roleObjective={scenarioRole?.primaryObjective || "Coordinate the work assigned to your role."} donnaOverlay={scenarioRole?.secretaryOverlay || "Track each owner, dependency, deadline, and next action."} pendingTaskId={taskEngine.pendingTaskId} error={taskEngine.error} onAction={taskEngine.act} onOpenModule={(target) => onOpenModule?.(target === "secretary" || target === "din" ? target : "sales")} />
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <Panel title={`Transaction documents · ${allDocuments.length}`}><div className="space-y-3">{allDocuments.slice(0, 12).map((doc) => <div key={doc.id} className="flex items-center gap-3"><FileText className="h-4 w-4 text-cyan-300" /><div><p className="text-sm text-white/75">{doc.name}</p><p className="text-[11px] text-white/35">{titleCase(doc.status)} · {doc.type.toUpperCase()}</p></div></div>)}{!allDocuments.length && <p className="text-sm text-white/40">No transaction documents have been added yet.</p>}</div></Panel>
+        <Panel title="Upcoming"><div className="space-y-3">{allCalendarEvents.map((event) => <div key={event.id}><p className="text-sm text-white/75">{event.title}</p><p className="text-xs text-white/35">{formatDate(event.start_time)} · {event.location}</p></div>)}{!allCalendarEvents.length && <p className="text-sm text-white/40">Deadlines are shown on the assigned tasks.</p>}</div></Panel>
       </div>
-    )
+    </>
   } else if (moduleId === "email") {
     content = (
       <div className="grid min-h-[560px] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] md:grid-cols-[360px_1fr]">
