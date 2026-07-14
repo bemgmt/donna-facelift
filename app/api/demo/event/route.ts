@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { hasValidFacilitatorSession } from '@/lib/donna-drive/facilitator-auth'
 import {
   FACILITATOR_SECRET,
   isDonnaDriveEnabled,
@@ -41,10 +42,10 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabaseAdmin()
 
   // Verify auth: check facilitator_secret OR an admin Supabase session
-  let isAuthorized = false
-  if (body.facilitator_secret === FACILITATOR_SECRET) {
+  let isAuthorized = hasValidFacilitatorSession(request)
+  if (!isAuthorized && body.facilitator_secret === FACILITATOR_SECRET) {
     isAuthorized = true
-  } else if (supabase) {
+  } else if (!isAuthorized && supabase) {
     const authHeader = request.headers.get('authorization')
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '')

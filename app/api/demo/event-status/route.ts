@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { isDonnaDriveEnabled, DEMO_ROLES } from '@/lib/donna-drive/constants'
+import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
 import { generateDemoSeedData, ScenarioKey } from '@/lib/donna-drive/seed-generator'
 import { SCENARIOS } from '@/lib/donna-drive/scenarios'
+import { isFacilitatorRequestAuthorized } from '@/lib/donna-drive/facilitator-auth'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -42,6 +43,14 @@ export async function GET(request: NextRequest) {
 
     if (membersError) throw membersError
 
+    const { data: roles, error: rolesError } = await supabase
+      .from('donna_drive_roles')
+      .select('*')
+      .eq('org_id', orgId)
+      .order('label', { ascending: true })
+
+    if (rolesError) throw rolesError
+
     // 3. Fetch past completed events for view historical event card
     const { data: pastOrgs, error: pastError } = await supabase
       .from('donna_drive_organizations')
@@ -57,6 +66,7 @@ export async function GET(request: NextRequest) {
       property_name: org?.property_name || '',
       property_value: org?.property_value || '',
       members: members || [],
+      roles: roles || [],
       past_events: pastError ? [] : (pastOrgs || [])
     })
 
@@ -69,6 +79,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
     return NextResponse.json({ success: false, message: 'DONNA Drive is not enabled' }, { status: 403 })
+  }
+
+  if (!(await isFacilitatorRequestAuthorized(request))) {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
   }
 
   let body
@@ -117,8 +131,19 @@ export async function POST(request: NextRequest) {
 
       if (orgError) throw orgError
 
-      // Clear any pre-existing scenario data for this organization so we have a clean event run
-      await Promise.all([
+      // Unassign attendees before replacing roles. The current schema cascades role
+      // deletes to assigned members, so deleting roles first can remove attendees.
+      const { error: unassignError } = await supabase
+        .from('donna_drive_members')
+        .update({ role_id: null })
+        .eq('org_id', org_id)
+        .eq('is_facilitator', false)
+
+      if (unassignError) throw unassignError
+
+      // Clear pre-existing scenario data for a clean event run and fail loudly if
+      // any reset operation is rejected.
+      const resetResults = await Promise.all([
         supabase.from('donna_drive_roles').delete().eq('org_id', org_id),
         supabase.from('donna_drive_emails').delete().eq('org_id', org_id),
         supabase.from('donna_drive_tasks').delete().eq('org_id', org_id),
@@ -129,6 +154,9 @@ export async function POST(request: NextRequest) {
         supabase.from('donna_drive_din_bid_responses').delete().eq('org_id', org_id),
         supabase.from('donna_drive_facilitator_chats').delete().eq('org_id', org_id)
       ])
+
+      const resetError = resetResults.find(result => result.error)?.error
+      if (resetError) throw resetError
 
       // Seed scenario data template
       const seedData = generateDemoSeedData(seedKey, org_id)
@@ -144,7 +172,8 @@ export async function POST(request: NextRequest) {
           icon: 'User',
           color: 'blue'
         }))
-        await supabase.from('donna_drive_roles').insert(rolesToInsert)
+        const { error: roleInsertError } = await supabase.from('donna_drive_roles').insert(rolesToInsert)
+        if (roleInsertError) throw roleInsertError
       }
 
       if (seedData.contacts.length > 0) {
@@ -180,6 +209,7 @@ export async function POST(request: NextRequest) {
         .from('donna_drive_roles')
         .select('*')
         .eq('org_id', org_id)
+        .order('label', { ascending: true })
 
       if (rolesError || !dbRoles || dbRoles.length === 0) {
         throw new Error('Roles have not been seeded or configured for this organization')
@@ -207,7 +237,9 @@ export async function POST(request: NextRequest) {
           .eq('id', member.id)
       })
 
-      await Promise.all(updates)
+      const updateResults = await Promise.all(updates)
+      const updateError = updateResults.find(result => result.error)?.error
+      if (updateError) throw updateError
 
       return NextResponse.json({ success: true, message: 'Users auto-sorted to roles successfully' })
 
@@ -240,6 +272,28 @@ export async function POST(request: NextRequest) {
       if (updateError) throw updateError
 
       return NextResponse.json({ success: true, message: 'User role updated successfully' })
+
+    } else if (action === 'remove_member') {
+      const { member_id } = body
+      if (!member_id) {
+        return NextResponse.json({ success: false, message: 'member_id is required' }, { status: 400 })
+      }
+
+      const { data: removedMember, error: removeError } = await supabase
+        .from('donna_drive_members')
+        .delete()
+        .eq('id', member_id)
+        .eq('org_id', org_id)
+        .eq('is_facilitator', false)
+        .select('id')
+        .maybeSingle()
+
+      if (removeError) throw removeError
+      if (!removedMember) {
+        return NextResponse.json({ success: false, message: 'Attendee not found' }, { status: 404 })
+      }
+
+      return NextResponse.json({ success: true, message: 'Attendee removed from the waiting room' })
 
     } else if (action === 'start') {
       // Transition organization status to live
@@ -325,17 +379,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Reset the main event organization back to inactive
-      await supabase
-        .from('donna_drive_organizations')
-        .update({ status: 'inactive' })
-        .eq('id', org_id)
-
-      // Reset roles assigned to current active members
-      await supabase
-        .from('donna_drive_members')
-        .update({ role_id: null })
-        .eq('org_id', org_id)
+      // Keep this completed state visible so attendee clients can show the closing screen.
+      // The next stage action performs the clean event reset.
 
       return NextResponse.json({ success: true, message: 'Event successfully completed and archived' })
 

@@ -1,83 +1,101 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { SCENARIOS } from '@/lib/donna-drive/scenarios';
-import { Resend } from 'resend';
+import { NextRequest, NextResponse } from 'next/server'
+import { Resend } from 'resend'
+import { SCENARIOS } from '@/lib/donna-drive/scenarios'
+import { authenticateDriveTaskRequest, DRIVE_ORG_ID, TaskAuthError } from '@/lib/donna-drive/task-auth'
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key');
+let resendClient: Resend | null = null
 
-export async function POST(req: NextRequest) {
+function getResend() {
+  if (!process.env.RESEND_API_KEY) return null
+  if (!resendClient) resendClient = new Resend(process.env.RESEND_API_KEY)
+  return resendClient
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const { roleId, userName } = await req.json();
-
-    const supabase = getSupabaseAdmin();
-    if (!supabase) return NextResponse.json({ success: false, message: 'Database disconnected' }, { status: 500 });
-
-    // Find the member's email
-    const { data: memberData } = await supabase
-        .from('donna_drive_members')
-        .select('email, org_id')
-        .eq('display_name', userName) // Or search by role
-        .maybeSingle();
-
-    if (!memberData?.email) {
-       return NextResponse.json({ success: false, message: 'Member email not found' }, { status: 404 });
+    const { supabase, member, roleSlug } = await authenticateDriveTaskRequest(request)
+    if (!member || !roleSlug) {
+      return NextResponse.json({ success: false, message: 'An assigned attendee role is required.' }, { status: 403 })
     }
 
-    const { data: orgData } = await supabase
-        .from('donna_drive_organizations')
-        .select('*')
-        .eq('id', memberData.org_id)
-        .maybeSingle();
+    const { data: attendee, error: attendeeError } = await supabase
+      .from('donna_drive_members')
+      .select('id, email, display_name')
+      .eq('id', member.id)
+      .eq('org_id', DRIVE_ORG_ID)
+      .single()
 
-    const scenario = SCENARIOS.find(s => s.name === orgData?.property_name);
+    if (attendeeError || !attendee?.email) {
+      return NextResponse.json({ success: false, message: 'Your registration email was not found.' }, { status: 404 })
+    }
 
-    // Get chat logs for summary
-    const { data: chats } = await supabase
-        .from('donna_drive_facilitator_chats')
-        .select('*')
-        .eq('org_id', memberData.org_id)
-        .eq('member_id', roleId);
+    const [orgResult, taskResult, chatResult] = await Promise.all([
+      supabase.from('donna_drive_organizations').select('property_name, status').eq('id', DRIVE_ORG_ID).maybeSingle(),
+      supabase.from('donna_drive_tasks').select('title, status').eq('org_id', DRIVE_ORG_ID).eq('assigned_to', roleSlug).order('updated_at', { ascending: false }),
+      supabase.from('donna_drive_facilitator_chats').select('message').eq('org_id', DRIVE_ORG_ID).eq('member_id', member.id).order('created_at', { ascending: true }),
+    ])
 
-    const interactions = chats?.map(c => c.message).join('\n') || 'No significant interactions recorded.';
+    const queryError = orgResult.error || taskResult.error || chatResult.error
+    if (queryError) throw queryError
+    if (orgResult.data?.status !== 'completed') {
+      return NextResponse.json({ success: false, message: 'The event has not ended yet.' }, { status: 409 })
+    }
 
-    const participantName = userName;
-    const scenarioTitle = scenario?.name || 'Donna Drive Scenario';
-    const roleName = scenario?.roles.find(r => r.id === roleId)?.title || roleId;
+    const scenario = SCENARIOS.find((item) => item.name === orgResult.data?.property_name) || SCENARIOS[0]
+    const role = scenario.roles.find((item) => item.id === roleSlug)
+    const tasks = taskResult.data || []
+    const completedTasks = tasks.filter((task) => task.status === 'completed')
+    const taskLines = tasks.length
+      ? tasks.map((task) => `<li><strong>${escapeHtml(task.title)}</strong> - ${escapeHtml(task.status.replaceAll('_', ' '))}</li>`).join('')
+      : '<li>No role tasks were recorded.</li>'
+    const chats = chatResult.data || []
+    const interactionLines = chats.length
+      ? chats.slice(-8).map((chat) => `<li>${escapeHtml(chat.message)}</li>`).join('')
+      : '<li>No DONNA or DIN interactions were recorded.</li>'
 
     const emailHtml = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-        <h2>Your Donna Drive Session Summary</h2>
-        <p>Hi ${participantName},</p>
-        <p>Thanks for participating in today’s Donna Drive event.</p>
-        <p><strong>Scenario:</strong><br/> ${scenarioTitle}</p>
-        <p><strong>Your Role:</strong><br/> ${roleName}</p>
-        <hr style="border: 1px solid #eee;" />
-        <h3>Key Interactions & Completed Tasks:</h3>
-        <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; white-space: pre-wrap; font-size: 13px;">${interactions.slice(-1000)}</pre>
-        <hr style="border: 1px solid #eee;" />
-        <p>Want Donna working inside your business every day?</p>
-        <p><a href="https://askdonna.com" style="background: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Learn more here</a></p>
-        <p>– Donna<br/>Digital Operations Neural Network Assistant</p>
-      </div>
-    `;
+      <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #20242c; line-height: 1.55;">
+        <h2>Your DONNA Drive event breakdown</h2>
+        <p>Hi ${escapeHtml(attendee.display_name || 'Attendee')},</p>
+        <p>Thanks for joining the DONNA Drive event.</p>
+        <p><strong>Scenario:</strong> ${escapeHtml(scenario.name)}<br />
+        <strong>Your role:</strong> ${escapeHtml(role?.title || roleSlug)}<br />
+        <strong>Progress:</strong> ${completedTasks.length} of ${tasks.length} assigned tasks completed</p>
+        <h3>Your task breakdown</h3><ul>${taskLines}</ul>
+        <h3>Recent DONNA and DIN activity</h3><ul>${interactionLines}</ul>
+        <p>Thank you for participating.</p>
+        <p>- DONNA<br />Digital Operations Neural Network Assistant</p>
+      </div>`
 
-    // Only send if we have a real key, otherwise just print to console for demo
-    if (process.env.RESEND_API_KEY) {
-        await resend.emails.send({
-            from: 'Donna Drive <donna@askdonna.com>', // ensure this is a verified domain
-            to: memberData.email,
-            subject: 'Your Donna Drive Session Summary',
-            html: emailHtml
-        });
-    } else {
-        console.log("RESEND_API_KEY not set. Would have sent email:");
-        console.log(emailHtml);
+    const resend = getResend()
+    if (!resend) {
+      console.info('[DONNA Drive] Summary requested without RESEND_API_KEY', { memberId: member.id })
+      return NextResponse.json({ success: false, message: 'Event email delivery is not configured.' }, { status: 503 })
     }
 
-    return NextResponse.json({ success: true, message: 'Summary emailed' });
+    const { error: emailError } = await resend.emails.send({
+      from: 'DONNA Drive <donna@askdonna.com>',
+      to: attendee.email,
+      subject: 'Your DONNA Drive event breakdown',
+      html: emailHtml,
+    })
+    if (emailError) throw emailError
 
-  } catch (error: any) {
-    console.error('Summary API error:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Your event breakdown was sent to your registration email.' })
+  } catch (error) {
+    if (error instanceof TaskAuthError) {
+      return NextResponse.json({ success: false, message: error.message }, { status: error.status })
+    }
+    console.error('[DONNA Drive] Summary API error:', error)
+    return NextResponse.json({ success: false, message: 'Your event breakdown could not be sent.' }, { status: 500 })
   }
 }

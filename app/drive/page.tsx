@@ -132,7 +132,7 @@ export default function DriveLandingPage() {
             </div>
             
             <div className="mt-4 text-sm text-white/70 italic border-l-2 border-cyan-400/50 pl-3">
-              "{activeScenario.scenarioBrief}"
+              &ldquo;{activeScenario.scenarioBrief}&rdquo;
             </div>
           </motion.div>
 
@@ -141,7 +141,7 @@ export default function DriveLandingPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
-            className="mt-10"
+            className="mt-10 flex flex-wrap items-center justify-center gap-3"
           >
             <Link
               href="/drive/register"
@@ -149,6 +149,13 @@ export default function DriveLandingPage() {
             >
               Register for DONNA Drive
               <ArrowRight className="w-5 h-5 ml-1" />
+            </Link>
+            <Link
+              href="/drive/facilitator"
+              className="donna-btn-glass inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm text-white/80 transition-colors hover:bg-white/10"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Facilitator access
             </Link>
           </motion.div>
         </div>

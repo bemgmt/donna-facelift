@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
-
-const VERTICAL_MAP: Record<string, string> = {
-  'Real Estate': 'real_estate',
-  'Hospitality': 'hospitality',
-  'Professional Services': 'professional_services',
-  'real_estate': 'real_estate',
-  'hospitality': 'hospitality',
-  'professional_services': 'professional_services'
-}
+import { normalizeDriveIndustry } from '@/lib/donna-drive/industries'
 
 export async function POST(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -38,6 +30,14 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const vertical = normalizeDriveIndustry(industry)
+  if (!vertical) {
+    return NextResponse.json(
+      { success: false, message: 'Please select a recognized industry' },
+      { status: 400 }
+    )
+  }
+
   const supabase = getSupabaseAdmin()
   if (!supabase) {
     // Fallback preview mode
@@ -48,9 +48,23 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  try {
-    const vertical = VERTICAL_MAP[industry] || 'real_estate'
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json(
+      { success: false, message: 'An authenticated attendee session is required' },
+      { status: 401 }
+    )
+  }
 
+  const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.slice(7))
+  if (authError || !user) {
+    return NextResponse.json({ success: false, message: 'Your attendee session has expired' }, { status: 401 })
+  }
+  if (user.id !== user_id || user.email?.toLowerCase() !== String(email).toLowerCase()) {
+    return NextResponse.json({ success: false, message: 'The attendee identity does not match this registration' }, { status: 403 })
+  }
+
+  try {
     // 1. Insert or update the public.users record
     const { error: userError } = await supabase
       .from('users')
@@ -83,7 +97,7 @@ export async function POST(request: NextRequest) {
           display_name: name,
           company: company || '',
           phone: phone || '',
-          industry: industry || '',
+          industry: vertical,
           email
         })
         .eq('id', memberId)
@@ -101,7 +115,7 @@ export async function POST(request: NextRequest) {
           display_name: name,
           company: company || '',
           phone: phone || '',
-          industry: industry || '',
+          industry: vertical,
           email,
           role_id: null, // assigned by admin during staging
           is_facilitator: false

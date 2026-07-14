@@ -2,16 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Building2, RefreshCw, AlertTriangle, CheckCircle2, User, Globe, ShieldAlert, ArrowRight, LogOut } from "lucide-react"
-import Link from "next/link"
+import { Building2, RefreshCw, AlertTriangle, CheckCircle2, Globe, ShieldAlert, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
-
-const INDUSTRIES = [
-  { slug: "Real Estate", label: "Real Estate" },
-  { slug: "Hospitality", label: "Hospitality" },
-  { slug: "Professional Services", label: "Professional Services" },
-]
+import { supabase, isSupabaseConfigured } from "@/lib/supabase"
+import { DRIVE_INDUSTRIES, normalizeDriveIndustry, type DriveIndustrySlug } from "@/lib/donna-drive/industries"
 
 export default function WaitingRoomPage() {
   const router = useRouter()
@@ -19,7 +13,7 @@ export default function WaitingRoomPage() {
   // Attendee state from local storage
   const [userName, setUserName] = useState("")
   const [memberId, setMemberId] = useState("")
-  const [currentIndustry, setCurrentIndustry] = useState("Real Estate")
+  const [currentIndustry, setCurrentIndustry] = useState<DriveIndustrySlug>("real_estate")
   const [assignedRoleLabel, setAssignedRoleLabel] = useState("Not Assigned Yet")
   const [assignedRoleSlug, setAssignedRoleSlug] = useState("")
   
@@ -35,7 +29,7 @@ export default function WaitingRoomPage() {
     if (typeof window !== "undefined") {
       const name = localStorage.getItem("donna_drive_user_name") || "Attendee"
       const mId = localStorage.getItem("donna_drive_member_id") || ""
-      const ind = localStorage.getItem("donna_drive_industry") || "Real Estate"
+      const ind = normalizeDriveIndustry(localStorage.getItem("donna_drive_industry")) || "real_estate"
       const cachedRole = localStorage.getItem("donna_drive_role") || ""
       
       setUserName(name)
@@ -62,21 +56,36 @@ export default function WaitingRoomPage() {
         if (data.success) {
           setOrgStatus(data.org_status)
           setAssignedRoleLabel(data.role_label)
-          setCurrentIndustry(data.industry)
+          const industry = normalizeDriveIndustry(data.industry)
+          if (industry) {
+            setCurrentIndustry(industry)
+            localStorage.setItem("donna_drive_industry", industry)
+          }
           
-          // Check if role has been switched
+          // Keep assigned and unassigned role state synchronized.
           const cachedRole = localStorage.getItem("donna_drive_role") || ""
-          if (data.role_slug && data.role_slug !== cachedRole) {
-            localStorage.setItem("donna_drive_role", data.role_slug)
-            setAssignedRoleSlug(data.role_slug)
-            setRoleSwitched(true)
+          if (data.role_slug !== cachedRole) {
+            localStorage.setItem("donna_drive_role", data.role_slug || "")
+            setAssignedRoleSlug(data.role_slug || "")
+            setRoleSwitched(Boolean(data.role_slug))
           }
 
-          // If the event goes live, automatically redirect to the interactive grid
+          // Route attendees as the event moves into or out of the live workspace.
+          if (data.org_status === "completed") {
+            router.replace("/drive/summary")
+          }
           if (data.org_status === "live") {
             localStorage.setItem("donna_demo_session", "true")
-            router.push("/")
+            const roleQuery = data.role_slug
+              ? `?role=${encodeURIComponent(data.role_slug)}`
+              : ""
+            router.push(`/drive/dashboard${roleQuery}`)
           }
+        } else if (res.status === 404) {
+          localStorage.removeItem("donna_drive_member_id")
+          localStorage.removeItem("donna_drive_role")
+          setError("You were removed from this waiting room. Redirecting to registration...")
+          setTimeout(() => router.replace("/drive/register"), 1500)
         }
       } catch (err) {
         console.error("Waiting room check error:", err)
@@ -88,13 +97,25 @@ export default function WaitingRoomPage() {
     // Initial check
     checkStatus()
 
-    // Poll every 3 seconds
+    // Subscribe for immediate cross-browser updates. Polling remains as a
+    // fallback if the Realtime socket is interrupted.
+    const channel = isSupabaseConfigured
+      ? supabase
+          .channel("donna-drive-waiting-" + memberId)
+          .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_members", filter: "id=eq." + memberId }, checkStatus)
+          .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_organizations", filter: "id=eq.dd-org-001" }, checkStatus)
+          .subscribe()
+      : null
+
     const interval = setInterval(checkStatus, 3000)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      if (channel) void supabase.removeChannel(channel)
+    }
   }, [memberId, router])
 
   // Switch industry handler
-  const handleSwitchIndustry = async (industryName: string) => {
+  const handleSwitchIndustry = async (industry: DriveIndustrySlug) => {
     if (orgStatus === "live" || orgStatus === "completed") {
       return
     }
@@ -106,14 +127,14 @@ export default function WaitingRoomPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           member_id: memberId,
-          industry: industryName
+          industry
         }),
       })
 
       const data = await res.json()
       if (data.success) {
-        setCurrentIndustry(industryName)
-        localStorage.setItem("donna_drive_industry", industryName)
+        setCurrentIndustry(industry)
+        localStorage.setItem("donna_drive_industry", industry)
       } else {
         setError(data.message || "Failed to update industry.")
       }
@@ -201,6 +222,12 @@ export default function WaitingRoomPage() {
           )}
         </AnimatePresence>
 
+        {error && (
+          <div role="alert" className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
         {/* Main Card */}
         <div className="glass rounded-2xl border border-white/10 overflow-hidden bg-black/30 backdrop-blur-md">
           {/* Header */}
@@ -234,8 +261,8 @@ export default function WaitingRoomPage() {
               </p>
 
               <div className="space-y-2">
-                {INDUSTRIES.map((ind) => {
-                  const isActive = currentIndustry.toLowerCase().replace(/ /g, '_') === ind.slug.toLowerCase().replace(/ /g, '_')
+                {DRIVE_INDUSTRIES.map((ind) => {
+                  const isActive = currentIndustry === ind.slug
                   return (
                     <button
                       key={ind.slug}

@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Settings, Database, Play, Lock, RefreshCw, AlertTriangle, FileWarning,
-  Clock, TrendingDown, FileX, Zap, Users, CheckCircle, Mail, LogOut,
+  Clock, TrendingDown, FileX, Zap, Users, CheckCircle, LogOut,
   ArrowLeft, ArrowRight, Gavel, Sparkles, MessageSquare, ShieldCheck,
-  ChevronDown, CheckCircle2, Circle
+  ChevronDown, CheckCircle2, Circle, Trash2
 } from "lucide-react"
 import { toast } from "sonner"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
@@ -15,11 +15,27 @@ import { SCENARIOS } from "@/lib/donna-drive/scenarios"
 
 type FacilitatorTab = "dashboard" | "new_event" | "staged_live" | "view_old"
 
+type TaskActivity = {
+  id: string
+  task_id: string
+  event_type: string
+  from_status: string | null
+  to_status: string
+  payload?: { note?: string }
+  donna_drive_tasks?: { title?: string; scenario_task_id?: string } | null
+}
+
+type FacilitatorStats = {
+  blockedTasks?: Array<{ id: string }>
+  recentActivity?: TaskActivity[]
+  progressByRole?: Record<string, { completed: number; total: number }>
+  totalUsersInQueue?: number
+}
+
 export default function FacilitatorDashboard() {
-  const [session, setSession] = useState<any>(null)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isAuthenticating, setIsAuthenticating] = useState(true)
+  const [driveSecret, setDriveSecret] = useState("")
+  const [secretAuthenticated, setSecretAuthenticated] = useState(false)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
 
   // Tab State
   const [activeTab, setActiveTab] = useState<FacilitatorTab>("dashboard")
@@ -33,6 +49,7 @@ export default function FacilitatorDashboard() {
   
   // Attendees & History
   const [members, setMembers] = useState<any[]>([])
+  const [availableRoles, setAvailableRoles] = useState<any[]>([])
   const [pastEvents, setPastEvents] = useState<any[]>([])
   const [expandedPastEventId, setExpandedPastEventId] = useState<string | null>(null)
   
@@ -42,7 +59,7 @@ export default function FacilitatorDashboard() {
   const [isStaging, setIsStaging] = useState(false)
 
   // Live progress stats
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<FacilitatorStats | null>(null)
   const [isFetchingStats, setIsFetchingStats] = useState(false)
   
   // Chat State
@@ -52,50 +69,14 @@ export default function FacilitatorDashboard() {
   const [sendingChat, setSendingChat] = useState(false)
 
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const hasFacilitatorAccess = secretAuthenticated
+  const facilitatorHeaders = { "Content-Type": "application/json" }
 
-  // Check auth & fetch initial data
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setIsAuthenticating(false)
-      return
-    }
-
-    let subscription: any = null
-
-    try {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session)
-        setIsAuthenticating(false)
-        if (session) {
-          fetchStatusAndMembers()
-        }
-      }).catch(err => {
-        console.error("Auth session retrieval error:", err)
-        setIsAuthenticating(false)
-      })
-
-      const authChangeRes = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session)
-        if (session) {
-          fetchStatusAndMembers()
-        }
-      })
-      subscription = authChangeRes.data?.subscription
-    } catch (err) {
-      console.error("Failed to initialize auth listeners:", err)
-      setIsAuthenticating(false)
-    }
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe()
-      }
-    }
-  }, [])
-
+  // Facilitator controls are intentionally secret-only. Existing attendee or
+  // Supabase account sessions never unlock this screen automatically.
   // Poll status, statistics, and chats
   useEffect(() => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
 
     fetchStatusAndMembers()
     fetchStats()
@@ -108,7 +89,31 @@ export default function FacilitatorDashboard() {
     }, 4000)
 
     return () => clearInterval(interval)
-  }, [session, selectedChatMemberId])
+  }, [hasFacilitatorAccess, selectedChatMemberId])
+
+  // Supabase Realtime refreshes the facilitator queue immediately. The polling
+  // interval above remains as a recovery fallback for temporary socket failures.
+  useEffect(() => {
+    if (!hasFacilitatorAccess || !isSupabaseConfigured) return
+
+    const refresh = () => {
+      fetchStatusAndMembers()
+      fetchStats()
+    }
+
+    const channel = supabase
+      .channel("donna-drive-facilitator")
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_members", filter: "org_id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_roles", filter: "org_id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_organizations", filter: "id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_tasks", filter: "org_id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "donna_drive_task_events", filter: "org_id=eq.dd-org-001" }, refresh)
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [hasFacilitatorAccess])
 
   // Scroll chat to bottom on updates
   useEffect(() => {
@@ -127,6 +132,7 @@ export default function FacilitatorDashboard() {
         setPropertyValue(data.property_value)
         setOrgDescription(data.org_description)
         setMembers(data.members || [])
+        setAvailableRoles(data.roles || [])
         setPastEvents(data.past_events || [])
       }
     } catch (err) {
@@ -136,11 +142,11 @@ export default function FacilitatorDashboard() {
 
   // Fetch Live Task Progress statistics
   const fetchStats = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     setIsFetchingStats(true)
     try {
       const res = await fetch("/api/demo/facilitator/stats", {
-        headers: { Authorization: `Bearer ${session.access_token}` }
+        headers: facilitatorHeaders
       })
       const data = await res.json()
       if (data.success && data.stats) {
@@ -169,28 +175,40 @@ export default function FacilitatorDashboard() {
     }
   }
 
-  // Form Submission — Login
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSecretLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsAuthenticating(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      toast.error(error.message)
+    try {
+      const response = await fetch("/api/demo/facilitator/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: driveSecret }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        toast.error(data.message || "Invalid Drive secret")
+        return
+      }
+      setSecretAuthenticated(true)
+      setDriveSecret("")
+      toast.success("Facilitator controls unlocked")
+      fetchStatusAndMembers()
+    } catch {
+      toast.error("Unable to verify the Drive secret")
+    } finally {
       setIsAuthenticating(false)
-    } else {
-      toast.success("Signed in successfully!")
     }
   }
 
-  // Log out
+  // Lock facilitator controls without changing the attendee account session.
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setSession(null)
+    await fetch("/api/demo/facilitator/auth", { method: "DELETE" })
+    setSecretAuthenticated(false)
   }
 
   // Stage a new event (Move to Staging)
   const handleStageEvent = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     setIsStaging(true)
     
     const scenarioDef = SCENARIOS.find(s => s.id === selectedScenario)
@@ -198,10 +216,7 @@ export default function FacilitatorDashboard() {
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           action: "stage",
           scenario: selectedScenario,
@@ -227,14 +242,11 @@ export default function FacilitatorDashboard() {
 
   // Auto-Sort Users inside Staging Room
   const handleAutoSort = async () => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({ action: "auto_sort" })
       })
       const data = await res.json()
@@ -251,14 +263,11 @@ export default function FacilitatorDashboard() {
 
   // Update Individual Attendee Role slug
   const handleAssignRole = async (memberId: string, roleSlug: string) => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           action: "assign_role",
           member_id: memberId,
@@ -277,16 +286,35 @@ export default function FacilitatorDashboard() {
     }
   }
 
-  // Start Live Event
-  const handleStartLiveEvent = async () => {
-    if (!session) return
+  const handleRemoveMember = async (memberId: string, displayName: string) => {
+    if (!hasFacilitatorAccess) return
+    if (!window.confirm("Remove " + displayName + " from the waiting room?")) return
+
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
+        body: JSON.stringify({ action: "remove_member", member_id: memberId })
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(displayName + " was removed from the waiting room.")
+        fetchStatusAndMembers()
+      } else {
+        toast.error(data.message || "Failed to remove attendee.")
+      }
+    } catch {
+      toast.error("Error removing attendee.")
+    }
+  }
+
+  // Start Live Event
+  const handleStartLiveEvent = async () => {
+    if (!hasFacilitatorAccess) return
+    try {
+      const res = await fetch("/api/demo/event-status", {
+        method: "POST",
+        headers: facilitatorHeaders,
         body: JSON.stringify({ action: "start" })
       })
       const data = await res.json()
@@ -303,16 +331,13 @@ export default function FacilitatorDashboard() {
 
   // End Live Event
   const handleEndEvent = async () => {
-    if (!session) return
-    if (!confirm("Are you sure you want to end this event? This will archive the progress and reset the room.")) return
+    if (!hasFacilitatorAccess) return
+    if (!confirm("Are you sure you want to end this event? This will archive the progress and close attendee workspaces.")) return
 
     try {
       const res = await fetch("/api/demo/event-status", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({ action: "end" })
       })
       const data = await res.json()
@@ -330,14 +355,11 @@ export default function FacilitatorDashboard() {
 
   // Inject Scenario Incident
   const handleInjectEvent = async (eventType: string) => {
-    if (!session) return
+    if (!hasFacilitatorAccess) return
     try {
       const res = await fetch("/api/demo/event", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           event_type: eventType,
           org_id: "dd-org-001"
@@ -364,7 +386,7 @@ export default function FacilitatorDashboard() {
     try {
       const res = await fetch("/api/demo/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: facilitatorHeaders,
         body: JSON.stringify({
           org_id: "dd-org-001",
           member_id: selectedChatMemberId,
@@ -418,7 +440,7 @@ export default function FacilitatorDashboard() {
   }
 
   // Authentication Login Screen
-  if (!session) {
+  if (!hasFacilitatorAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#0C0F16] to-[#10121A]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
@@ -428,39 +450,28 @@ export default function FacilitatorDashboard() {
                 <Lock className="w-8 h-8 text-cyan-400" />
               </div>
               <h1 className="text-2xl font-semibold text-white">Facilitator Login</h1>
-              <p className="text-white/50 text-sm">Access the live simulation control panel</p>
+              <p className="text-white/50 text-sm">Enter the Drive secret to access the live simulation control panel</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleSecretLogin} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm text-white/70 flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-white/70 flex items-center gap-2">
-                  <Lock className="w-4 h-4" /> Password
+                <label className="flex items-center gap-2 text-sm text-white/70">
+                  <ShieldCheck className="w-4 h-4" /> Drive Secret
                 </label>
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-400/50 outline-none"
+                  value={driveSecret}
+                  onChange={(e) => setDriveSecret(e.target.value)}
+                  placeholder="Enter facilitator Drive secret"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-400/50 outline-none"
                   required
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 rounded-xl transition-colors mt-6"
+                className="w-full border border-purple-400/30 bg-purple-500/15 hover:bg-purple-500/25 text-purple-100 font-semibold py-3 rounded-xl transition-colors"
               >
-                Sign In
+                Unlock with Drive Secret
               </button>
             </form>
           </div>
@@ -471,9 +482,8 @@ export default function FacilitatorDashboard() {
 
   // Active scenario definition details
   const activeScenarioDef = SCENARIOS.find(s => s.id === selectedScenario)
-  // Find live scenario roles based on propertyName matching scenario name
-  const liveScenarioDef = SCENARIOS.find(s => s.name === propertyName)
-  const activeRoles = liveScenarioDef?.roles || []
+  // Use the roles returned by the staged event instead of inferring them from UI state.
+  const activeRoles = availableRoles
 
   return (
     <div className="min-h-screen bg-transparent text-white overflow-hidden py-12 px-4 sm:px-6 lg:px-8 relative">
@@ -758,11 +768,20 @@ export default function FacilitatorDashboard() {
                           >
                             <option value="">-- Choose Role --</option>
                             {activeRoles.map((role) => (
-                              <option key={role.id} value={role.id}>
-                                {role.title}
+                              <option key={role.id} value={role.slug}>
+                                {role.label}
                               </option>
                             ))}
                           </select>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMember(member.id, member.display_name)}
+                            className="rounded-lg border border-red-400/20 bg-red-500/10 p-1.5 text-red-300 transition-colors hover:bg-red-500/20"
+                            aria-label={"Remove " + member.display_name + " from waiting room"}
+                            title="Remove attendee"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
                     ))
@@ -805,7 +824,7 @@ export default function FacilitatorDashboard() {
                         Task tracker inactive. Attendees will populate checklist logs on load.
                       </div>
                     ) : (
-                      Object.entries(stats.progressByRole).map(([roleSlug, data]: [string, any]) => {
+                      Object.entries(stats.progressByRole).map(([roleSlug, data]) => {
                         const percentage = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0
                         return (
                           <div key={roleSlug} className="space-y-1">
@@ -826,6 +845,28 @@ export default function FacilitatorDashboard() {
                   </div>
                 </div>
 
+                <div className="glass rounded-2xl border border-white/10 p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                      <Zap className="w-4 h-4" /> Task Activity & Side Effects
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider text-white/35">{stats?.blockedTasks?.length || 0} blocked</span>
+                  </div>
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                    {!stats?.recentActivity?.length ? (
+                      <p className="py-5 text-center text-xs text-white/35">Task actions will appear here in real time.</p>
+                    ) : stats.recentActivity.map((activity) => (
+                      <div key={activity.id} className="rounded-xl border border-white/5 bg-black/20 p-3">
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-medium text-white/80">{activity.donna_drive_tasks?.scenario_task_id || activity.task_id} · {activity.donna_drive_tasks?.title || 'Task update'}</span>
+                          <span className={`shrink-0 uppercase tracking-wider ${activity.event_type === 'block' ? 'text-amber-300' : activity.event_type === 'complete' ? 'text-emerald-300' : 'text-cyan-300'}`}>{activity.event_type}</span>
+                        </div>
+                        {activity.payload?.note && <p className="mt-2 text-xs leading-5 text-white/45">{activity.payload.note}</p>}
+                        <p className="mt-2 text-[10px] uppercase tracking-wider text-white/25">{activity.from_status || 'new'} → {activity.to_status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 {/* 2. Help Desk Live Chat */}
                 <div className="glass rounded-2xl border border-white/10 p-6 flex flex-col h-[340px]">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5 mb-3">

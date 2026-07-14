@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
-
-const VERTICAL_MAP: Record<string, string> = {
-  'Real Estate': 'real_estate',
-  'Hospitality': 'hospitality',
-  'Professional Services': 'professional_services',
-  'real_estate': 'real_estate',
-  'hospitality': 'hospitality',
-  'professional_services': 'professional_services'
-}
+import { normalizeDriveIndustry } from '@/lib/donna-drive/industries'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -38,7 +30,7 @@ export async function GET(request: NextRequest) {
       org_status: 'staged',
       role_slug: 'commercial_broker',
       role_label: 'Commercial Broker',
-      industry: 'Real Estate'
+      industry: 'real_estate'
     })
   }
 
@@ -73,7 +65,7 @@ export async function GET(request: NextRequest) {
       org_status: org?.status || 'inactive',
       role_slug: member.donna_drive_roles?.slug || '',
       role_label: member.donna_drive_roles?.label || 'Not Assigned Yet',
-      industry: member.industry || 'Real Estate'
+      industry: normalizeDriveIndustry(member.industry) || 'real_estate'
     })
 
   } catch (error) {
@@ -112,14 +104,20 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const vertical = normalizeDriveIndustry(industry)
+  if (!vertical) {
+    return NextResponse.json(
+      { success: false, message: 'Please select a recognized industry' },
+      { status: 400 }
+    )
+  }
+
   const supabase = getSupabaseAdmin()
   if (!supabase) {
     return NextResponse.json({ success: true, message: 'Industry updated (Preview)' })
   }
 
   try {
-    const vertical = VERTICAL_MAP[industry] || 'real_estate'
-
     // 1. Get the member's user_id
     const { data: member, error: memberFetchError } = await supabase
       .from('donna_drive_members')
@@ -145,7 +143,7 @@ export async function POST(request: NextRequest) {
     // 3. Update industry on member record
     const { error: memberError } = await supabase
       .from('donna_drive_members')
-      .update({ industry })
+      .update({ industry: vertical })
       .eq('id', member_id)
 
     if (memberError) throw memberError

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { isDonnaDriveEnabled } from '@/lib/donna-drive/constants'
+import { isFacilitatorRequestAuthorized } from '@/lib/donna-drive/facilitator-auth'
 
 export async function GET(request: NextRequest) {
   if (!isDonnaDriveEnabled()) {
@@ -10,13 +11,10 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Verify auth from authorization header or cookies
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) {
+  if (!(await isFacilitatorRequestAuthorized(request))) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
   }
 
-  const token = authHeader.replace('Bearer ', '')
   const supabase = getSupabaseAdmin()
 
   if (!supabase) {
@@ -24,55 +22,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 1. Verify user session
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    
-    if (authError || !user) {
-      return NextResponse.json({ success: false, message: 'Invalid session' }, { status: 401 })
-    }
-
-    // 2. Check if user is admin by checking the 'profile' column in public.users table
-    let { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('profile')
-      .eq('email', user.email)
-      .single()
-
-    if (userError || !userData) {
-      // Auto-provision the user in the public.users table as a facilitator
-      const { data: newUser, error: insertError } = await supabase
-        .from('users')
-        .insert({
-          email: user.email,
-          name: user.email?.split('@')[0] || 'Demo User',
-          profile: { role: 'facilitator' }
-        })
-        .select('profile')
-        .single()
-      
-      if (insertError) {
-        console.error('[DONNA Drive] Auto-provisioning failed:', insertError)
-        return NextResponse.json({ success: false, message: 'User record not found and auto-provisioning failed' }, { status: 403 })
-      }
-      userData = newUser
-    }
-
-    // Check role column from profile JSONB
-    const role = userData?.profile?.role
-    if (role !== 'admin' && role !== 'facilitator') {
-      return NextResponse.json({ success: false, message: 'Access denied: User is not an admin' }, { status: 403 })
-    }
-
-    // 3. Fetch stats
+    // Fetch stats
     const orgId = 'dd-org-001' // Default demo org
 
     // Fetch total tasks
     const { data: tasks, error: tasksError } = await supabase
       .from('donna_drive_tasks')
-      .select('status, assigned_to')
+      .select('id, scenario_task_id, title, status, assigned_to, blocked_reason, updated_at')
       .eq('org_id', orgId)
 
     if (tasksError) throw tasksError
+
+    const { data: recentActivity, error: activityError } = await supabase
+      .from('donna_drive_task_events')
+      .select('id, task_id, event_type, from_status, to_status, payload, created_at, donna_drive_tasks(title, scenario_task_id, assigned_to)')
+      .eq('org_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(12)
+
+    if (activityError) throw activityError
 
     // Fetch assigned members
     // Fallback: If donna_drive_members doesn't exist, we just query contacts with roles.
@@ -105,7 +73,9 @@ export async function GET(request: NextRequest) {
       success: true,
       stats: {
         totalUsersInQueue,
-        progressByRole
+        progressByRole,
+        blockedTasks: (tasks || []).filter(task => task.status === 'blocked'),
+        recentActivity: recentActivity || []
       }
     })
 

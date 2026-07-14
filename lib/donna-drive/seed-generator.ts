@@ -10,6 +10,7 @@ import {
   DemoRoleSlug,
 } from './types'
 import { SCENARIOS } from './scenarios'
+import { enrichScenarioTask } from './task-engine'
 
 function daysFromNow(days: number): string {
   const d = new Date()
@@ -77,7 +78,8 @@ export function generateDemoSeedData(scenarioKey: ScenarioKey, orgId: string) {
     })
 
     tasks = scenarioPack.tasks.map((t, i) => {
-      let status: 'pending' | 'in_progress' | 'completed' | 'blocked' = 'pending'
+      let status: 'pending' | 'waiting' | 'in_progress' | 'completed' | 'blocked' = 'pending'
+      if (t.status === 'waiting') status = 'waiting'
       if (t.status === 'in_progress') status = 'in_progress'
       if (t.status === 'done') status = 'completed'
       
@@ -86,11 +88,11 @@ export function generateDemoSeedData(scenarioKey: ScenarioKey, orgId: string) {
         org_id: orgId,
         assigned_to: t.ownerRoleId,
         title: t.title,
-        description: t.title,
         status: status,
         priority: 'medium',
         due_date: daysFromNow(2),
-        dependency_task_ids: [],
+        ...enrichScenarioTask(t, i, orgId),
+        updated_at: daysAgo(5),
         created_at: daysAgo(5)
       }
     })
