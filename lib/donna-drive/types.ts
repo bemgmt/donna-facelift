@@ -110,7 +110,7 @@ export interface DemoTask {
   required_inputs?: string[]
   completion_criteria?: string[]
   evidence_requirements?: string[]
-  action_config?: { module?: string; label?: string }
+  action_config?: Record<string, unknown>
   updated_at?: string
   created_at: string
 }

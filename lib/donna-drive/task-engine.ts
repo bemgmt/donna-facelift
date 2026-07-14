@@ -12,6 +12,12 @@ export interface DriveTaskDefinition {
   evidenceRequirements: string[]
   actionModule: 'room' | 'din' | 'calendar' | 'secretary'
   actionLabel: string
+  completionEffects: {
+    documentName: string
+    notifyRoles: string[]
+    emailToRole?: string
+    emailSubject?: string
+  }
 }
 
 export interface DriveTaskRecord {
@@ -29,7 +35,16 @@ export interface DriveTaskRecord {
   required_inputs: string[]
   completion_criteria: string[]
   evidence_requirements: string[]
-  action_config: { module?: DriveTaskDefinition['actionModule']; label?: string }
+  action_config: {
+    module?: DriveTaskDefinition['actionModule']
+    label?: string
+    completion_effects?: {
+      document_name?: string
+      notify_roles?: string[]
+      email_to_role?: string
+      email_subject?: string
+    }
+  }
   started_at: string | null
   completed_at: string | null
   blocked_reason: string | null
@@ -39,6 +54,23 @@ export interface DriveTaskRecord {
   dependencies_complete?: boolean
 }
 
+export interface DriveTaskActivity {
+  id: string
+  task_id: string
+  event_type: DriveTaskAction
+  from_status: DriveTaskStatus | null
+  to_status: DriveTaskStatus | null
+  payload: { note?: string; side_effects?: Record<string, unknown> }
+  created_at: string
+}
+
+export interface DriveEcosystemData {
+  activity: DriveTaskActivity[]
+  notifications: Array<{ id: string; title: string; body: string; type: string; read: boolean; created_at: string }>
+  calendar: Array<{ id: string; title: string; description: string; start_time: string; end_time: string; location: string; attendees: string[] }>
+  documents: Array<{ id: string; name: string; type: string; uploaded_by: string; status: string; version: string | null; created_at: string }>
+  emails: Array<{ id: string; from_role: string; to_role: string; subject: string; body: string; read: boolean; created_at: string }>
+}
 export const VERNON_TASK_DEFINITIONS: Record<string, DriveTaskDefinition> = {
   'VCC-01': {
     scenarioTaskId: 'VCC-01',
@@ -54,6 +86,7 @@ export const VERNON_TASK_DEFINITIONS: Record<string, DriveTaskDefinition> = {
     evidenceRequirements: ['Title objection summary'],
     actionModule: 'room',
     actionLabel: 'Open title commitment',
+    completionEffects: { documentName: 'VCC_Title_Objection_Summary.txt', notifyRoles: ['vcc-acq-manager', 'vcc-surveyor', 'vcc-title-officer'] },
   },
   'VCC-02': {
     scenarioTaskId: 'VCC-02',
@@ -64,6 +97,7 @@ export const VERNON_TASK_DEFINITIONS: Record<string, DriveTaskDefinition> = {
     evidenceRequirements: ['Survey field-work summary'],
     actionModule: 'room',
     actionLabel: 'Open survey package',
+    completionEffects: { documentName: 'VCC_Survey_Field_Status.txt', notifyRoles: ['vcc-acq-manager', 'vcc-counsel', 'vcc-title-officer'] },
   },
   'VCC-03': {
     scenarioTaskId: 'VCC-03',
@@ -74,6 +108,7 @@ export const VERNON_TASK_DEFINITIONS: Record<string, DriveTaskDefinition> = {
     evidenceRequirements: ['Phase I questionnaire response summary'],
     actionModule: 'secretary',
     actionLabel: 'Draft questionnaire response',
+    completionEffects: { documentName: 'VCC_Phase_I_User_Questionnaire.txt', notifyRoles: ['vcc-env'] },
   },
   'VCC-04': {
     scenarioTaskId: 'VCC-04',
@@ -84,6 +119,7 @@ export const VERNON_TASK_DEFINITIONS: Record<string, DriveTaskDefinition> = {
     evidenceRequirements: ['Tenant estoppel status summary'],
     actionModule: 'din',
     actionLabel: 'Coordinate with DIN',
+    completionEffects: { documentName: 'VCC_Top_Tenant_Estoppel_Status.txt', notifyRoles: ['vcc-acq-manager', 'vcc-underwriter'] },
   },
   'VCC-05': {
     scenarioTaskId: 'VCC-05',
@@ -94,6 +130,7 @@ export const VERNON_TASK_DEFINITIONS: Record<string, DriveTaskDefinition> = {
     evidenceRequirements: ['Lender delivery confirmation'],
     actionModule: 'room',
     actionLabel: 'Review lender package',
+    completionEffects: { documentName: 'VCC_Lender_Operating_Package_Delivery.txt', notifyRoles: ['vcc-underwriter'], emailToRole: 'vcc-underwriter', emailSubject: 'Updated T-12, YTD, and AR aging delivered' },
   },
 }
 
@@ -107,7 +144,16 @@ export function enrichScenarioTask(task: TaskItem, index: number, orgId: string)
     required_inputs: definition?.requiredInputs || [],
     completion_criteria: definition?.completionCriteria || [],
     evidence_requirements: definition?.evidenceRequirements || [],
-    action_config: definition ? { module: definition.actionModule, label: definition.actionLabel } : {},
+    action_config: definition ? {
+      module: definition.actionModule,
+      label: definition.actionLabel,
+      completion_effects: {
+        document_name: definition.completionEffects.documentName,
+        notify_roles: definition.completionEffects.notifyRoles,
+        email_to_role: definition.completionEffects.emailToRole,
+        email_subject: definition.completionEffects.emailSubject,
+      },
+    } : {},
     dependency_task_ids: dependencies,
   }
 }

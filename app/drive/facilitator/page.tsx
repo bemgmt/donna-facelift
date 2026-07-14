@@ -15,6 +15,23 @@ import { SCENARIOS } from "@/lib/donna-drive/scenarios"
 
 type FacilitatorTab = "dashboard" | "new_event" | "staged_live" | "view_old"
 
+type TaskActivity = {
+  id: string
+  task_id: string
+  event_type: string
+  from_status: string | null
+  to_status: string
+  payload?: { note?: string }
+  donna_drive_tasks?: { title?: string; scenario_task_id?: string } | null
+}
+
+type FacilitatorStats = {
+  blockedTasks?: Array<{ id: string }>
+  recentActivity?: TaskActivity[]
+  progressByRole?: Record<string, { completed: number; total: number }>
+  totalUsersInQueue?: number
+}
+
 export default function FacilitatorDashboard() {
   const [driveSecret, setDriveSecret] = useState("")
   const [secretAuthenticated, setSecretAuthenticated] = useState(false)
@@ -42,7 +59,7 @@ export default function FacilitatorDashboard() {
   const [isStaging, setIsStaging] = useState(false)
 
   // Live progress stats
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<FacilitatorStats | null>(null)
   const [isFetchingStats, setIsFetchingStats] = useState(false)
   
   // Chat State
@@ -81,6 +98,7 @@ export default function FacilitatorDashboard() {
 
     const refresh = () => {
       fetchStatusAndMembers()
+      fetchStats()
     }
 
     const channel = supabase
@@ -88,6 +106,8 @@ export default function FacilitatorDashboard() {
       .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_members", filter: "org_id=eq.dd-org-001" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_roles", filter: "org_id=eq.dd-org-001" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_organizations", filter: "id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_tasks", filter: "org_id=eq.dd-org-001" }, refresh)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "donna_drive_task_events", filter: "org_id=eq.dd-org-001" }, refresh)
       .subscribe()
 
     return () => {
@@ -804,7 +824,7 @@ export default function FacilitatorDashboard() {
                         Task tracker inactive. Attendees will populate checklist logs on load.
                       </div>
                     ) : (
-                      Object.entries(stats.progressByRole).map(([roleSlug, data]: [string, any]) => {
+                      Object.entries(stats.progressByRole).map(([roleSlug, data]) => {
                         const percentage = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0
                         return (
                           <div key={roleSlug} className="space-y-1">
@@ -825,6 +845,28 @@ export default function FacilitatorDashboard() {
                   </div>
                 </div>
 
+                <div className="glass rounded-2xl border border-white/10 p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                      <Zap className="w-4 h-4" /> Task Activity & Side Effects
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider text-white/35">{stats?.blockedTasks?.length || 0} blocked</span>
+                  </div>
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                    {!stats?.recentActivity?.length ? (
+                      <p className="py-5 text-center text-xs text-white/35">Task actions will appear here in real time.</p>
+                    ) : stats.recentActivity.map((activity) => (
+                      <div key={activity.id} className="rounded-xl border border-white/5 bg-black/20 p-3">
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-medium text-white/80">{activity.donna_drive_tasks?.scenario_task_id || activity.task_id} · {activity.donna_drive_tasks?.title || 'Task update'}</span>
+                          <span className={`shrink-0 uppercase tracking-wider ${activity.event_type === 'block' ? 'text-amber-300' : activity.event_type === 'complete' ? 'text-emerald-300' : 'text-cyan-300'}`}>{activity.event_type}</span>
+                        </div>
+                        {activity.payload?.note && <p className="mt-2 text-xs leading-5 text-white/45">{activity.payload.note}</p>}
+                        <p className="mt-2 text-[10px] uppercase tracking-wider text-white/25">{activity.from_status || 'new'} → {activity.to_status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 {/* 2. Help Desk Live Chat */}
                 <div className="glass rounded-2xl border border-white/10 p-6 flex flex-col h-[340px]">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5 mb-3">

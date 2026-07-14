@@ -28,10 +28,19 @@ export async function GET(request: NextRequest) {
     // Fetch total tasks
     const { data: tasks, error: tasksError } = await supabase
       .from('donna_drive_tasks')
-      .select('status, assigned_to')
+      .select('id, scenario_task_id, title, status, assigned_to, blocked_reason, updated_at')
       .eq('org_id', orgId)
 
     if (tasksError) throw tasksError
+
+    const { data: recentActivity, error: activityError } = await supabase
+      .from('donna_drive_task_events')
+      .select('id, task_id, event_type, from_status, to_status, payload, created_at, donna_drive_tasks(title, scenario_task_id, assigned_to)')
+      .eq('org_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(12)
+
+    if (activityError) throw activityError
 
     // Fetch assigned members
     // Fallback: If donna_drive_members doesn't exist, we just query contacts with roles.
@@ -64,7 +73,9 @@ export async function GET(request: NextRequest) {
       success: true,
       stats: {
         totalUsersInQueue,
-        progressByRole
+        progressByRole,
+        blockedTasks: (tasks || []).filter(task => task.status === 'blocked'),
+        recentActivity: recentActivity || []
       }
     })
 

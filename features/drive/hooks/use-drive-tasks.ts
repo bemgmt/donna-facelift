@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
-import { VERNON_TASK_DEFINITIONS, type DriveTaskAction, type DriveTaskRecord } from "@/lib/donna-drive/task-engine"
+import { VERNON_TASK_DEFINITIONS, type DriveEcosystemData, type DriveTaskAction, type DriveTaskRecord } from "@/lib/donna-drive/task-engine"
 import type { ScenarioPack } from "@/lib/donna-drive/types"
 
 function fallbackTasks(scenario: ScenarioPack, roleId: string): DriveTaskRecord[] {
@@ -23,7 +23,16 @@ function fallbackTasks(scenario: ScenarioPack, roleId: string): DriveTaskRecord[
       required_inputs: definition?.requiredInputs || [],
       completion_criteria: definition?.completionCriteria || [],
       evidence_requirements: definition?.evidenceRequirements || [],
-      action_config: definition ? { module: definition.actionModule, label: definition.actionLabel } : {},
+      action_config: definition ? {
+        module: definition.actionModule,
+        label: definition.actionLabel,
+        completion_effects: {
+          document_name: definition.completionEffects.documentName,
+          notify_roles: definition.completionEffects.notifyRoles,
+          email_to_role: definition.completionEffects.emailToRole,
+          email_subject: definition.completionEffects.emailSubject,
+        },
+      } : {},
       started_at: null,
       completed_at: null,
       blocked_reason: null,
@@ -42,6 +51,7 @@ export function useDriveTasks(scenario: ScenarioPack, roleId: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null)
+  const [ecosystem, setEcosystem] = useState<DriveEcosystemData>({ activity: [], notifications: [], calendar: [], documents: [], emails: [] })
 
   const refresh = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -60,6 +70,7 @@ export function useDriveTasks(scenario: ScenarioPack, roleId: string) {
     const body = await response.json()
     if (!response.ok || !body.success) throw new Error(body.message || "Unable to load live tasks.")
     setTasks(body.tasks)
+    setEcosystem(body.ecosystem || { activity: [], notifications: [], calendar: [], documents: [], emails: [] })
     setLive(true)
     setError(null)
     setLoading(false)
@@ -71,6 +82,7 @@ export function useDriveTasks(scenario: ScenarioPack, roleId: string) {
     if (!live || !isSupabaseConfigured) return
     const channel = supabase.channel("drive-task-engine")
       .on("postgres_changes", { event: "*", schema: "public", table: "donna_drive_tasks", filter: "org_id=eq.dd-org-001" }, () => { refresh().catch(() => undefined) })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "donna_drive_task_events", filter: "org_id=eq.dd-org-001" }, () => { refresh().catch(() => undefined) })
       .subscribe()
     return () => { void supabase.removeChannel(channel) }
   }, [live, refresh])
@@ -93,5 +105,5 @@ export function useDriveTasks(scenario: ScenarioPack, roleId: string) {
     }
   }, [refresh])
 
-  return { tasks, live, loading, error, pendingTaskId, act, refresh }
+  return { tasks, ecosystem, live, loading, error, pendingTaskId, act, refresh }
 }

@@ -23,6 +23,37 @@ export async function GET(request: NextRequest) {
     const tasks = (data || []) as DriveTaskRecord[]
     const completedIds = new Set(tasks.filter((task) => task.status === 'completed').map((task) => task.id))
     const roleAssigned = Boolean(roleSlug)
+    const visibleActivityTaskIds = new Set(
+      tasks.filter((task) => facilitator || task.assigned_to === roleSlug).map((task) => task.id)
+    )
+
+    let notificationQuery = supabase
+      .from('donna_drive_notifications')
+      .select('id, title, body, type, read, created_at')
+      .eq('org_id', DRIVE_ORG_ID)
+      .or('id.like.task-%,id.like.din-ping-%')
+      .order('created_at', { ascending: false })
+      .limit(20)
+    let emailQuery = supabase
+      .from('donna_drive_emails')
+      .select('id, from_role, to_role, subject, body, read, created_at')
+      .eq('org_id', DRIVE_ORG_ID)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    if (!facilitator && roleSlug) {
+      notificationQuery = notificationQuery.eq('target_role', roleSlug)
+      emailQuery = emailQuery.eq('to_role', roleSlug)
+    }
+
+    const [activityResult, notificationResult, calendarResult, documentResult, emailResult] = await Promise.all([
+      supabase.from('donna_drive_task_events').select('id, task_id, event_type, from_status, to_status, payload, created_at').eq('org_id', DRIVE_ORG_ID).order('created_at', { ascending: false }).limit(50),
+      notificationQuery,
+      supabase.from('donna_drive_calendar_events').select('id, title, description, start_time, end_time, location, attendees').eq('org_id', DRIVE_ORG_ID).like('id', 'task-calendar-%').order('start_time', { ascending: true }),
+      supabase.from('donna_drive_documents').select('id, name, type, uploaded_by, status, version, created_at').eq('org_id', DRIVE_ORG_ID).like('id', 'task-evidence-%').order('created_at', { ascending: false }),
+      emailQuery,
+    ])
+    const ecosystemError = activityResult.error || notificationResult.error || calendarResult.error || documentResult.error || emailResult.error
+    if (ecosystemError) throw ecosystemError
 
     return NextResponse.json({
       success: true,
@@ -32,6 +63,13 @@ export async function GET(request: NextRequest) {
         can_act: facilitator || (roleAssigned && task.assigned_to === roleSlug),
         dependencies_complete: (task.dependency_task_ids || []).every((id) => completedIds.has(id)),
       })),
+      ecosystem: {
+        activity: (activityResult.data || []).filter((event) => facilitator || visibleActivityTaskIds.has(event.task_id)),
+        notifications: notificationResult.data || [],
+        calendar: calendarResult.data || [],
+        documents: documentResult.data || [],
+        emails: emailResult.data || [],
+      },
     })
   } catch (error) {
     return errorResponse(error)
