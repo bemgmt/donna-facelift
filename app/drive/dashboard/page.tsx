@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { withBasePath } from '@/lib/base-path'
 
 type Tab = "secretary" | "din"
 
@@ -54,7 +55,7 @@ function DriveDashboardContent() {
   // Fetch org info for dynamic banner
   const fetchOrgInfo = useCallback(async () => {
     try {
-      const res = await fetch("/api/demo/event-status")
+      const res = await fetch(withBasePath("/api/demo/event-status"))
       const json = await res.json()
       if (json.success) {
         setOrgInfo({
@@ -77,7 +78,7 @@ function DriveDashboardContent() {
   const fetchDinMembers = useCallback(async () => {
     setDinLoading(true)
     try {
-      const res = await fetch(`/api/donna-drive/din?my_role_id=${roleSlug}`)
+      const res = await fetch(withBasePath(`/api/donna-drive/din?my_role_id=${roleSlug}`))
       const json = await res.json()
       if (json.success) {
         setDinMembers(json.members || [])
@@ -110,7 +111,7 @@ function DriveDashboardContent() {
     setSendingChat(true)
 
     try {
-      const res = await fetch('/api/donna-drive/secretary', {
+      const res = await fetch(withBasePath('/api/donna-drive/secretary'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMessage, roleId: roleSlug })
@@ -137,7 +138,7 @@ function DriveDashboardContent() {
     }
     setDinSending(memberId)
     try {
-      const res = await fetch('/api/donna-drive/din', {
+      const res = await fetch(withBasePath('/api/donna-drive/din'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetMemberId: memberId, message, senderRoleId: roleSlug })

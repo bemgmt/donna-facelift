@@ -1,5 +1,7 @@
 "use client"
 
+import { withBasePath } from '@/lib/base-path'
+
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }, reset: () => void }) {
   return (
     <html>
@@ -9,7 +11,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           <h2 className="text-xl font-light mb-2">Something went wrong</h2>
           <p className="text-white/60 mb-6">{error.message || 'An unexpected error occurred.'}</p>
           <div className="flex gap-3 justify-center">
-            <a href="/" className="px-4 py-2 bg-white text-black rounded">Back to grid</a>
+            <a href={withBasePath('/')} className="px-4 py-2 bg-white text-black rounded">Back to grid</a>
             <button onClick={() => reset()} className="px-4 py-2 bg-white/10 rounded">Try again</button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import type React from "react"
 import { Send, Inbox, Star, Archive, Trash2, Mail, RefreshCw, Bot, Zap } from "lucide-react"
 import type { gmail_v1 } from 'googleapis'
 import DOMPurify from 'isomorphic-dompurify'
+import { withBasePath } from '@/lib/base-path'
 
 // Render sanitized HTML to prevent injection
 const EmailBody = ({ htmlBody }: { htmlBody: string }) => {
@@ -51,7 +52,7 @@ export default function EmailInterface() {
     fetchEmails()
     const fetchSettings = async () => {
       try {
-        const res = await fetch("/api/user/get-settings")
+        const res = await fetch(withBasePath("/api/user/get-settings"))
         const data = await res.json()
         if (data.success) setIsAutopilotOn(data.autopilot_enabled)
       } catch (error) {
@@ -66,7 +67,7 @@ export default function EmailInterface() {
     const newState = !isAutopilotOn
     setIsAutopilotOn(newState)
     try {
-      const res = await fetch("/api/user/set-autopilot", {
+      const res = await fetch(withBasePath("/api/user/set-autopilot"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: newState })
@@ -80,14 +81,14 @@ export default function EmailInterface() {
   }
 
   const startGmailConnect = () => {
-    window.location.href = "/api/gmail/oauth/start"
+    window.location.href = withBasePath("/api/gmail/oauth/start")
   }
 
   const fetchEmails = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch("/api/gmail/messages?limit=15")
+      const response = await fetch(withBasePath("/api/gmail/messages?limit=15"))
       if (response.status === 401) {
         setError("Please sign in to connect Gmail")
         setEmails([])
@@ -141,7 +142,7 @@ export default function EmailInterface() {
     }
     setIsSending(true)
     try {
-      const res = await fetch("/api/gmail/send", {
+      const res = await fetch(withBasePath("/api/gmail/send"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(composer)
@@ -176,7 +177,7 @@ export default function EmailInterface() {
     }
     setIsDrafting(true)
     try {
-      const res = await fetch("/api/gmail/draft-reply", {
+      const res = await fetch(withBasePath("/api/gmail/draft-reply"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: selectedEmail, goal: aiGoal })

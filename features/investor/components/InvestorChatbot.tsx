@@ -9,6 +9,7 @@ import { FuturisticInput } from "@/components/ui/futuristic-input"
 import { GlassCard } from "@/components/ui/glass-card"
 import { useTour } from "@/contexts/TourContext"
 import { useInvestorPreviewOptional } from "@/contexts/InvestorPreviewContext"
+import { withBasePath } from '@/lib/base-path'
 
 interface ChatMessage {
   id: string
@@ -315,7 +316,7 @@ export default function ChatWidget() {
     void (async () => {
       setKnowledgeChatLoading(true)
       try {
-        const res = await fetch("/api/knowledge-chat", {
+        const res = await fetch(withBasePath("/api/knowledge-chat"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { MessageSquare, X, Send, RefreshCw } from "lucide-react"
+import { withBasePath } from '@/lib/base-path'
 
 export default function FacilitatorSupportChat() {
   const [isOpen, setIsOpen] = useState(false)
@@ -28,7 +29,7 @@ export default function FacilitatorSupportChat() {
 
     const loadChats = async () => {
       try {
-        const res = await fetch(`/api/demo/chat?member_id=${memberId}`)
+        const res = await fetch(withBasePath(`/api/demo/chat?member_id=${memberId}`))
         const data = await res.json()
         if (data.success) {
           const newMessages = data.chats || []
@@ -75,7 +76,7 @@ export default function FacilitatorSupportChat() {
     setInputMessage("")
     
     try {
-      const res = await fetch("/api/demo/chat", {
+      const res = await fetch(withBasePath("/api/demo/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -8,6 +8,7 @@ import { VERTICALS, type VerticalKey } from "@/lib/constants/verticals"
 import { Loader2 } from "lucide-react"
 import { useOnboarding } from "@/contexts/OnboardingContext"
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow"
+import { withBasePath } from '@/lib/base-path'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -34,7 +35,7 @@ export default function OnboardingPage() {
     setError(null)
 
     try {
-      const response = await fetch('/api/user/vertical', {
+      const response = await fetch(withBasePath('/api/user/vertical'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

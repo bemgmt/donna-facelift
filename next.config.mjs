@@ -26,8 +26,10 @@ const nextConfig = {
   // Environment variables
 
 
-  // Configure base path if needed (disabled for Vercel deployment)
-  // basePath: process.env.NODE_ENV === 'production' ? '/donna/grid' : '',
+  // Serve the app under a sub-path when proxied (e.g. aidonna.co/demo).
+  // Vercel production defaults to /demo with no dashboard env required;
+  // previews and local dev stay at root unless NEXT_BASE_PATH is set.
+  basePath: process.env.NEXT_BASE_PATH || (process.env.VERCEL_ENV === 'production' ? '/demo' : ''),
 
   // Configure asset prefix for production (disabled for Vercel deployment)
   // assetPrefix: process.env.NODE_ENV === 'production' ? '/donna/grid' : '',

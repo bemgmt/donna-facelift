@@ -4,6 +4,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft, Rocket, Building2, CheckCircle2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { withBasePath } from '@/lib/base-path'
 
 export default function ConvertDemoPage() {
   const router = useRouter()
@@ -24,7 +25,7 @@ export default function ConvertDemoPage() {
     setError("")
 
     try {
-      const res = await fetch("/api/demo/convert", {
+      const res = await fetch(withBasePath("/api/demo/convert"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

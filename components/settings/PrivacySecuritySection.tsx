@@ -4,6 +4,7 @@ import SettingsSectionWrapper from "./SettingsSectionWrapper"
 import { SettingsFormField } from "./SettingsFormField"
 import { Button } from "@/components/ui/button"
 import { Download, Trash2, ExternalLink } from "lucide-react"
+import { withBasePath } from "@/lib/base-path"
 
 export default function PrivacySecuritySection() {
   const handleExportData = () => {
@@ -57,7 +58,7 @@ export default function PrivacySecuritySection() {
               size="sm"
               onClick={() => {
                 // TODO: Navigate to access logs viewer
-                window.open("/admin/logs", "_blank")
+                window.open(withBasePath("/admin/logs"), "_blank")
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
@@ -123,7 +124,7 @@ export default function PrivacySecuritySection() {
               size="sm"
               onClick={() => {
                 // TODO: Navigate to AI usage log
-                window.open("/admin/ai-usage", "_blank")
+                window.open(withBasePath("/admin/ai-usage"), "_blank")
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />

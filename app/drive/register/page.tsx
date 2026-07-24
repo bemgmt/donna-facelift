@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Building2, User, Briefcase, Mail, Phone, Globe, 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
+import { withBasePath } from '@/lib/base-path'
 
 const INDUSTRIES = [
   { slug: "real_estate", label: "Real Estate" },
@@ -72,7 +73,7 @@ export default function DriveRegisterPage() {
 
       // 2. Call backend register API to save user and member records
       const friendlyIndustry = INDUSTRIES.find(ind => ind.slug === form.industry)?.label || form.industry
-      const res = await fetch("/api/demo/register", {
+      const res = await fetch(withBasePath("/api/demo/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

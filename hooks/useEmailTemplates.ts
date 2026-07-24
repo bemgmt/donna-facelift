@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { EmailTemplate, TemplateFormData, UseEmailTemplatesReturn } from '@/types/email'
 import { toast } from '@/hooks/use-toast'
+import { withBasePath } from '@/lib/base-path'
 
 interface UseEmailTemplatesOptions {
   templateType?: 'personal' | 'campaign' | 'all'
@@ -34,7 +35,7 @@ export function useEmailTemplates(
         params.append('type', templateType)
       }
 
-      const response = await fetch(`/api/gmail/templates?${params}`)
+      const response = await fetch(withBasePath(`/api/gmail/templates?${params}`))
       
       if (!response.ok) {
         throw new Error(`Failed to fetch templates: ${response.statusText}`)
@@ -65,7 +66,7 @@ export function useEmailTemplates(
     setError(null)
 
     try {
-      const response = await fetch('/api/gmail/templates', {
+      const response = await fetch(withBasePath('/api/gmail/templates'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -113,7 +114,7 @@ export function useEmailTemplates(
     setError(null)
 
     try {
-      const response = await fetch('/api/gmail/templates', {
+      const response = await fetch(withBasePath('/api/gmail/templates'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -162,7 +163,7 @@ export function useEmailTemplates(
     setError(null)
 
     try {
-      const response = await fetch(`/api/gmail/templates?id=${id}`, {
+      const response = await fetch(withBasePath(`/api/gmail/templates?id=${id}`), {
         method: 'DELETE'
       })
 

@@ -2,6 +2,7 @@
 
 import * as Sentry from '@sentry/nextjs'
 import { Component, ReactNode } from 'react'
+import { withBasePath } from '@/lib/base-path'
 
 interface Props {
   children: ReactNode
@@ -58,7 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
               >
                 Try again
               </button>
-              <a href="/" className="px-4 py-2 bg-white/10 rounded">
+              <a href={withBasePath('/')} className="px-4 py-2 bg-white/10 rounded">
                 Back to home
               </a>
             </div>

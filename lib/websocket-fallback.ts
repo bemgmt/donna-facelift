@@ -1,3 +1,4 @@
+import { withBasePath } from '@/lib/base-path'
 /**
  * WebSocket Fallback Manager
  * Provides alternative communication methods when WebSocket server is unavailable
@@ -93,7 +94,7 @@ export class WebSocketFallbackManager {
     try {
       console.log('[WebSocket Fallback] Sending message via HTTP API')
       
-      const response = await fetch('/api/chat/fallback', {
+      const response = await fetch(withBasePath('/api/chat/fallback'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -148,7 +149,7 @@ export class WebSocketFallbackManager {
    */
   public async checkWebSocketAvailability(): Promise<boolean> {
     try {
-      const response = await fetch('/api/websocket-health', {
+      const response = await fetch(withBasePath('/api/websocket-health'), {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       })

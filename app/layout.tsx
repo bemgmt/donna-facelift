@@ -11,6 +11,7 @@ import { TourProvider } from '@/contexts/TourContext'
 import { DashboardConfigProvider } from '@/contexts/DashboardConfigContext'
 import { Toaster } from '@/components/ui/toaster'
 import dynamic from 'next/dynamic'
+import { withBasePath } from '@/lib/base-path'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -49,8 +50,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.svg" />
+        <link rel="icon" href={withBasePath('/favicon.svg')} type="image/svg+xml" />
+        <link rel="alternate icon" href={withBasePath('/favicon.svg')} />
         <style dangerouslySetInnerHTML={{
           __html: `html {
   font-family: ${inter.style.fontFamily}, system-ui, sans-serif;

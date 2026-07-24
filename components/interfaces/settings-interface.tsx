@@ -28,6 +28,7 @@ import AdvancedDeveloperSection from "@/components/settings/AdvancedDeveloperSec
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Save } from "lucide-react"
+import { withBasePath } from '@/lib/base-path'
 
 const settingsSections = [
   { id: "profile", label: "Profile & Identity", icon: User },
@@ -60,7 +61,7 @@ export default function SettingsInterface() {
     const loadSettings = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch("/api/chatbot_settings.php", {
+        const response = await fetch(withBasePath("/api/chatbot_settings.php"), {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -118,7 +119,7 @@ export default function SettingsInterface() {
       setIsSaving(true)
       const formData = form.getValues()
 
-      const response = await fetch("/api/chatbot_settings.php", {
+      const response = await fetch(withBasePath("/api/chatbot_settings.php"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

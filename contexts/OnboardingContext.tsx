@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { OnboardingState, OnboardingStep, TourState, TourStatus } from '@/types/onboarding'
+import { withBasePath } from '@/lib/base-path'
 
 interface OnboardingContextType {
   state: OnboardingState
@@ -170,7 +171,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const saveProgress = useCallback(async () => {
     try {
       // Save to backend API
-      const response = await fetch('/api/user/onboarding', {
+      const response = await fetch(withBasePath('/api/user/onboarding'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(state)
@@ -187,7 +188,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const loadProgress = useCallback(async () => {
     try {
-      const response = await fetch('/api/user/onboarding')
+      const response = await fetch(withBasePath('/api/user/onboarding'))
       if (response.ok) {
         const data = await response.json()
         if (data.progress) {

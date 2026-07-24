@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Loader2 } from 'lucide-react'
+import { withBasePath } from '@/lib/base-path'
 
 interface EmailComposerProps {
   onEmailSent?: (to: string, subject: string) => void
@@ -33,7 +34,7 @@ export default function EmailComposer({ onEmailSent, className }: EmailComposerP
       setError(null)
       setSuccess(false)
 
-      const response = await fetch('/api/gmail/send', {
+      const response = await fetch(withBasePath('/api/gmail/send'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

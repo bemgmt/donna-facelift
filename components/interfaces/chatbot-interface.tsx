@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Send, Bot, User, Loader2, Mic, MicOff, Volume2, VolumeX, Settings } from "lucide-react"
 import { useVoiceChat } from "@/hooks/use-voice-chat"
+import { withBasePath } from '@/lib/base-path'
 
 // Backend API base comes from env in Vercel; fallback to empty (relative)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || ''
@@ -55,7 +56,7 @@ export default function ChatbotInterface() {
       setRtMessages((prev) => [...prev, userEntry])
       setTextChatLoading(true)
       try {
-        const res = await fetch("/api/knowledge-chat", {
+        const res = await fetch(withBasePath("/api/knowledge-chat"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

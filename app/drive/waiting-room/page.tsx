@@ -6,6 +6,7 @@ import { Building2, RefreshCw, AlertTriangle, CheckCircle2, User, Globe, ShieldA
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { withBasePath } from '@/lib/base-path'
 
 const INDUSTRIES = [
   { slug: "Real Estate", label: "Real Estate" },
@@ -56,7 +57,7 @@ export default function WaitingRoomPage() {
 
     const checkStatus = async () => {
       try {
-        const res = await fetch(`/api/demo/waiting-room?member_id=${memberId}`)
+        const res = await fetch(withBasePath(`/api/demo/waiting-room?member_id=${memberId}`))
         const data = await res.json()
 
         if (data.success) {
@@ -101,7 +102,7 @@ export default function WaitingRoomPage() {
 
     setUpdatingIndustry(true)
     try {
-      const res = await fetch("/api/demo/waiting-room", {
+      const res = await fetch(withBasePath("/api/demo/waiting-room"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

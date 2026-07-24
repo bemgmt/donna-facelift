@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from 'react'
 import { useAudioRecorder } from './use-audio-recorder'
 import { useAudioPlayer } from './use-audio-player'
+import { withBasePath } from '@/lib/base-path'
 // Note: In production, import DonnaOpenAIClient for direct client-side processing
 
 export interface VoiceChatMessage {
@@ -182,7 +183,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
         timestamp: new Date()
       })
 
-      const response = await fetch('/api/knowledge-chat', {
+      const response = await fetch(withBasePath('/api/knowledge-chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
