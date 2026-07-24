@@ -37,6 +37,7 @@ import {
 } from "@/lib/investor/demo-seed"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import { withBasePath } from '@/lib/base-path'
 
 
 interface Meeting {
@@ -142,7 +143,7 @@ export default function SecretaryInterface(): JSX.Element {
     if (isLiveDemo && roleSlug) {
       const loadLiveSimulationData = async () => {
         try {
-          const res = await fetch(`/api/demo/data?role=${roleSlug}`)
+          const res = await fetch(withBasePath(`/api/demo/data?role=${roleSlug}`))
           const data = await res.json()
           
           if (data.success) {
@@ -191,7 +192,7 @@ export default function SecretaryInterface(): JSX.Element {
               
               // Mark the notification as read via backend API
               try {
-                await fetch('/api/demo/notifications/read', {
+                await fetch(withBasePath('/api/demo/notifications/read'), {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',

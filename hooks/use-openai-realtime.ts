@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { shouldRetry, getRetryDelay, isRetriableError } from '@/lib/reconnect-policy'
 import { checkWebSocketHealth, type WebSocketHealthResponse } from '@/lib/websocket-health-check'
+import { withBasePath } from '@/lib/base-path'
 
 export interface RealtimeMessage {
   id: string
@@ -110,7 +111,7 @@ export function useOpenAIRealtime(options: UseOpenAIRealtimeOptions = {}) {
 
       // Persist message to DB via API route
       if (wsRef.current) { // only persist if there is a session
-        fetch('/api/db/chat', {
+        fetch(withBasePath('/api/db/chat'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -697,7 +698,7 @@ export function useOpenAIRealtime(options: UseOpenAIRealtimeOptions = {}) {
     }
     // Optional fanout
     try {
-      fetch('/api/voice/fanout', {
+      fetch(withBasePath('/api/voice/fanout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'text_input', text, at: Date.now() }),

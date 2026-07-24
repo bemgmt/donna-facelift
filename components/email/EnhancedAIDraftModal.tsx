@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "@/hooks/use-toast"
 import { AIReplyOptions, EnhancedMessage } from "@/types/email"
+import { withBasePath } from '@/lib/base-path'
 
 interface EnhancedAIDraftModalProps {
   isOpen: boolean
@@ -127,7 +128,7 @@ export function EnhancedAIDraftModal({
         template_id: selectedTemplate || undefined
       }
 
-      const response = await fetch('/api/gmail/draft-reply', {
+      const response = await fetch(withBasePath('/api/gmail/draft-reply'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

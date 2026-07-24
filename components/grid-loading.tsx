@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { withBasePath } from "@/lib/base-path"
 
 /**
  * Beautiful brain loading screen for Donna
@@ -38,25 +39,25 @@ export default function GridLoading() {
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
             <a
-              href="/sales"
+              href={withBasePath("/sales")}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
             >
               Sales
             </a>
             <a
-              href="/marketing"
+              href={withBasePath("/marketing")}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
             >
               Marketing
             </a>
             <a
-              href="/chatbot"
+              href={withBasePath("/chatbot")}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
             >
               Chatbot
             </a>
             <a
-              href="/secretary"
+              href={withBasePath("/secretary")}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
             >
               Secretary

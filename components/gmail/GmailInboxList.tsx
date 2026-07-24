@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Mail, RefreshCw } from 'lucide-react'
+import { withBasePath } from '@/lib/base-path'
 
 interface EmailMessage {
   id: string
@@ -29,7 +30,7 @@ export default function GmailInboxList({ maxMessages = 5, className }: GmailInbo
       setLoading(true)
       setError(null)
       
-      const response = await fetch('/api/gmail/messages', { signal, cache: 'no-store' })
+      const response = await fetch(withBasePath('/api/gmail/messages'), { signal, cache: 'no-store' })
       if (!response.ok) {
         throw new Error(`Failed to fetch messages: ${response.statusText}`)
       }

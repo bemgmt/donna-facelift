@@ -1,6 +1,7 @@
 'use client'
 
 import type { Metric } from 'web-vitals'
+import { withBasePath } from '@/lib/base-path'
 
 type WebVitalsModule = typeof import('web-vitals')
 type Listener = (callback: Metric) => void
@@ -90,7 +91,7 @@ function sendToAnalytics(metric: WebVitalMetric) {
     })
   }
 
-  fetch('/api/analytics/web-vitals', {
+  fetch(withBasePath('/api/analytics/web-vitals'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

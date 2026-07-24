@@ -9,6 +9,7 @@ import { TagPill } from "@/components/din/ui/tag-pill"
 import type { MatchProfile } from "@/lib/din/types"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
+import { withBasePath } from '@/lib/base-path'
 
 const suggestedMatches: MatchProfile[] = [
   {
@@ -128,7 +129,7 @@ export default function SuggestedMatchesPage() {
     
     try {
       if (isLiveDemo) {
-        const res = await fetch(`/api/demo/data?role=${roleSlug}`)
+        const res = await fetch(withBasePath(`/api/demo/data?role=${roleSlug}`))
         const data = await res.json()
         
         if (data.success && data.tasks) {

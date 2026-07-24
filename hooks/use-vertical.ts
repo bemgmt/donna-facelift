@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { type VerticalKey } from "@/lib/constants/verticals"
+import { withBasePath } from '@/lib/base-path'
 
 export function useVertical() {
   const [vertical, setVertical] = useState<VerticalKey | null>(null)
@@ -11,7 +12,7 @@ export function useVertical() {
   useEffect(() => {
     const fetchVertical = async () => {
       try {
-        const response = await fetch('/api/user/vertical')
+        const response = await fetch(withBasePath('/api/user/vertical'))
         if (!response.ok) {
           throw new Error('Failed to fetch vertical')
         }

@@ -6,6 +6,7 @@ import { SettingsFormField } from "./SettingsFormField"
 import VerticalSpecificSettings from "./VerticalSpecificSettings"
 import { VERTICALS } from "@/lib/constants/verticals"
 import { ProfileIdentitySettings } from "@/types/settings"
+import { withBasePath } from "@/lib/base-path"
 
 // Common timezones
 const TIMEZONES = [
@@ -155,7 +156,7 @@ export default function ProfileIdentitySection() {
           {brandVoice === "custom" && planTier !== "pro" && planTier !== "enterprise" && (
             <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-sm text-yellow-300">
               Custom brand voice is available for Pro and Enterprise tiers only.{" "}
-              <a href="/billing" className="underline hover:text-yellow-200">
+              <a href={withBasePath('/billing')} className="underline hover:text-yellow-200">
                 Upgrade now
               </a>
             </div>

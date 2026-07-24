@@ -6,6 +6,7 @@ import {
   Zap, AlertTriangle, FileWarning, Clock, TrendingDown, FileX,
   ChevronDown, ChevronUp, CheckCircle2, Loader2,
 } from "lucide-react"
+import { withBasePath } from '@/lib/base-path'
 
 const EVENTS = [
   {
@@ -64,7 +65,7 @@ export default function FacilitatorPanel({
     setLastResult(null)
 
     try {
-      const res = await fetch("/api/demo/event", {
+      const res = await fetch(withBasePath("/api/demo/event"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

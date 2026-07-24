@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Mail, CheckCircle, AlertCircle } from 'lucide-react'
+import { withBasePath } from '@/lib/base-path'
 
 interface GmailConnectButtonProps {
   onConnected?: () => void
@@ -20,7 +21,7 @@ export default function GmailConnectButton({ onConnected, className }: GmailConn
     try {
       setIsConnecting(true)
       // Redirect to OAuth start endpoint
-      window.location.href = '/api/gmail/oauth/start'
+      window.location.href = withBasePath('/api/gmail/oauth/start')
     } catch (error) {
       console.error('Failed to start Gmail OAuth:', error)
       setConnectionStatus('error')

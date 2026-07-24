@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { withBasePath } from '@/lib/base-path'
 
 export interface DashboardWidget {
   id: string
@@ -47,7 +48,7 @@ export function DashboardConfigProvider({
     setIsLoading(true)
     try {
       const v = vertical || 'default'
-      const res = await fetch(`/api/user/dashboard-config?vertical=${encodeURIComponent(v)}`)
+      const res = await fetch(withBasePath(`/api/user/dashboard-config?vertical=${encodeURIComponent(v)}`))
       const data = await res.json()
       if (data.success && data.config) {
         setConfig({
@@ -77,7 +78,7 @@ export function DashboardConfigProvider({
       }
       setConfig(merged)
       try {
-        await fetch('/api/user/dashboard-config', {
+        await fetch(withBasePath('/api/user/dashboard-config'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

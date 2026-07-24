@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/AppSidebar"
+import { withBasePath } from '@/lib/base-path'
 
 export default function ProtectedLayout({
   children,
@@ -29,7 +30,7 @@ export default function ProtectedLayout({
 
     const checkVertical = async () => {
       try {
-        const response = await fetch("/api/user/vertical")
+        const response = await fetch(withBasePath("/api/user/vertical"))
 
         if (!response.ok) {
           setIsChecking(false)

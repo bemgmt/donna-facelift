@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { DEMO_EVENTS } from "@/lib/donna-drive/constants"
 import { SCENARIOS } from "@/lib/donna-drive/scenarios"
+import { withBasePath } from '@/lib/base-path'
 
 type FacilitatorTab = "dashboard" | "new_event" | "staged_live" | "view_old"
 
@@ -118,7 +119,7 @@ export default function FacilitatorDashboard() {
   // Fetch Event Status, Attendees Staged and History
   const fetchStatusAndMembers = async () => {
     try {
-      const res = await fetch("/api/demo/event-status")
+      const res = await fetch(withBasePath("/api/demo/event-status"))
       const data = await res.json()
       if (data.success) {
         setOrgStatus(data.org_status)
@@ -139,7 +140,7 @@ export default function FacilitatorDashboard() {
     if (!session) return
     setIsFetchingStats(true)
     try {
-      const res = await fetch("/api/demo/facilitator/stats", {
+      const res = await fetch(withBasePath("/api/demo/facilitator/stats"), {
         headers: { Authorization: `Bearer ${session.access_token}` }
       })
       const data = await res.json()
@@ -196,7 +197,7 @@ export default function FacilitatorDashboard() {
     const scenarioDef = SCENARIOS.find(s => s.id === selectedScenario)
     
     try {
-      const res = await fetch("/api/demo/event-status", {
+      const res = await fetch(withBasePath("/api/demo/event-status"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -229,7 +230,7 @@ export default function FacilitatorDashboard() {
   const handleAutoSort = async () => {
     if (!session) return
     try {
-      const res = await fetch("/api/demo/event-status", {
+      const res = await fetch(withBasePath("/api/demo/event-status"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -253,7 +254,7 @@ export default function FacilitatorDashboard() {
   const handleAssignRole = async (memberId: string, roleSlug: string) => {
     if (!session) return
     try {
-      const res = await fetch("/api/demo/event-status", {
+      const res = await fetch(withBasePath("/api/demo/event-status"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -281,7 +282,7 @@ export default function FacilitatorDashboard() {
   const handleStartLiveEvent = async () => {
     if (!session) return
     try {
-      const res = await fetch("/api/demo/event-status", {
+      const res = await fetch(withBasePath("/api/demo/event-status"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -307,7 +308,7 @@ export default function FacilitatorDashboard() {
     if (!confirm("Are you sure you want to end this event? This will archive the progress and reset the room.")) return
 
     try {
-      const res = await fetch("/api/demo/event-status", {
+      const res = await fetch(withBasePath("/api/demo/event-status"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -332,7 +333,7 @@ export default function FacilitatorDashboard() {
   const handleInjectEvent = async (eventType: string) => {
     if (!session) return
     try {
-      const res = await fetch("/api/demo/event", {
+      const res = await fetch(withBasePath("/api/demo/event"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -362,7 +363,7 @@ export default function FacilitatorDashboard() {
 
     setSendingChat(true)
     try {
-      const res = await fetch("/api/demo/chat", {
+      const res = await fetch(withBasePath("/api/demo/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -407,7 +408,7 @@ export default function FacilitatorDashboard() {
             The Facilitator Dashboard controls the live transaction database and requires an active Supabase connection.
           </p>
           <a
-            href="/drive"
+            href={withBasePath("/drive")}
             className="block w-full bg-white/5 hover:bg-white/10 text-white font-medium py-3 rounded-xl border border-white/10 transition-colors text-center text-sm"
           >
             Back to DONNA Drive

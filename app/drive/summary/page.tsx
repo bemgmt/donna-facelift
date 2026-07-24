@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { Mail, Award, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { withBasePath } from '@/lib/base-path'
 
 function SummaryContent() {
   const searchParams = useSearchParams()
@@ -17,7 +18,7 @@ function SummaryContent() {
   const handleEmailSummary = async () => {
     setEmailing(true)
     try {
-      const res = await fetch("/api/donna-drive/summary", {
+      const res = await fetch(withBasePath("/api/donna-drive/summary"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

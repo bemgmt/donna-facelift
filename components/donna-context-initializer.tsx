@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Shield, FileText, Eye, CheckCircle2 } from "lucide-react"
+import { withBasePath } from '@/lib/base-path'
 
 type InitializationStatus = 'idle' | 'initializing' | 'complete' | 'error'
 
@@ -74,7 +75,7 @@ export default function DonnaContextInitializer({
       
       // Load governance policy (if available)
       try {
-        const governanceResponse = await fetch('/api/governance/policy')
+        const governanceResponse = await fetch(withBasePath('/api/governance/policy'))
         if (governanceResponse.ok) {
           await governanceResponse.json()
         }
@@ -91,7 +92,7 @@ export default function DonnaContextInitializer({
       
       // Load UI awareness (if available)
       try {
-        const uiResponse = await fetch('/api/contexts/ui-awareness')
+        const uiResponse = await fetch(withBasePath('/api/contexts/ui-awareness'))
         if (uiResponse.ok) {
           await uiResponse.json()
         }

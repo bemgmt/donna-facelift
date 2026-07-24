@@ -62,7 +62,7 @@ export function useRealtimeVoice(): [RealtimeVoiceState, RealtimeVoiceActions] {
           }
           if (evt?.type === 'conversation.item.input_audio_transcription.completed' && evt.transcript) {
             // Fire and forget: POST to local events endpoint so other services can consume
-            fetch('/api/voice/events', {
+            fetch(withBasePath('/api/voice/events'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ kind: 'user_transcript', transcript: evt.transcript, itemId: evt.item_id, at: Date.now() })
@@ -76,7 +76,7 @@ export function useRealtimeVoice(): [RealtimeVoiceState, RealtimeVoiceActions] {
         try {
           const text = realtimeUtils?.getLastTextFromAudioOutputMessage?.(item as any)
           if (text) {
-            fetch('/api/voice/events', {
+            fetch(withBasePath('/api/voice/events'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ kind: 'assistant_output', text, itemId: item?.id, at: Date.now() })
@@ -133,3 +133,5 @@ export function useRealtimeVoice(): [RealtimeVoiceState, RealtimeVoiceActions] {
   return [state, { start, stop, pushToTalkStart, pushToTalkStop, clearError }]
 }
 
+
+import { withBasePath } from '@/lib/base-path'

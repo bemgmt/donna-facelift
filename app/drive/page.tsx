@@ -21,6 +21,7 @@ import {
 import Link from "next/link"
 import { SCENARIOS } from "@/lib/donna-drive/scenarios"
 import { ScenarioPack } from "@/lib/donna-drive/types"
+import { withBasePath } from '@/lib/base-path'
 
 const ICONS: Record<string, React.ReactNode> = {
   Briefcase: <Briefcase className="w-6 h-6" />,
@@ -52,7 +53,7 @@ export default function DriveLandingPage() {
   useEffect(() => {
     async function fetchStatus() {
       try {
-        const res = await fetch("/api/demo/event-status")
+        const res = await fetch(withBasePath("/api/demo/event-status"))
         const data = await res.json()
         if (data.success && data.property_name) {
           const match = SCENARIOS.find(s => s.name === data.property_name)
